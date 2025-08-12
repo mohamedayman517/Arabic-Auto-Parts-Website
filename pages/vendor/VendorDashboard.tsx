@@ -115,7 +115,7 @@ const notifications = [
   },
 ];
 
-export default function VendorDashboard(context: RouteContext) {
+export default function VendorDashboard({ setCurrentPage, ...context }: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
   const statsCards = [
     {
@@ -338,7 +338,7 @@ export default function VendorDashboard(context: RouteContext) {
             <CardContent className="space-y-3">
               <Button
                 className="w-full justify-start"
-                onClick={() => context.setCurrentPage("vendor-products")}
+                onClick={() => setCurrentPage && setCurrentPage("vendor-products")}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 {t("addNewProduct")}
@@ -346,7 +346,7 @@ export default function VendorDashboard(context: RouteContext) {
               <Button
                 className="w-full justify-start"
                 variant="outline"
-                onClick={() => context.setCurrentPage("vendor-orders")}
+                onClick={() => setCurrentPage && setCurrentPage("vendor-orders")}
               >
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 {t("manageOrders")}
@@ -354,7 +354,7 @@ export default function VendorDashboard(context: RouteContext) {
               <Button
                 className="w-full justify-start"
                 variant="outline"
-                onClick={() => context.setCurrentPage("vendor-analytics")}
+                onClick={() => setCurrentPage && setCurrentPage("vendor-analytics")}
               >
                 <BarChart3 className="mr-2 h-4 w-4" />
                 {t("analyticsReports")}
@@ -362,7 +362,7 @@ export default function VendorDashboard(context: RouteContext) {
               <Button
                 className="w-full justify-start"
                 variant="outline"
-                onClick={() => context.setCurrentPage("vendor-settings")}
+                onClick={() => setCurrentPage && setCurrentPage("vendor-settings")}
               >
                 <Settings className="mr-2 h-4 w-4" />
                 {t("storeSettings")}
@@ -388,9 +388,9 @@ export default function VendorDashboard(context: RouteContext) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => context.setCurrentPage("vendor-orders")}
+                    onClick={() => setCurrentPage && setCurrentPage("vendor-orders")}
                   >
-                    <Eye className="mr-2 h-4 w-4" />
+                    <Package className="mr-2 h-4 w-4" />
                     {t("viewAll")}
                   </Button>
                 </CardTitle>

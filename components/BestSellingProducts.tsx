@@ -6,6 +6,7 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { RouteContext } from './Router';
 import { useTranslation } from '../hooks/useTranslation';
 import { formatCurrency } from '../utils/vendorHelpers';
+import Swal from 'sweetalert2';
 
 const products = [
   {
@@ -62,11 +63,11 @@ const products = [
   }
 ];
 
-export default function BestSellingProducts(context: RouteContext) {
+export default function BestSellingProducts({ setSelectedProduct, setCurrentPage, isInWishlist, addToWishlist, removeFromWishlist, addToCart, setSearchFilters }: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
   const handleProductClick = (product: any) => {
-    context.setSelectedProduct(product);
-    context.setCurrentPage('product-details');
+    setSelectedProduct && setSelectedProduct(product);
+    setCurrentPage && setCurrentPage('product-details');
   };
   return (
     <section className="py-16 bg-white" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -94,12 +95,50 @@ export default function BestSellingProducts(context: RouteContext) {
                   {locale === 'en' ? (product.badgeEn ?? product.badge) : product.badge}
                 </Badge>
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 left-2 bg-white/80 hover:bg-white text-gray-600 hover:text-red-500"
-                >
-                  <Heart className="w-4 h-4" />
-                </Button>
+                    size="icon"
+                    variant="ghost"
+                    className={`absolute top-2 left-2 bg-white/80 hover:bg-white ${(isInWishlist && isInWishlist(String(product.id))) ? 'text-red-500' : 'text-gray-600 hover:text-red-500'}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      
+                      if (!isInWishlist || !isInWishlist(String(product.id))) {
+                        // Add to wishlist
+                        addToWishlist && addToWishlist({
+                          id: String(product.id),
+                          name: locale === 'en' ? (product.nameEn ?? product.name) : product.name,
+                          price: product.price,
+                          brand: locale === 'en' ? product.nameEn : product.name,
+                          originalPrice: product.originalPrice,
+                          image: product.image,
+                          inStock: true
+                        });
+                        
+                        Swal.fire({
+                          title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
+                          icon: 'success',
+                          toast: true,
+                          position: 'top-end',
+                          showConfirmButton: false,
+                          timer: 3000
+                        });
+                      } else {
+                        // Remove from wishlist
+                        removeFromWishlist && removeFromWishlist(String(product.id));
+                        
+                        Swal.fire({
+                          title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
+                          icon: 'info',
+                          toast: true,
+                          position: 'top-end',
+                          showConfirmButton: false,
+                          timer: 3000
+                        });
+                      }
+                    }}
+                  >
+                    <Heart className={`h-4 w-4 ${(isInWishlist && isInWishlist(String(product.id))) ? 'fill-current' : ''}`} />
+                  </Button>
               </div>
               
               <CardContent className="p-4">
@@ -126,14 +165,23 @@ export default function BestSellingProducts(context: RouteContext) {
                   className="w-full"
                   size="sm"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    context.addToCart({
+                    addToCart && addToCart({
                       id: String(product.id),
                       name: locale === 'en' ? (product.nameEn ?? product.name) : product.name,
                       price: product.price,
                       image: product.image,
                       quantity: 1,
                       inStock: true,
+                    });
+                    Swal.fire({
+                      title: locale === 'en' ? 'Added to cart' : 'تمت الإضافة إلى السلة',
+                      icon: 'success',
+                      toast: true,
+                      position: 'top-end',
+                      showConfirmButton: false,
+                      timer: 2000,
                     });
                   }}
                 >
@@ -146,7 +194,11 @@ export default function BestSellingProducts(context: RouteContext) {
         </div>
 
         <div className="text-center">
-          <Button variant="outline" size="lg" onClick={() => context.setCurrentPage('products')}>
+          <Button variant="outline" size="lg" onClick={() => {
+            // Clear any pre-applied filters to show all products
+            setSearchFilters && setSearchFilters(null);
+            setCurrentPage && setCurrentPage('products');
+          }}>
             {t('viewAllProducts')}
           </Button>
         </div>

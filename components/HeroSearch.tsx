@@ -13,7 +13,7 @@ import { RouteContext } from "./Router";
 import { useTranslation } from "../hooks/useTranslation";
 import { useState } from "react";
 
-export default function HeroSearch(context: RouteContext) {
+export default function HeroSearch({ setSearchFilters, setCurrentPage }: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
   const [carType, setCarType] = useState<string | undefined>();
   const [model, setModel] = useState<string | undefined>();
@@ -110,13 +110,13 @@ export default function HeroSearch(context: RouteContext) {
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 shadow-md hover:shadow-lg focus-visible:ring-blue-400"
                 onClick={() => {
-                  context.setSearchFilters({
+                  setSearchFilters && setSearchFilters({
                     term,
                     carType,
                     model,
                     partCategory,
                   });
-                  context.setCurrentPage("products");
+                  setCurrentPage && setCurrentPage("products");
                 }}
               >
                 <Search className="w-5 h-5 ml-2" />
@@ -127,13 +127,13 @@ export default function HeroSearch(context: RouteContext) {
                 size="lg"
                 className="px-8 border-gray-300 bg-white text-gray-900 hover:bg-gray-100"
                 onClick={() => {
-                  context.setSearchFilters({
+                  setSearchFilters && setSearchFilters({
                     term,
                     carType,
                     model,
                     partCategory,
                   });
-                  context.setCurrentPage("products");
+                  setCurrentPage && setCurrentPage("products");
                 }}
               >
                 <Filter className="w-5 h-5 ml-2" />

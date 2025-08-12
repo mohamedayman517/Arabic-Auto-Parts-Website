@@ -40,7 +40,7 @@ const categories = (t: (key: any) => string) => [
   },
 ];
 
-export default function ProductCategories(context: RouteContext) {
+export default function ProductCategories({ setCurrentPage, setSearchFilters }: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
 
   return (
@@ -80,7 +80,11 @@ export default function ProductCategories(context: RouteContext) {
                 <Button
                   variant="outline"
                   className="w-full border-gray-300 text-gray-900 bg-white"
-                  onClick={() => context.setCurrentPage("products")}
+                  onClick={() => {
+                    // Set normalized part category id (engines, tires, electrical, tools)
+                    setSearchFilters && setSearchFilters({ term: '', partCategory: category.id });
+                    setCurrentPage && setCurrentPage("products");
+                  }}
                 >
                   {t("viewAll")}
                   <ArrowLeft className="w-4 h-4 mr-2" />

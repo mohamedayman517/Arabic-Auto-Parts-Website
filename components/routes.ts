@@ -39,6 +39,10 @@ import MarketerDashboard from '../pages/marketer/MarketerDashboard';
 // Import admin dashboard components
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminUsers from '../pages/admin/AdminUsers';
+import AdminVendors from '../pages/admin/AdminVendors';
+import AdminProducts from '../pages/admin/AdminProducts';
+import AdminReports from '../pages/admin/AdminReports';
+import AdminSettings from '../pages/admin/AdminSettings';
 
 export const routes: Record<string, RouteConfig> = {
   // Public routes
@@ -73,4 +77,8 @@ export const routes: Record<string, RouteConfig> = {
   // Admin routes (require admin role)
   'admin-dashboard': { component: AdminDashboard, title: 'لوحة التحكم الإدارية', icon: Shield, requiresAuth: true, allowedRoles: ['admin'] },
   'admin-users': { component: AdminUsers, title: 'إدارة المستخدمين', icon: Users, requiresAuth: true, allowedRoles: ['admin'] },
+  'admin-vendors': { component: AdminVendors, title: 'إدارة المتاجر', icon: Store, requiresAuth: true, allowedRoles: ['admin'] },
+  'admin-products': { component: AdminProducts, title: 'إدارة المنتجات', icon: Package, requiresAuth: true, allowedRoles: ['admin'] },
+  'admin-reports': { component: AdminReports, title: 'Reports & Analytics', icon: BarChart3, requiresAuth: true, allowedRoles: ['admin'] },
+  'admin-settings': { component: AdminSettings, title: 'System Settings', icon: Settings, requiresAuth: true, allowedRoles: ['admin'] },
 };

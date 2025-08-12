@@ -1,5 +1,16 @@
 import { useState } from "react";
-import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Clock,
+  Send,
+  User,
+  MessageSquare,
+  Type,
+  ListTree,
+  Loader2,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -22,12 +33,10 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useTranslation } from "../hooks/useTranslation";
 
-interface ContactProps {
-  setCurrentPage: (page: string) => void;
-}
+interface ContactProps extends RouteContext {}
 
-export default function Contact({ setCurrentPage }: ContactProps) {
-  const { t } = useTranslation();
+export default function Contact({ setCurrentPage, user, setUser, cartItems }: ContactProps) {
+  const { t, locale } = useTranslation();
 
   // contactInfo يجب أن يكون هنا
   const contactInfo = [
@@ -91,9 +100,14 @@ export default function Contact({ setCurrentPage }: ContactProps) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const padInput = locale === 'ar' ? 'pr-12 md:pr-14' : 'pl-12 md:pl-14'
+  const iconSide = locale === 'ar' ? 'right-3' : 'left-3'
+  const textDir = locale === 'ar' ? 'rtl' : 'ltr'
+  const sendingText = locale === 'ar' ? 'جاري الإرسال...' : 'Sending...'
+
   return (
-    <div className="min-h-screen bg-background">
-      <Header currentPage="contact" setCurrentPage={setCurrentPage} />
+    <div className="min-h-screen bg-background" dir={textDir} lang={locale}>
+      <Header currentPage="contact" setCurrentPage={setCurrentPage} user={user} setUser={setUser} cartItems={cartItems} />
 
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
@@ -132,7 +146,7 @@ export default function Contact({ setCurrentPage }: ContactProps) {
 
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Contact Form */}
-          <Card>
+          <Card className="shadow-md border border-muted/40 rounded-xl">
             <CardHeader>
               <CardTitle>{t("sendMessage")}</CardTitle>
             </CardHeader>
@@ -140,108 +154,141 @@ export default function Contact({ setCurrentPage }: ContactProps) {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">{t("fullName")} *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        handleInputChange("name", e.target.value)
-                      }
-                      required
-                    />
+                    <Label htmlFor="name" className="mb-1 block text-sm font-medium flex items-center gap-1">
+                      {t("fullName")} <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) =>
+                          handleInputChange("name", e.target.value)
+                        }
+                        required
+                        className={`h-12 ${padInput} text-foreground placeholder:text-muted-foreground text-base md:text-lg leading-normal bg-background focus-visible:ring-2 focus-visible:ring-primary`}
+                      />
+                      <User className={`pointer-events-none absolute ${iconSide} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground`} />
+                    </div>
                   </div>
                   <div>
-                    <Label htmlFor="email">{t("emailAddress")} *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) =>
-                        handleInputChange("email", e.target.value)
-                      }
-                      required
-                    />
+                    <Label htmlFor="email" className="mb-1 block text-sm font-medium flex items-center gap-1">
+                      {t("emailAddress")} <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) =>
+                          handleInputChange("email", e.target.value)
+                        }
+                        required
+                        className={`h-12 ${padInput} text-foreground placeholder:text-muted-foreground text-base md:text-lg leading-normal bg-background focus-visible:ring-2 focus-visible:ring-primary`}
+                      />
+                      <Mail className={`pointer-events-none absolute ${iconSide} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground`} />
+                    </div>
                   </div>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="phone">{t("phoneNumber")}</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) =>
-                        handleInputChange("phone", e.target.value)
-                      }
-                    />
+                    <Label htmlFor="phone" className="mb-1 block text-sm font-medium">{t("phoneNumber")}</Label>
+                    <div className="relative">
+                      <Input
+                        id="phone"
+                        value={formData.phone}
+                        onChange={(e) =>
+                          handleInputChange("phone", e.target.value)
+                        }
+                        className={`h-12 ${padInput} text-foreground placeholder:text-muted-foreground text-base md:text-lg leading-normal bg-background focus-visible:ring-2 focus-visible:ring-primary`}
+                      />
+                      <Phone className={`pointer-events-none absolute ${iconSide} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground`} />
+                    </div>
                   </div>
                   <div>
-                    <Label htmlFor="category">{t("inquiryCategory")}</Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(value) =>
-                        handleInputChange("category", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("choosCategory")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="general">{t("general")}</SelectItem>
-                        <SelectItem value="order">{t("order")}</SelectItem>
-                        <SelectItem value="product">{t("product")}</SelectItem>
-                        <SelectItem value="technical">
-                          {t("technical")}
-                        </SelectItem>
-                        <SelectItem value="complaint">
-                          {t("complaint")}
-                        </SelectItem>
-                        <SelectItem value="suggestion">
-                          {t("suggestion")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="category" className="mb-1 block text-sm font-medium">{t("inquiryCategory")}</Label>
+                    <div className="relative">
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) =>
+                          handleInputChange("category", value)
+                        }
+                      >
+                        <SelectTrigger className={`h-12 ${padInput} text-foreground text-base md:text-lg leading-normal`}>
+                          <SelectValue placeholder={t("choosCategory")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="general">{t("general")}</SelectItem>
+                          <SelectItem value="order">{t("order")}</SelectItem>
+                          <SelectItem value="product">{t("product")}</SelectItem>
+                          <SelectItem value="technical">
+                            {t("technical")}
+                          </SelectItem>
+                          <SelectItem value="complaint">
+                            {t("complaint")}
+                          </SelectItem>
+                          <SelectItem value="suggestion">
+                            {t("suggestion")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <ListTree className={`pointer-events-none absolute ${iconSide} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground`} />
+                    </div>
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="subject">{t("messageSubject")} *</Label>
-                  <Input
-                    id="subject"
-                    value={formData.subject}
-                    onChange={(e) =>
-                      handleInputChange("subject", e.target.value)
-                    }
-                    required
-                  />
+                  <Label htmlFor="subject" className="mb-1 block text-sm font-medium flex items-center gap-1">
+                    {t("messageSubject")} <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="subject"
+                      value={formData.subject}
+                      onChange={(e) =>
+                        handleInputChange("subject", e.target.value)
+                      }
+                      required
+                      className={`h-12 ${padInput} text-foreground placeholder:text-muted-foreground text-base md:text-lg leading-normal bg-background focus-visible:ring-2 focus-visible:ring-primary`}
+                    />
+                    <Type className={`pointer-events-none absolute ${iconSide} top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground`} />
+                  </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="message">{t("messageText")} *</Label>
-                  <Textarea
-                    id="message"
-                    rows={6}
-                    value={formData.message}
-                    onChange={(e) =>
-                      handleInputChange("message", e.target.value)
-                    }
-                    placeholder={t("writeMessage")}
-                    required
-                  />
+                  <Label htmlFor="message" className="mb-1 block text-sm font-medium flex items-center gap-1">
+                    {t("messageText")} <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                      <Textarea
+                        id="message"
+                        rows={6}
+                        value={formData.message}
+                        onChange={(e) =>
+                          handleInputChange("message", e.target.value)
+                        }
+                        required
+                        className={`${padInput} text-foreground placeholder:text-muted-foreground text-base md:text-lg leading-relaxed bg-background focus-visible:ring-2 focus-visible:ring-primary min-h-[140px] pt-3`}
+                      />
+                    <MessageSquare className={`pointer-events-none absolute ${iconSide} top-4 h-5 w-5 text-muted-foreground`} />
+                  </div>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full h-11 text-base"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                    "جاري الإرسال..."
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {sendingText}
+                    </span>
                   ) : (
-                    <>
-                      <Send className="h-4 w-4 ml-2" />
+                    <span className="inline-flex items-center gap-2">
+                      <Send className="h-4 w-4" />
                       {t("sendMessage")}
-                    </>
+                    </span>
                   )}
                 </Button>
               </form>
@@ -253,14 +300,14 @@ export default function Contact({ setCurrentPage }: ContactProps) {
             {/* Map Placeholder */}
             <Card>
               <CardHeader>
-                <CardTitle>{t("ourLocation")}</CardTitle>
+                <CardTitle>{t("ourLocationContact")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
                   <div className="text-center">
                     <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500">{t("mapLocation")}</p>
-                    <p className="text-sm text-gray-400">{t("addressMap")}</p>
+                    <p className="text-gray-500">{t("mapLocationContact")}</p>
+                    <p className="text-sm text-gray-400">{t("addressMapContact")}</p>
                   </div>
                 </div>
               </CardContent>

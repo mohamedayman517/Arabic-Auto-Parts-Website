@@ -104,7 +104,7 @@ const systemAlerts = [
   }
 ];
 
-export default function AdminDashboard(context: RouteContext) {
+export default function AdminDashboard({ setCurrentPage, ...context }: Partial<RouteContext>) {
   const { t } = useTranslation();
   const statsData: Array<{ title: string; value: string; change: string; icon: any; trend: Trend }> = [
     {
@@ -237,7 +237,7 @@ export default function AdminDashboard(context: RouteContext) {
               <Button 
                 className="w-full justify-start"
                 variant="outline"
-                onClick={() => context.setCurrentPage('admin-users')}
+                onClick={() => setCurrentPage && setCurrentPage('admin-users')}
               >
                 <Users className="mr-2 h-4 w-4" />
                 {t('manageUsers')}
@@ -245,7 +245,7 @@ export default function AdminDashboard(context: RouteContext) {
               <Button 
                 className="w-full justify-start"
                 variant="outline"
-                onClick={() => context.setCurrentPage('admin-vendors')}
+                onClick={() => setCurrentPage && setCurrentPage('admin-vendors')}
               >
                 <Store className="mr-2 h-4 w-4" />
                 {t('manageVendors')}
@@ -253,7 +253,7 @@ export default function AdminDashboard(context: RouteContext) {
               <Button 
                 className="w-full justify-start"
                 variant="outline"
-                onClick={() => context.setCurrentPage('admin-products')}
+                onClick={() => setCurrentPage && setCurrentPage('admin-products')}
               >
                 <Package className="mr-2 h-4 w-4" />
                 {t('manageProducts')}
@@ -261,7 +261,7 @@ export default function AdminDashboard(context: RouteContext) {
               <Button 
                 className="w-full justify-start"
                 variant="outline"
-                onClick={() => context.setCurrentPage('admin-reports')}
+                onClick={() => setCurrentPage && setCurrentPage('admin-reports')}
               >
                 <BarChart3 className="mr-2 h-4 w-4" />
                 {t('reportsAndAnalytics')}
@@ -269,7 +269,7 @@ export default function AdminDashboard(context: RouteContext) {
               <Button 
                 className="w-full justify-start"
                 variant="outline"
-                onClick={() => context.setCurrentPage('admin-settings')}
+                onClick={() => setCurrentPage && setCurrentPage('admin-settings')}
               >
                 <Settings className="mr-2 h-4 w-4" />
                 {t('systemSettings')}
@@ -319,7 +319,7 @@ export default function AdminDashboard(context: RouteContext) {
                       </div>
                       <div className="flex space-x-2 space-x-reverse">
                         <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
+                          <Package className="h-4 w-4" />
                         </Button>
                         <Button size="sm" variant="outline">
                           <Edit className="h-4 w-4" />

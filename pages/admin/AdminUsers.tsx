@@ -1,3 +1,4 @@
+import React from 'react';
 import { RouteContext } from '../../components/Router';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -21,83 +22,41 @@ import {
   Phone,
   MapPin,
   Calendar,
-  ArrowRight
+  ArrowRight,
+  User
 } from 'lucide-react';
 import Header from '../../components/Header';
 import { useTranslation } from '../../hooks/useTranslation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  getAdminUsers,
+  addAdminUser,
+  updateAdminUser,
+  deleteAdminUser,
+  setAdminUserStatus,
+} from '../../lib/adminStore';
+import type { AdminUser, AdminRole, AdminUserStatus } from '../../lib/adminStore';
 
-const mockUsers = [
-  {
-    id: 1,
-    name: 'محمد العلي',
-    email: 'mohammed@example.com',
-    phone: '+966501234567',
-    role: 'customer',
-    status: 'active',
-    joinDate: '2024-01-15',
-    location: 'الرياض',
-    orders: 12,
-    totalSpent: '15,400 ر.س'
-  },
-  {
-    id: 2,
-    name: 'فاطمة أحمد',
-    email: 'fatima@example.com',
-    phone: '+966507654321',
-    role: 'vendor',
-    status: 'pending',
-    joinDate: '2024-01-14',
-    location: 'جدة',
-    orders: 0,
-    totalSpent: '0 ر.س'
-  },
-  {
-    id: 3,
-    name: 'علي محمود',
-    email: 'ali@example.com',
-    phone: '+966501122334',
-    role: 'marketer',
-    status: 'active',
-    joinDate: '2024-01-13',
-    location: 'الدمام',
-    orders: 8,
-    totalSpent: '8,200 ر.س'
-  },
-  {
-    id: 4,
-    name: 'نورا السالم',
-    email: 'nora@example.com',
-    phone: '+966505566778',
-    role: 'customer',
-    status: 'suspended',
-    joinDate: '2024-01-12',
-    location: 'مكة',
-    orders: 25,
-    totalSpent: '32,100 ر.س'
-  },
-  {
-    id: 5,
-    name: 'خالد الأحمد',
-    email: 'khalid@example.com',
-    phone: '+966503344556',
-    role: 'vendor',
-    status: 'active',
-    joinDate: '2024-01-11',
-    location: 'المدينة',
-    orders: 45,
-    totalSpent: '67,800 ر.س'
-  }
-];
+// Local state backed by adminStore (localStorage)
+export type UserRow = AdminUser;
 
-export default function AdminUsers(context: RouteContext) {
+export default function AdminUsers({ setCurrentPage, ...context }: Partial<RouteContext>) {
   const { t } = useTranslation();
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editMode, setEditMode] = useState<null | number>(null); // id when editing
+  const [form, setForm] = useState<Partial<UserRow>>({
+    name: '', email: '', phone: '', role: 'customer', status: 'active', location: '', orders: 0, totalSpent: '0 ر.س',
+  });
 
-  const filteredUsers = mockUsers.filter(user => {
+  const reload = () => setUsers(getAdminUsers());
+  useEffect(() => { reload(); }, []);
+
+  const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = selectedRole === 'all' || user.role === selectedRole;
@@ -105,6 +64,48 @@ export default function AdminUsers(context: RouteContext) {
     
     return matchesSearch && matchesRole && matchesStatus;
   });
+
+  const openCreate = () => {
+    setEditMode(null);
+    setForm({ name: '', email: '', phone: '', role: 'customer', status: 'active', location: '', orders: 0, totalSpent: '0 ر.س' });
+    setFormOpen(true);
+  };
+  const openEdit = (u: UserRow) => {
+    setEditMode(u.id);
+    setForm({ ...u });
+    setFormOpen(true);
+  };
+  const submitForm = () => {
+    if (!form.name || !form.email || !form.phone) return;
+    if (editMode) {
+      updateAdminUser(editMode, {
+        name: String(form.name),
+        email: String(form.email),
+        phone: String(form.phone),
+        role: form.role as AdminRole,
+        status: form.status as AdminUserStatus,
+        location: String(form.location || ''),
+        orders: Number(form.orders || 0),
+        totalSpent: String(form.totalSpent || '0 ر.س'),
+      });
+    } else {
+      addAdminUser({
+        name: String(form.name),
+        email: String(form.email),
+        phone: String(form.phone),
+        role: form.role as AdminRole,
+        status: form.status as AdminUserStatus,
+        location: String(form.location || ''),
+        orders: Number(form.orders || 0),
+        totalSpent: String(form.totalSpent || '0 ر.س'),
+      });
+    }
+    setFormOpen(false);
+    setEditMode(null);
+    reload();
+  };
+  const setStatus = (u: UserRow, status: AdminUserStatus) => { setAdminUserStatus(u.id, status); reload(); };
+  const removeUser = (u: UserRow) => { deleteAdminUser(u.id); reload(); };
 
   const getRoleText = (role: string) => {
     switch(role) {
@@ -145,7 +146,7 @@ export default function AdminUsers(context: RouteContext) {
           <div className="flex items-center mb-4">
             <Button 
               variant="outline" 
-              onClick={() => context.setCurrentPage('admin-dashboard')}
+              onClick={() => setCurrentPage && setCurrentPage('admin-dashboard')}
               className="mr-4"
             >
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -202,7 +203,7 @@ export default function AdminUsers(context: RouteContext) {
                 </SelectContent>
               </Select>
 
-              <Button>
+              <Button onClick={openCreate}>
                 <Plus className="mr-2 h-4 w-4" />
                 {t('addUser')}
               </Button>
@@ -260,7 +261,6 @@ export default function AdminUsers(context: RouteContext) {
                       </div>
                     </div>
                   </div>
-                  
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <Dialog>
                       <DialogTrigger asChild>
@@ -269,10 +269,10 @@ export default function AdminUsers(context: RouteContext) {
                           variant="outline"
                           onClick={() => setSelectedUser(user)}
                         >
-                          <Eye className="h-4 w-4" />
+                          <User className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-md">
+                      <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border border-white/20">
                         <DialogHeader>
                           <DialogTitle>{t('userDetails')}</DialogTitle>
                         </DialogHeader>
@@ -339,22 +339,19 @@ export default function AdminUsers(context: RouteContext) {
                         )}
                       </DialogContent>
                     </Dialog>
-
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => openEdit(user)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-
                     {user.status === 'active' ? (
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" onClick={() => setStatus(user, 'suspended')}>
                         <Ban className="h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" onClick={() => setStatus(user, 'active')}>
                         <CheckCircle className="h-4 w-4" />
                       </Button>
                     )}
-
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => removeUser(user)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -371,6 +368,77 @@ export default function AdminUsers(context: RouteContext) {
             )}
           </CardContent>
         </Card>
+
+        {/* Create / Edit User Dialog */}
+        <Dialog open={formOpen} onOpenChange={(open) => { setFormOpen(open); if (!open) setEditMode(null); }}>
+          <DialogContent className="max-w-lg bg-white/95 backdrop-blur-sm border border-white/20">
+            <DialogHeader>
+              <DialogTitle>{editMode ? t('editUser') : t('addUser')}</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>{t('fullName')}</Label>
+                <Input value={form.name || ''} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+              </div>
+              <div>
+                <Label>{t('email')}</Label>
+                <Input type="email" value={form.email || ''} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+              </div>
+              <div>
+                <Label>{t('phoneNumber')}</Label>
+                <Input value={form.phone || ''} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
+              </div>
+              <div>
+                <Label>{t('locationLabel')}</Label>
+                <Input value={form.location || ''} onChange={(e) => setForm(f => ({ ...f, location: e.target.value }))} />
+              </div>
+              <div>
+                <Label>{t('userType')}</Label>
+                <Select value={(form.role as string) || 'customer'} onValueChange={(v) => setForm(f => ({ ...f, role: v as any }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="customer">{t('customerRole')}</SelectItem>
+                    <SelectItem value="vendor">{t('vendorRole')}</SelectItem>
+                    <SelectItem value="marketer">{t('marketerRole')}</SelectItem>
+                    <SelectItem value="admin">{t('adminRole')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>{t('statusLabel')}</Label>
+                <Select value={(form.status as string) || 'active'} onValueChange={(v) => setForm(f => ({ ...f, status: v as any }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">{t('activeStatus')}</SelectItem>
+                    <SelectItem value="pending">{t('pendingStatus')}</SelectItem>
+                    <SelectItem value="suspended">{t('suspendedStatus')}</SelectItem>
+                    <SelectItem value="banned">{t('bannedStatus')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>{t('ordersCountLabel')}</Label>
+                <Input type="number" value={Number(form.orders || 0)} onChange={(e) => setForm(f => ({ ...f, orders: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <Label>{t('totalSpentLabel')}</Label>
+                <Input value={form.totalSpent || '0 ر.س'} onChange={(e) => setForm(f => ({ ...f, totalSpent: e.target.value }))} />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => { setFormOpen(false); setEditMode(null); }}>
+                {t('cancel')}
+              </Button>
+              <Button onClick={submitForm}>
+                {t('save')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

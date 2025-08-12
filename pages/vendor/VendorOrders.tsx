@@ -249,7 +249,7 @@ export default function VendorOrders({ setCurrentPage }: VendorOrdersProps) {
                     </p>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 ml-2" />
+                        <Package className="h-4 w-4 ml-2" />
                         {t('viewDetails')}
                       </Button>
                       {order.status === 'pending' && (

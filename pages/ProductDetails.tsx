@@ -14,6 +14,7 @@ import {
   Minus,
   Check,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import {
@@ -87,13 +88,26 @@ const reviews = [
   },
 ];
 
-interface ProductDetailsProps extends RouteContext {}
+import { WishlistItem } from "../components/Router";
+
+interface ProductDetailsProps {
+  currentPage?: string;
+  setCurrentPage?: (page: string) => void;
+  selectedProduct?: any;
+  addToCart?: (item: any) => void;
+  isInWishlist?: (id: string) => boolean;
+  addToWishlist?: (item: WishlistItem) => void;
+  removeFromWishlist?: (id: string) => void;
+}
 
 export default function ProductDetails({
   currentPage,
   setCurrentPage,
   selectedProduct,
   addToCart,
+  isInWishlist,
+  addToWishlist,
+  removeFromWishlist
 }: ProductDetailsProps) {
   const { t, locale } = useTranslation();
   const currency = locale === "ar" ? "ر.س" : "SAR";
@@ -105,10 +119,9 @@ export default function ProductDetails({
   };
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [userRating, setUserRating] = useState<number | null>(null);
   const [userComment, setUserComment] = useState("");
-
+  
   // Use mock data if no product is selected
   const product = selectedProduct || {
     id: "1",
@@ -164,6 +177,9 @@ export default function ProductDetails({
     ],
   };
 
+  // Check if product is in wishlist using props
+  const isWishlisted = isInWishlist && isInWishlist(product?.id || "1");
+
   const images = product.images || [
     product.image,
     product.image,
@@ -183,25 +199,30 @@ export default function ProductDetails({
 
   const handleAddToCart = () => {
     // Front-only add to cart using context
-    addToCart({
-      id: product.id,
-      name: getText(product.name),
-      price: product.price,
-      image: images[0],
-      partNumber: product.partNumber,
-      quantity,
-      inStock: normalizedInStock,
-      maxQuantity: normalizedStockCount,
-      originalPrice: product.originalPrice,
-      brand: getText(product.brand),
-    });
-    setCurrentPage("cart");
+    if (addToCart) {
+      addToCart({
+        id: product.id,
+        name: getText(product.name),
+        price: product.price,
+        image: images[0],
+        partNumber: product.partNumber,
+        quantity,
+        inStock: normalizedInStock,
+        maxQuantity: normalizedStockCount,
+        originalPrice: product.originalPrice,
+        brand: getText(product.brand),
+      });
+    }
+    if (setCurrentPage) {
+      setCurrentPage("cart");
+    }
   };
 
   const handleBuyNow = () => {
-    addToCart({
-      id: product.id,
-      name: getText(product.name),
+    if (addToCart) {
+      addToCart({
+        id: product.id,
+        name: getText(product.name),
       price: product.price,
       image: images[0],
       partNumber: product.partNumber,
@@ -210,8 +231,11 @@ export default function ProductDetails({
       maxQuantity: normalizedStockCount,
       originalPrice: product.originalPrice,
       brand: getText(product.brand),
-    });
-    setCurrentPage("checkout");
+      });
+    }
+    if (setCurrentPage) {
+      setCurrentPage("checkout");
+    }
   };
 
   return (
@@ -219,20 +243,20 @@ export default function ProductDetails({
       className="min-h-screen bg-background"
       dir={locale === "ar" ? "rtl" : "ltr"}
     >
-      <Header currentPage="product-details" setCurrentPage={setCurrentPage} />
+      <Header currentPage="product-details" setCurrentPage={setCurrentPage!} />
 
       <div className="container mx-auto px-4 py-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <button
-            onClick={() => setCurrentPage("home")}
+            onClick={() => setCurrentPage && setCurrentPage("home")}
             className="hover:text-primary"
           >
             {t("home")}
           </button>
           <ChevronLeft className="h-4 w-4" />
           <button
-            onClick={() => setCurrentPage("products")}
+            onClick={() => setCurrentPage && setCurrentPage("products")}
             className="hover:text-primary"
           >
             {t("products")}
@@ -411,7 +435,45 @@ export default function ProductDetails({
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setIsWishlisted(!isWishlisted)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (!isWishlisted) {
+                      // Add to wishlist
+                      addToWishlist && addToWishlist({
+                        id: product?.id || "1",
+                        name: getText(product?.name),
+                        price: product?.price || 0,
+                        brand: getText(product?.brand),
+                        originalPrice: product?.originalPrice,
+                        image: product?.images?.[0] || "",
+                        partNumber: product?.partNumber,
+                        inStock: product?.inStock || false
+                      });
+                      
+                      Swal.fire({
+                        title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
+                        icon: 'success',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                      });
+                    } else {
+                      // Remove from wishlist
+                      removeFromWishlist && removeFromWishlist(product?.id || "1");
+                      
+                      Swal.fire({
+                        title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
+                        icon: 'info',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                      });
+                    }
+                  }}
                   className={isWishlisted ? "text-red-500 border-red-500" : ""}
                 >
                   <Heart
@@ -683,16 +745,20 @@ export default function ProductDetails({
                       {relatedProduct.price} {locale === "en" ? "SAR" : "ر.س"}
                     </span>
                     <Button size="sm" onClick={() => {
-                      addToCart({
-                        id: relatedProduct.id,
-                        name: relatedProduct.name,
-                        price: relatedProduct.price,
-                        image: relatedProduct.image,
-                        quantity: 1,
-                        inStock: true,
-                        maxQuantity: 99,
-                      });
-                      setCurrentPage('cart');
+                      if (addToCart) {
+                        addToCart({
+                          id: relatedProduct.id,
+                          name: relatedProduct.name,
+                          price: relatedProduct.price,
+                          image: relatedProduct.image,
+                          quantity: 1,
+                          inStock: true,
+                          maxQuantity: 99,
+                        });
+                      }
+                      if (setCurrentPage) {
+                        setCurrentPage('cart');
+                      }
                     }}>{t("addToCart")}</Button>
                   </div>
                 </CardContent>
@@ -702,7 +768,7 @@ export default function ProductDetails({
         </div>
       </div>
 
-      <Footer setCurrentPage={setCurrentPage} />
+      <Footer setCurrentPage={setCurrentPage!} />
     </div>
   );
 }

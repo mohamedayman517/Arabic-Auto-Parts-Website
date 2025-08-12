@@ -17,11 +17,9 @@ import {
 import {
   Percent,
   Clock,
-  Tag,
   Star,
   Flame,
   TrendingUp,
-  Calendar,
   Users,
   ShoppingCart,
   Gift,
@@ -34,11 +32,12 @@ import {
   Search,
   Package,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import { useTranslation } from "../hooks/useTranslation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
-export default function Offers(context: RouteContext) {
+export default function Offers({ setCurrentPage, isInWishlist, addToWishlist, removeFromWishlist, ...context }: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
   const currency = locale === 'ar' ? 'ر.س' : 'SAR';
   const daysLeftText = (n: number) => (locale === 'ar' ? `باقي ${n} أيام` : `${n} days left`);
@@ -92,50 +91,7 @@ export default function Offers(context: RouteContext) {
     },
   ];
 
-  const categoryOffers = [
-    {
-      category: t("tiresWheelsTitle"),
-      count: 45,
-      maxDiscount: "40%",
-      icon: "🚗",
-      color: "bg-blue-50 text-blue-700",
-    },
-    {
-      category: t("workshopToolsTitle"),
-      count: 32,
-      maxDiscount: "30%",
-      icon: "🛢️",
-      color: "bg-green-50 text-green-700",
-    },
-    {
-      category: t("brakes"),
-      count: 28,
-      maxDiscount: "45%",
-      icon: "🔧",
-      color: "bg-red-50 text-red-700",
-    },
-    {
-      category: t("enginePartsTitle"),
-      count: 67,
-      maxDiscount: "35%",
-      icon: "⚙️",
-      color: "bg-purple-50 text-purple-700",
-    },
-    {
-      category: t("electricalPartsTitle"),
-      count: 19,
-      maxDiscount: "25%",
-      icon: "💡",
-      color: "bg-yellow-50 text-yellow-700",
-    },
-    {
-      category: t("batteries"),
-      count: 15,
-      maxDiscount: "20%",
-      icon: "🔋",
-      color: "bg-orange-50 text-orange-700",
-    },
-  ];
+  
 
   const flashDeals = [
     {
@@ -300,14 +256,56 @@ export default function Offers(context: RouteContext) {
                   <div className="flex space-x-2 space-x-reverse">
                     <Button
                       className="flex-1"
-                      onClick={() => context.setCurrentPage("product-details")}
+                      onClick={() => setCurrentPage && setCurrentPage("product-details")}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
                       {t("buyNow")}
                     </Button>
-                    <Button variant="outline" size="icon">
-                      <Heart className="h-4 w-4" />
-                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className={(isInWishlist && isInWishlist(String(offer.id))) ? 'text-red-500' : ''}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          
+                          if (!isInWishlist || !isInWishlist(String(offer.id))) {
+                            // Add to wishlist
+                            addToWishlist && addToWishlist({
+                              id: String(offer.id),
+                              name: offer.title,
+                              price: parseFloat(offer.salePrice),
+                              brand: offer.category,
+                              originalPrice: parseFloat(offer.originalPrice),
+                              image: "", // Offer doesn't have image property, using empty string
+                              inStock: true
+                            });
+                            
+                            Swal.fire({
+                              title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
+                              icon: 'success',
+                              toast: true,
+                              position: 'top-end',
+                              showConfirmButton: false,
+                              timer: 3000
+                            });
+                          } else {
+                            // Remove from wishlist
+                            removeFromWishlist && removeFromWishlist(String(offer.id));
+                            
+                            Swal.fire({
+                              title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
+                              icon: 'info',
+                              toast: true,
+                              position: 'top-end',
+                              showConfirmButton: false,
+                              timer: 3000
+                            });
+                          }
+                        }}
+                      >
+                        <Heart className={`h-4 w-4 ${(isInWishlist && isInWishlist(String(offer.id))) ? 'fill-current' : ''}`} />
+                      </Button>
                     <Button variant="outline" size="icon">
                       <Share className="h-4 w-4" />
                     </Button>
@@ -318,44 +316,29 @@ export default function Offers(context: RouteContext) {
           </div>
         </div>
 
-        {/* Category Offers */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6 flex items-center">
-            <Tag className="h-6 w-6 text-blue-500 mr-2" />
-            {t("offersByCategory")}
-          </h2>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {categoryOffers.map((category, index) => (
-              <Card
-                key={index}
-                className={`cursor-pointer hover:scale-105 transition-transform ${category.color}`}
-                onClick={() => context.setCurrentPage("products")}
-              >
-                <CardContent className="p-4 text-center">
-                  <div className="text-3xl mb-2">{category.icon}</div>
-                  <h3 className="font-medium text-sm mb-1">
-                    {category.category}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    {category.count} {t("productsCount")}
-                  </p>
-                  <Badge variant="outline" className="text-xs">
-                    {t("specialOffer")}
-                  </Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        
 
         {/* Tabs for Different Offer Types */}
         <Tabs defaultValue="flash" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="flash">{t("flashDeals")}</TabsTrigger>
-            <TabsTrigger value="bundle">{t("bundledOffers")}</TabsTrigger>
-            <TabsTrigger value="loyalty">{t("loyaltyProgram")}</TabsTrigger>
-            <TabsTrigger value="seasonal">{t("seasonalOffers")}</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-muted/40 p-1 rounded-lg shadow-sm">
+            <TabsTrigger
+              value="flash"
+              className="rounded-md px-3 py-2 font-medium text-foreground/80 hover:text-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border data-[state=active]:border-primary data-[state=active]:shadow"
+            >
+              {t("flashDeals")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="bundle"
+              className="rounded-md px-3 py-2 font-medium text-foreground/80 hover:text-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border data-[state=active]:border-primary data-[state=active]:shadow"
+            >
+              {t("bundledOffers")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="loyalty"
+              className="rounded-md px-3 py-2 font-medium text-foreground/80 hover:text-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border data-[state=active]:border-primary data-[state=active]:shadow"
+            >
+              {t("loyaltyProgram")}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="flash" className="space-y-6">
@@ -555,69 +538,11 @@ export default function Offers(context: RouteContext) {
             </Card>
           </TabsContent>
 
-          <TabsContent value="seasonal" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Calendar className="h-5 w-5 text-purple-500 mr-2" />
-                  {t("seasonalOffers")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="bg-blue-50 border-blue-200">
-                    <CardHeader>
-                      <CardTitle className="text-blue-700 flex items-center">
-                        ❄️ عروض الشتاء
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <p className="text-sm">خصومات حتى 40% على:</p>
-                        <ul className="text-sm space-y-1">
-                          <li>• إطارات الشتاء المتخصصة</li>
-                          <li>• زيوت المحرك منخفضة الحرارة</li>
-                          <li>• بطاريات عالية الأداء</li>
-                          <li>• أنظمة التدفئة</li>
-                        </ul>
-                        <Button className="w-full">
-                          {t("discoverOffers")}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-yellow-50 border-yellow-200">
-                    <CardHeader>
-                      <CardTitle className="text-yellow-700 flex items-center">
-                        ☀️ عروض الصيف
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <p className="text-sm">
-                          عروض قادمة - خصومات حتى 35% على:
-                        </p>
-                        <ul className="text-sm space-y-1">
-                          <li>• أنظمة التكييف</li>
-                          <li>• مبردات المحرك</li>
-                          <li>• فلاتر الهواء المحسنة</li>
-                          <li>• حماية الطلاء</li>
-                        </ul>
-                        <Button variant="outline" className="w-full">
-                          {t("notifyMe")}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          
         </Tabs>
       </div>
 
-      <Footer {...context} />
+      <Footer setCurrentPage={setCurrentPage ?? (() => {})} />
     </div>
   );
 }

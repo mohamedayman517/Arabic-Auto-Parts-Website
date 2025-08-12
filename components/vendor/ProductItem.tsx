@@ -1,4 +1,4 @@
-import { Edit, Trash2, Eye, MoreVertical } from 'lucide-react';
+import { Edit, Trash2, Eye, MoreVertical, Package } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
@@ -73,7 +73,7 @@ export default function ProductItem({ product, onEdit, onDelete, onView }: Produ
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onView(product)}>
-              <Eye className="h-4 w-4 ml-2" />
+              <Package className="h-4 w-4 ml-2" />
               {locale === 'en' ? 'View' : 'عرض'}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onEdit(product)}>

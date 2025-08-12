@@ -36,9 +36,26 @@ export function useTranslation() {
         setLocale(e.newValue as Locale)
       }
     }
-    if (typeof window !== 'undefined') window.addEventListener('storage', onStorage)
+    // Same-tab language switch without navigation
+    const onLocaleChanged = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as Locale | undefined
+        if (detail === 'en' || detail === 'ar') setLocale(detail)
+        else {
+          const stored = localStorage.getItem('locale') as Locale | null
+          if (stored === 'en' || stored === 'ar') setLocale(stored)
+        }
+      } catch {}
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', onStorage)
+      window.addEventListener('locale-changed', onLocaleChanged as any)
+    }
     return () => {
-      if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', onStorage)
+        window.removeEventListener('locale-changed', onLocaleChanged as any)
+      }
     }
   }, [pathname, locale])
 

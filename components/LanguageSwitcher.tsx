@@ -1,59 +1,44 @@
 'use client'
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Button } from './ui/button'
 import { Globe } from 'lucide-react'
 
-const languages = {
-  ar: { name: 'العربية', flag: '🇸🇦' },
-  en: { name: 'English', flag: '🇺🇸' }
-}
-
 export default function LanguageSwitcher() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  
-  // Extract current locale from pathname
-  const safePath = (pathname ?? '/ar') as string
-  const currentLocale = safePath.split('/')[1] || 'ar'
-  
-  const switchLanguage = (newLocale: string) => {
-    // Persist selection so hooks can read it
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('locale', newLocale)
-      }
-    } catch {
-      // ignore storage errors
-    }
-    // Replace only the locale segment and preserve query/hash
-    const segments = safePath.split('/')
-    segments[1] = newLocale
-    const newPath = segments.join('/')
-    const query = searchParams?.toString()
-    const hash = typeof window !== 'undefined' ? window.location.hash : ''
-    const url = query && query.length > 0 ? `${newPath}?${query}${hash}` : `${newPath}${hash}`
-    router.push(url)
+  // Derive current locale from URL path (fallback to 'ar')
+  const getPath = () => {
+    if (typeof window === 'undefined') return '/ar'
+    try { return window.location.pathname || '/ar' } catch { return '/ar' }
   }
-  
+  const safePath = getPath()
+  const currentLocale = (safePath.split('/')[1] || 'ar') as 'ar' | 'en'
+
+  const switchLanguage = (newLocale: 'ar' | 'en') => {
+    // 1) Persist selection
+    try { localStorage.setItem('locale', newLocale) } catch {}
+
+    // 2) Update URL locale segment without navigating
+    try {
+      const url = new URL(window.location.href)
+      const segments = url.pathname.split('/')
+      segments[1] = newLocale
+      url.pathname = segments.join('/')
+      window.history.replaceState({}, '', url.toString())
+    } catch {}
+
+    // 3) Notify app in same tab
+    try { window.dispatchEvent(new CustomEvent('locale-changed', { detail: newLocale })) } catch {}
+  }
+
   return (
-    <div className="flex items-center gap-2">
-      <Globe className="h-4 w-4" />
-      <div className="flex gap-1">
-        {Object.entries(languages).map(([locale, { name, flag }]) => (
-          <Button
-            key={locale}
-            variant={currentLocale === locale ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => switchLanguage(locale)}
-            className="h-8 px-2 text-xs"
-          >
-            <span className="mr-1">{flag}</span>
-            {name}
-          </Button>
-        ))}
-      </div>
-    </div>
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label={currentLocale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+      title={currentLocale === 'ar' ? 'English' : 'العربية'}
+      className="h-8 w-8"
+      onClick={() => switchLanguage(currentLocale === 'ar' ? 'en' : 'ar')}
+    >
+      <Globe className="h-5 w-5" />
+    </Button>
   )
 }

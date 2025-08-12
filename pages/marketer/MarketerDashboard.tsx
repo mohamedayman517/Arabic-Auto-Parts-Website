@@ -44,114 +44,117 @@ import {
 } from "lucide-react";
 import Header from "../../components/Header";
 import { useTranslation } from "../../hooks/useTranslation";
+import { Input } from "../../components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
+import { Label } from "../../components/ui/label";
+import { Textarea } from "../../components/ui/textarea";
+import { Search, ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
 
+// Campaign quick stats (example)
 const campaignStats = [
   {
-    title: "الحملات النشطة",
+    title: "Active campaigns",
     value: "12",
-    change: "+3 هذا الأسبوع",
+    change: "+3 this week",
     icon: Target,
     color: "text-blue-600",
     trend: "up",
   },
   {
-    title: "إجمالي النقرات",
+    title: "Total clicks",
     value: "45,678",
-    change: "+25% من الشهر الماضي",
+    change: "+25% vs last month",
     icon: MousePointer,
     color: "text-green-600",
     trend: "up",
   },
   {
-    title: "التحويلات",
+    title: "Conversions",
     value: "2,134",
-    change: "+15% من الشهر الماضي",
+    change: "+15% vs last month",
     icon: ShoppingCart,
     color: "text-purple-600",
     trend: "up",
   },
   {
-    title: "عائد الاستثمار",
+    title: "ROI",
     value: "320%",
-    change: "+45% من الشهر الماضي",
+    change: "+45% vs last month",
     icon: DollarSign,
     color: "text-yellow-600",
     trend: "up",
   },
 ];
 
-const activeCampaigns = [
-  {
-    id: 1,
-    name: "عرض قطع غيار الشتاء",
-    type: "social",
-    status: "active",
-    budget: "5,000 ر.س",
-    spent: "3,200 ر.س",
-    clicks: 1234,
-    conversions: 89,
-    ctr: "3.2%",
-    startDate: "2024-01-01",
-    endDate: "2024-01-31",
-  },
-  {
-    id: 2,
-    name: "إطارات ميشلين - خصم 20%",
-    type: "google",
-    status: "active",
-    budget: "3,500 ر.س",
-    spent: "2,100 ر.س",
-    clicks: 856,
-    conversions: 67,
-    ctr: "4.1%",
-    startDate: "2024-01-10",
-    endDate: "2024-02-10",
-  },
-  {
-    id: 3,
-    name: "حملة زيوت المحرك المميزة",
-    type: "email",
-    status: "paused",
-    budget: "2,000 ر.س",
-    spent: "450 ر.س",
-    clicks: 234,
-    conversions: 12,
-    ctr: "2.1%",
-    startDate: "2024-01-05",
-    endDate: "2024-01-25",
-  },
-];
+type CampaignStatus = 'active' | 'paused' | 'completed';
+type CampaignType = 'social' | 'google' | 'email';
+interface CampaignRow {
+  id: number;
+  name: string;
+  type: CampaignType;
+  status: CampaignStatus;
+  budget: number;
+  spent: number;
+  clicks: number;
+  conversions: number;
+  ctr: string;
+  startDate: string;
+  endDate: string;
+  notes?: string;
+}
+
+const STORAGE_KEY = 'marketer_campaigns_mock';
+
+function readCampaigns(): CampaignRow[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  const seed: CampaignRow[] = [
+    { id: 1, name: 'Winter Parts Promo', type: 'social', status: 'active', budget: 5000, spent: 3200, clicks: 1234, conversions: 89, ctr: '3.2%', startDate: '2024-01-01', endDate: '2024-01-31' },
+    { id: 2, name: 'Michelin Tires -20%', type: 'google', status: 'active', budget: 3500, spent: 2100, clicks: 856, conversions: 67, ctr: '4.1%', startDate: '2024-01-10', endDate: '2024-02-10' },
+    { id: 3, name: 'Premium Engine Oils', type: 'email', status: 'paused', budget: 2000, spent: 450, clicks: 234, conversions: 12, ctr: '2.1%', startDate: '2024-01-05', endDate: '2024-01-25' },
+  ];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
+  return seed;
+}
+
+function writeCampaigns(rows: CampaignRow[]) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(rows)); } catch {}
+}
 
 const topPerformingContent = [
   {
-    title: "فيديو: كيفية تغيير زيت المحرك",
+    title: "Video: How to change engine oil",
     type: "video",
     views: "25,400",
     engagement: "8.5%",
     conversions: 234,
-    platform: "يوتيوب",
+    platform: "YouTube",
   },
   {
-    title: "مقال: أفضل إطارات لموسم الشتاء",
+    title: "Article: Best winter tires",
     type: "article",
     views: "15,600",
     engagement: "12.3%",
     conversions: 167,
-    platform: "المدونة",
+    platform: "Blog",
   },
   {
-    title: "إنفوجرافيك: صيانة المكابح",
+    title: "Infographic: Brake maintenance",
     type: "infographic",
     views: "18,900",
     engagement: "15.7%",
     conversions: 189,
-    platform: "إنستغرام",
+    platform: "Instagram",
   },
 ];
 
 const audienceInsights = [
   {
-    demographic: "الفئة العمرية",
+    demographic: "Age group",
     segments: [
       { name: "18-25", percentage: 15 },
       { name: "26-35", percentage: 35 },
@@ -160,19 +163,19 @@ const audienceInsights = [
     ],
   },
   {
-    demographic: "الجنس",
+    demographic: "Gender",
     segments: [
-      { name: "ذكور", percentage: 78 },
-      { name: "إناث", percentage: 22 },
+      { name: "Male", percentage: 78 },
+      { name: "Female", percentage: 22 },
     ],
   },
   {
-    demographic: "الموقع",
+    demographic: "Location",
     segments: [
-      { name: "الرياض", percentage: 35 },
-      { name: "جدة", percentage: 25 },
-      { name: "الدمام", percentage: 18 },
-      { name: "أخرى", percentage: 22 },
+      { name: "Riyadh", percentage: 35 },
+      { name: "Jeddah", percentage: 25 },
+      { name: "Dammam", percentage: 18 },
+      { name: "Other", percentage: 22 },
     ],
   },
 ];
@@ -180,31 +183,49 @@ const audienceInsights = [
 const upcomingTasks = [
   {
     id: 1,
-    task: "إطلاق حملة العروض الشتوية",
+    task: "Launch winter offers campaign",
     priority: "high",
     dueDate: "2024-01-18",
     status: "pending",
   },
   {
     id: 2,
-    task: "تحليل أداء حملة إطارات ميشلين",
+    task: "Analyze Michelin tires campaign performance",
     priority: "medium",
     dueDate: "2024-01-20",
     status: "in-progress",
   },
   {
     id: 3,
-    task: "إنشاء محتوى لوسائل التواصل الاجتماعي",
+    task: "Create social media content",
     priority: "low",
     dueDate: "2024-01-22",
     status: "pending",
   },
 ];
 
-export default function MarketerDashboard(context: RouteContext) {
+export default function MarketerDashboard(context: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
+  const [rows, setRows] = useState<CampaignRow[]>([]);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<'all' | CampaignStatus>('all');
+  const [type, setType] = useState<'all' | CampaignType>('all');
+  const [formOpen, setFormOpen] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [form, setForm] = useState<Partial<CampaignRow>>({ name: '', type: 'social', status: 'active', budget: 0, spent: 0, clicks: 0, conversions: 0, ctr: '0%', startDate: '', endDate: '', notes: '' });
 
-  // وظائف المسوق (مترجمة)
+  useEffect(() => { setRows(readCampaigns()); }, []);
+  const reload = () => setRows(readCampaigns());
+
+  const filtered = rows.filter(r => {
+    const s = search.trim().toLowerCase();
+    const matches = !s || r.name.toLowerCase().includes(s) || r.type.toLowerCase().includes(s);
+    const statusOk = status === 'all' || r.status === status;
+    const typeOk = type === 'all' || r.type === type;
+    return matches && statusOk && typeOk;
+  });
+
+  // Marketer quick functions grid
   const marketerFunctions = [
     {
       icon: "BarChart3",
@@ -240,11 +261,11 @@ export default function MarketerDashboard(context: RouteContext) {
   const getCampaignTypeText = (type: string) => {
     switch (type) {
       case "social":
-        return "وسائل التواصل";
+        return "Social";
       case "google":
-        return "إعلانات جوجل";
+        return "Google Ads";
       case "email":
-        return "البريد الإلكتروني";
+        return "Email";
       default:
         return type;
     }
@@ -266,11 +287,11 @@ export default function MarketerDashboard(context: RouteContext) {
   const getStatusText = (status: string) => {
     switch (status) {
       case "active":
-        return "نشطة";
+        return "Active";
       case "paused":
-        return "متوقفة";
+        return "Paused";
       case "completed":
-        return "مكتملة";
+        return "Completed";
       default:
         return status;
     }
@@ -292,11 +313,11 @@ export default function MarketerDashboard(context: RouteContext) {
   const getPriorityText = (priority: string) => {
     switch (priority) {
       case "high":
-        return "عالية";
+        return "High";
       case "medium":
-        return "متوسطة";
+        return "Medium";
       case "low":
-        return "منخفضة";
+        return "Low";
       default:
         return priority;
     }
@@ -308,7 +329,13 @@ export default function MarketerDashboard(context: RouteContext) {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4">{t("marketerFunctions")}</h2>
+          <div className="flex items-center mb-4">
+            <Button variant="outline" onClick={() => context.setCurrentPage && context.setCurrentPage('marketer-dashboard')} className="mr-4">
+              <ArrowRight className="ml-2 h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          </div>
+          <h2 className="text-xl font-bold mb-4">Marketer Functions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {marketerFunctions.map((func, i) => {
               const Icon = require("lucide-react")[func.icon];
@@ -319,16 +346,14 @@ export default function MarketerDashboard(context: RouteContext) {
                 >
                   <Icon className="h-8 w-8 mb-2 text-primary" />
                   <span className="text-sm font-medium text-center">
-                    {func.label[locale]}
+                    {func.label['en']}
                   </span>
                 </div>
               );
             })}
           </div>
-          <h1 className="mb-2">{`${t("welcome")} ${context.user?.name ?? ""}`}</h1>
-          <p className="text-muted-foreground">
-            {t("marketingDashboardDescription")}
-          </p>
+          <h1 className="mb-2">{`Welcome, ${context.user?.name ?? ""}`}</h1>
+          <p className="text-muted-foreground">Plan and monitor your campaigns, content and audience engagement.</p>
         </div>
 
         {/* Campaign Stats */}
@@ -364,24 +389,24 @@ export default function MarketerDashboard(context: RouteContext) {
           {/* Quick Actions */}
           <Card>
             <CardHeader>
-              <CardTitle>{t("quickActions")}</CardTitle>
+              <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button className="w-full justify-start">
+              <Button className="w-full justify-start" onClick={() => { setEditId(null); setFormOpen(true); setForm({ name: '', type: 'social', status: 'active', budget: 0, spent: 0, clicks: 0, conversions: 0, ctr: '0%', startDate: '', endDate: '', notes: '' }); }}>
                 <Plus className="mr-2 h-4 w-4" />
-                {t("createNewCampaign")}
+                Create new campaign
               </Button>
               <Button className="w-full justify-start" variant="outline">
                 <Edit className="mr-2 h-4 w-4" />
-                {t("createContent")}
+                Create content
               </Button>
               <Button className="w-full justify-start" variant="outline">
                 <BarChart3 className="mr-2 h-4 w-4" />
-                {t("performanceReports")}
+                Performance reports
               </Button>
               <Button className="w-full justify-start" variant="outline">
                 <Users className="mr-2 h-4 w-4" />
-                {t("audienceAnalysis")}
+                Audience analysis
               </Button>
             </CardContent>
           </Card>
@@ -391,7 +416,7 @@ export default function MarketerDashboard(context: RouteContext) {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Calendar className="mr-2 h-5 w-5" />
-                {t("upcomingTasks")}
+                Upcoming tasks
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -420,31 +445,26 @@ export default function MarketerDashboard(context: RouteContext) {
           {/* Performance Summary */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Award className="mr-2 h-5 w-5" />
-                {t("performanceSummary")}
-              </CardTitle>
+              <CardTitle className="flex items-center"><Award className="mr-2 h-5 w-5" /> Performance summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                 <div className="flex items-center">
                   <TrendingUp className="h-5 w-5 text-green-500 mr-2" />
-                  <span className="text-sm">
-                    {t("aboveAveragePerformance")}
-                  </span>
+                  <span className="text-sm">Above average performance</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>{t("conversionRate")}</span>
+                  <span>Conversion rate</span>
                   <span className="font-medium">4.7%</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>{t("conversionCost")}</span>
-                  <span className="font-medium">15 ر.س</span>
+                  <span>Conversion cost</span>
+                  <span className="font-medium">15 SAR</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>{t("investmentReturn")}</span>
+                  <span>Return on investment</span>
                   <span className="font-medium text-green-600">320%</span>
                 </div>
               </div>
@@ -453,114 +473,17 @@ export default function MarketerDashboard(context: RouteContext) {
         </div>
 
         {/* Detailed Tabs */}
-        <Tabs defaultValue="campaigns" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="campaigns">{t("campaigns")}</TabsTrigger>
-            <TabsTrigger value="content">{t("content")}</TabsTrigger>
-            <TabsTrigger value="audience">{t("audience")}</TabsTrigger>
-            <TabsTrigger value="analytics">{t("analytics")}</TabsTrigger>
+        <Tabs defaultValue="content" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="audience">Audience</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="campaigns" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{t("activeCampaigns")}</span>
-                  <Button size="sm">{t("newCampaign")}</Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {activeCampaigns.map((campaign) => {
-                    const TypeIcon = getCampaignTypeIcon(campaign.type);
-                    const budgetUsed =
-                      (parseInt(campaign.spent.replace(/[^\d]/g, "")) /
-                        parseInt(campaign.budget.replace(/[^\d]/g, ""))) *
-                      100;
-
-                    return (
-                      <div key={campaign.id} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center space-x-3 space-x-reverse">
-                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                              <TypeIcon className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="font-medium">{campaign.name}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {getCampaignTypeText(campaign.type)}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2 space-x-reverse">
-                            <Badge variant={getStatusColor(campaign.status)}>
-                              {getStatusText(campaign.status)}
-                            </Badge>
-                            <Button size="sm" variant="outline">
-                              {campaign.status === "active" ? (
-                                <Pause className="h-4 w-4" />
-                              ) : (
-                                <Play className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                          <div>
-                            <p className="text-xs text-muted-foreground">
-                              {t("budgetUsed")}
-                            </p>
-                            <p className="font-medium">
-                              {campaign.spent} {t("from")} {campaign.budget}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">
-                              {t("clicks")}
-                            </p>
-                            <p className="font-medium">
-                              {campaign.clicks.toLocaleString()}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">
-                              {t("conversions")}
-                            </p>
-                            <p className="font-medium">
-                              {campaign.conversions}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">
-                              {t("ctr")}
-                            </p>
-                            <p className="font-medium">{campaign.ctr}</p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>{t("budgetUtilization")}</span>
-                            <span>{budgetUsed.toFixed(1)}%</span>
-                          </div>
-                          <Progress value={budgetUsed} className="h-2" />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="content" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>{t("topPerformingContent")}</CardTitle>
+                <CardTitle>Top performing content</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -589,21 +512,15 @@ export default function MarketerDashboard(context: RouteContext) {
                       <div className="text-left">
                         <div className="grid grid-cols-3 gap-4 text-sm">
                           <div>
-                            <p className="text-muted-foreground">
-                              {t("views")}
-                            </p>
+                            <p className="text-muted-foreground">Views</p>
                             <p className="font-medium">{content.views}</p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground">
-                              {t("engagement")}
-                            </p>
+                            <p className="text-muted-foreground">Engagement</p>
                             <p className="font-medium">{content.engagement}</p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground">
-                              {t("conversions")}
-                            </p>
+                            <p className="text-muted-foreground">Conversions</p>
                             <p className="font-medium">{content.conversions}</p>
                           </div>
                         </div>
@@ -642,59 +559,57 @@ export default function MarketerDashboard(context: RouteContext) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("overallPerformance")}</CardTitle>
+                  <CardTitle>Overall performance</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">{t("totalMonthlyExpenses")}</span>
-                    <span className="font-medium">28,500 ر.س</span>
+                    <span className="text-sm">Total monthly expenses</span>
+                    <span className="font-medium">28,500 SAR</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">{t("totalReturn")}</span>
-                    <span className="font-medium">91,200 ر.س</span>
+                    <span className="text-sm">Total return</span>
+                    <span className="font-medium">91,200 SAR</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">{t("investmentReturn")}</span>
-                    <span className="font-medium text-green-600">+320%</span>
+                    <span className="text-sm">Return on investment</span>
+                    <span className="font-medium text-green-600">320%</span>
                   </div>
                   <div className="flex items-center justify-between border-t pt-4">
-                    <span className="font-medium">{t("netProfit")}</span>
-                    <span className="font-medium text-green-600">
-                      62,700 ر.س
-                    </span>
+                    <span className="font-medium">Net profit</span>
+                    <span className="font-medium text-green-600">62,700 SAR</span>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("conversionRates")}</CardTitle>
+                  <CardTitle>Conversion rates</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span>{t("googleAds")}</span>
+                      <span>Google Ads</span>
                       <span>5.2%</span>
                     </div>
                     <Progress value={52} className="h-2" />
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span>{t("socialMedia")}</span>
+                      <span>Social media</span>
                       <span>3.8%</span>
                     </div>
                     <Progress value={38} className="h-2" />
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span>{t("email")}</span>
+                      <span>Email</span>
                       <span>7.1%</span>
                     </div>
                     <Progress value={71} className="h-2" />
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span>{t("organicContent")}</span>
+                      <span>Organic content</span>
                       <span>4.5%</span>
                     </div>
                     <Progress value={45} className="h-2" />

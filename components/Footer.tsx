@@ -13,6 +13,8 @@ import {
   Clock
 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import { useState } from 'react';
+import Swal from 'sweetalert2';
 
 interface FooterProps {
   setCurrentPage: (page: string) => void;
@@ -20,6 +22,46 @@ interface FooterProps {
 
 export default function Footer({ setCurrentPage }: FooterProps) {
   const { t, locale } = useTranslation();
+  const [email, setEmail] = useState<string>("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const isValidEmail = (value: string) => {
+    // Simple and effective email regex
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+  };
+
+  const submitEmail = (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
+    const trimmed = email.trim();
+    if (!trimmed || !isValidEmail(trimmed)) {
+      setEmailError(locale === 'en' ? 'Please enter a valid email address' : 'من فضلك أدخل بريدًا إلكترونيًا صالحًا');
+      Swal.fire({
+        title: locale === 'en' ? 'Invalid email' : 'بريد إلكتروني غير صالح',
+        text: locale === 'en' ? 'Please enter a valid email address' : 'يرجى إدخال بريد إلكتروني صحيح',
+        icon: 'error',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2500,
+      });
+      return;
+    }
+
+    // Simulate subscription success
+    Swal.fire({
+      title: locale === 'en' ? 'Subscribed!' : 'تم الاشتراك!',
+      text: locale === 'en' ? 'You have been subscribed to our newsletter.' : 'تم اشتراكك في النشرة البريدية.',
+      icon: 'success',
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2200,
+    });
+
+    // Clear state
+    setEmail("");
+    setEmailError(null);
+  };
   return (
     <footer className="bg-gray-900 text-white" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       {/* Newsletter section */}
@@ -32,16 +74,38 @@ export default function Footer({ setCurrentPage }: FooterProps) {
             <p className="text-lg mb-6 opacity-90">
               {t('newsletterDescription')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <Input
-                placeholder={t('emailPlaceholder')}
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/70 text-right"
-              />
-              <Button variant="secondary" className="whitespace-nowrap">
+            <form
+              className="flex flex-col sm:flex-row gap-2 sm:gap-4 max-w-md mx-auto"
+              onSubmit={submitEmail}
+            >
+              <div className="w-full">
+                <Input
+                  type="email"
+                  inputMode="email"
+                  placeholder={t('emailPlaceholder')}
+                  className={`text-right ${emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError(null);
+                  }}
+                  aria-invalid={emailError ? 'true' : 'false'}
+                  aria-describedby={emailError ? 'newsletter-email-error' : undefined}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') submitEmail(e as any);
+                  }}
+                />
+                {emailError && (
+                  <p id="newsletter-email-error" className="text-red-500 text-sm mt-1 text-right">
+                    {emailError}
+                  </p>
+                )}
+              </div>
+              <Button type="submit" variant="secondary" className="whitespace-nowrap" onClick={submitEmail}>
                 <Send className="w-4 h-4 ml-1" />
                 {t('subscribe')}
               </Button>
-            </div>
+            </form>
           </div>
         </div>
       </div>

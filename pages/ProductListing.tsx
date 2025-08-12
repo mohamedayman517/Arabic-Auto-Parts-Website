@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import {
   Search,
   Filter,
-  Grid,
-  List,
   ChevronDown,
   Star,
   ShoppingCart,
   Heart,
   Eye,
+  ArrowUpDown,
+  Grid,
+  List,
   Package,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
@@ -31,10 +33,12 @@ import Footer from "../components/Footer";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useTranslation } from "../hooks/useTranslation";
 
-// Mock data for auto spare parts
+// Mock data for auto spare parts (acts like a backend)
+// `group` is a normalized category key coming from homepage: engines | tires | electrical | tools
 const mockProducts = [
   {
     id: "1",
+    group: 'engines',
     name: {
       ar: "فلتر زيت محرك تويوتا كامري",
       en: "Toyota Camry Engine Oil Filter",
@@ -63,6 +67,7 @@ const mockProducts = [
   },
   {
     id: "2",
+    group: 'tires',
     name: {
       ar: "إطار ميشلين بريميير 225/65R17",
       en: "Michelin Premier Tire 225/65R17",
@@ -92,6 +97,7 @@ const mockProducts = [
   },
   {
     id: "3",
+    group: 'electrical',
     name: { ar: "بطارية AC Delco 60 أمبير", en: "AC Delco 60 Amp Battery" },
     brand: { ar: "AC Delco", en: "AC Delco" },
     category: { ar: "بطاريات", en: "Batteries" },
@@ -117,6 +123,7 @@ const mockProducts = [
   },
   {
     id: "4",
+    group: 'electrical',
     name: {
       ar: "مكابح بريمبو سيراميك أمامية",
       en: "Brembo Ceramic Front Brake Discs",
@@ -146,6 +153,7 @@ const mockProducts = [
   },
   {
     id: "5",
+    group: 'electrical',
     name: { ar: "مصابيح LED فيليبس للمقدمة", en: "Philips LED Headlights" },
     brand: { ar: "فيليبس", en: "Philips" },
     category: { ar: "إضاءة", en: "Lighting" },
@@ -168,6 +176,7 @@ const mockProducts = [
   },
   {
     id: "6",
+    group: 'engines',
     name: {
       ar: "زيت محرك موبيل 1 الاصطناعي",
       en: "Mobil 1 Synthetic Engine Oil",
@@ -227,11 +236,13 @@ const brands = [
 interface ProductListingProps {
   setCurrentPage: (page: string) => void;
   setSelectedProduct: (product: any) => void;
+  isInWishlist?: (id: string) => boolean;
 }
 
 export default function ProductListing({
   setCurrentPage,
   setSelectedProduct,
+  isInWishlist,
   ...rest
 }: ProductListingProps & Partial<RouteContext>) {
   const { t, locale } = useTranslation();
@@ -239,6 +250,7 @@ export default function ProductListing({
   const [products, setProducts] = useState(mockProducts);
   const [filteredProducts, setFilteredProducts] = useState(mockProducts);
   const [searchTerm, setSearchTerm] = useState(rest?.searchFilters?.term || "");
+  const [selectedGroup, setSelectedGroup] = useState<string>(rest?.searchFilters?.partCategory || '');
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState([0, 1000]);
@@ -248,22 +260,15 @@ export default function ProductListing({
   const [inStockOnly, setInStockOnly] = useState(false);
   const [onSaleOnly, setOnSaleOnly] = useState(false);
 
-  // Apply incoming filters from homepage
+  // Apply incoming normalized group from homepage (engines | tires | electrical | tools)
   useEffect(() => {
     if (rest?.searchFilters) {
       const { partCategory } = rest.searchFilters;
-      if (partCategory)
-        setSelectedCategory(
-          partCategory === "engine"
-            ? "فلاتر"
-            : partCategory === "tires"
-            ? "إطارات"
-            : partCategory === "electrical"
-            ? "قطع كهربائية"
-            : partCategory === "tools"
-            ? "أدوات الورش"
-            : ""
-        );
+      if (partCategory) {
+        setSelectedGroup(partCategory);
+        // Reset localized category filter when group is set to avoid conflicts
+        setSelectedCategory("");
+      }
     }
   }, [rest?.searchFilters]);
 
@@ -281,8 +286,13 @@ export default function ProductListing({
       );
     }
 
-    // Category filter
-    if (selectedCategory) {
+    // Group filter from homepage
+    if (selectedGroup) {
+      filtered = filtered.filter((product) => product.group === selectedGroup);
+    }
+
+    // Localized Category filter (UI-side within listing page)
+    if (!selectedGroup && selectedCategory) {
       filtered = filtered.filter(
         (product) => product.category[locale] === selectedCategory
       );
@@ -333,6 +343,7 @@ export default function ProductListing({
     setFilteredProducts(filtered);
   }, [
     searchTerm,
+    selectedGroup,
     selectedCategory,
     selectedBrands,
     priceRange,
@@ -383,20 +394,51 @@ export default function ProductListing({
               <span className="text-white font-medium">{t("outOfStock")}</span>
             </div>
           )}
-          <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+          <div className="absolute bottom-2 right-2 opacity-100 transition-opacity flex gap-2">
             <Button
-              size="sm"
-              variant="outline"
-              className="h-8 w-8 p-0 bg-white/90"
+              variant="ghost"
+              size="icon"
+              className={`h-9 w-9 p-0 bg-white/95 border border-gray-200 shadow-sm hover:bg-white ring-1 ring-black/5 ${isInWishlist && isInWishlist(product.id) ? 'text-red-500 border-red-200 ring-red-200' : 'text-gray-700'}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (isInWishlist && !isInWishlist(product.id)) {
+                  // Add to wishlist
+                  rest.addToWishlist && rest.addToWishlist({
+                    id: product.id,
+                    name: product.name[locale],
+                    price: product.price,
+                    brand: product.brand[locale],
+                    originalPrice: product.originalPrice,
+                    image: product.image,
+                    inStock: product.inStock
+                  });
+                  
+                  Swal.fire({
+                    title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                  });
+                } else if (isInWishlist && isInWishlist(product.id)) {
+                  // Remove from wishlist
+                  rest.removeFromWishlist && rest.removeFromWishlist(product.id);
+                  
+                  Swal.fire({
+                    title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
+                    icon: 'info',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                  });
+                }
+              }}
             >
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 w-8 p-0 bg-white/90"
-            >
-              <Heart className="h-4 w-4" />
+              <Heart className={`h-5 w-5 ${isInWishlist && isInWishlist(product.id) ? 'fill-current' : ''}`} />
             </Button>
           </div>
         </div>
@@ -434,7 +476,32 @@ export default function ProductListing({
                 </span>
               )}
             </div>
-            <Button size="sm" className="h-8" disabled={!product.inStock}>
+            <Button
+              size="sm"
+              className="h-8"
+              disabled={!product.inStock}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!product.inStock) return;
+                rest.addToCart && rest.addToCart({
+                  id: product.id,
+                  name: product.name[locale],
+                  price: product.price,
+                  image: product.image,
+                  quantity: 1,
+                  inStock: product.inStock,
+                });
+                Swal.fire({
+                  title: locale === 'en' ? 'Added to cart' : 'تمت الإضافة إلى السلة',
+                  icon: 'success',
+                  toast: true,
+                  position: 'top-end',
+                  showConfirmButton: false,
+                  timer: 2000,
+                });
+              }}
+            >
               <ShoppingCart className="h-3 w-3 ml-1" />
               {t("add")}
             </Button>

@@ -173,7 +173,7 @@ export default function VendorAnalytics({ setCurrentPage }: VendorAnalyticsProps
                     </span>
                   </div>
                 </div>
-                <Eye className="h-8 w-8 text-purple-500" />
+                <TrendingUp className="h-8 w-8 text-purple-500" />
               </div>
             </CardContent>
           </Card>

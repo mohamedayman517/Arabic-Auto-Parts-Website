@@ -556,9 +556,9 @@ export default function VendorSettings({ user, setCurrentPage }: VendorSettingsP
                           onClick={() => setShowPassword(!showPassword)}
                         >
                           {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
+                            <Shield className="h-4 w-4" />
+                  ) : (
+                    <Shield className="h-4 w-4" />
                           )}
                         </Button>
                       </div>

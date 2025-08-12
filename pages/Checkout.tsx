@@ -44,15 +44,18 @@ export default function Checkout({ setCurrentPage, user, setReturnTo, cartItems 
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   // Calculations
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const items = cartItems ?? [];
+  const go = setCurrentPage ?? (() => {});
+  const setReturnToSafe = setReturnTo ?? (() => {});
+  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shippingCost = deliveryMethod === 'express' ? 35 : (subtotal >= 200 ? 0 : 25);
   const total = subtotal + shippingCost;
 
   const handlePlaceOrder = () => {
     // Require login before placing order
     if (!user) {
-      setReturnTo('checkout');
-      setCurrentPage('login');
+      setReturnToSafe('checkout');
+      go('login');
       return;
     }
     if (!agreeToTerms) {
@@ -79,14 +82,14 @@ export default function Checkout({ setCurrentPage, user, setReturnTo, cartItems 
             </p>
             <div className="space-y-2">
               <Button 
-                onClick={() => setCurrentPage('my-orders')} 
+                onClick={() => go('my-orders')} 
                 className="w-full"
               >
                 {locale === 'en' ? 'View My Orders' : 'عرض طلباتي'}
               </Button>
               <Button 
                 variant="outline" 
-                onClick={() => setCurrentPage('home')} 
+                onClick={() => go('home')} 
                 className="w-full"
               >
                 {locale === 'en' ? 'Back to Home' : 'العودة للرئيسية'}
@@ -392,7 +395,7 @@ export default function Checkout({ setCurrentPage, user, setReturnTo, cartItems 
               <CardContent className="space-y-4">
                 {/* Cart Items */}
                 <div className="space-y-3">
-                  {cartItems.map(item => (
+                  {items.map(item => (
                     <div key={item.id} className="flex gap-3">
                       <ImageWithFallback
                         src={item.image}

@@ -325,7 +325,7 @@ export default function MarketerDashboard(context: RouteContext) {
               );
             })}
           </div>
-          <h1 className="mb-2">{t("welcome", { name: context.user?.name })}</h1>
+          <h1 className="mb-2">{`${t("welcome")} ${context.user?.name ?? ""}`}</h1>
           <p className="text-muted-foreground">
             {t("marketingDashboardDescription")}
           </p>

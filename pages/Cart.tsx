@@ -17,10 +17,16 @@ export default function Cart({ setCurrentPage, cartItems, updateCartQty, removeF
   const { t } = useTranslation();
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
+  // Fallbacks for SSG/SSR where context props may be undefined
+  const items = cartItems ?? [];
+  const go = setCurrentPage ?? (() => {});
+  const updateQtySafe = updateCartQty ?? (() => {});
+  const removeSafe = removeFromCart ?? (() => {});
+  const clearSafe = clearCart ?? (() => {});
 
-  const updateQuantity = (id: string, newQuantity: number) => updateCartQty(id, newQuantity);
+  const updateQuantity = (id: string, newQuantity: number) => updateQtySafe(id, newQuantity);
 
-  const removeItem = (id: string) => removeFromCart(id);
+  const removeItem = (id: string) => removeSafe(id);
 
   const applyPromoCode = () => {
     // Mock promo code validation
@@ -46,8 +52,8 @@ export default function Cart({ setCurrentPage, cartItems, updateCartQty, removeF
   };
 
   // Calculations
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const savings = cartItems.reduce((sum, item) => {
+  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const savings = items.reduce((sum, item) => {
     if (item.originalPrice) {
       return sum + ((item.originalPrice - item.price) * item.quantity);
     }
@@ -67,14 +73,14 @@ export default function Cart({ setCurrentPage, cartItems, updateCartQty, removeF
     setCurrentPage('products');
   };
 
-  const hasUnavailable = cartItems.some(item => item.inStock === false);
+  const hasUnavailable = items.some(item => item.inStock === false);
   const removeUnavailable = () => {
-    cartItems.forEach(item => {
+    items.forEach(item => {
       if (item.inStock === false) removeItem(item.id);
     });
   };
 
-  if (cartItems.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="min-h-screen bg-background">
         <Header currentPage="cart" setCurrentPage={setCurrentPage} />
@@ -100,12 +106,12 @@ export default function Cart({ setCurrentPage, cartItems, updateCartQty, removeF
       <Header currentPage="cart" setCurrentPage={setCurrentPage} />
       
       <div className="container mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold mb-6">{`${t('cartTitle')} (${cartItems.length} ${t('cartItemsCount')})`}</h1>
+        <h1 className="text-2xl font-bold mb-6">{`${t('cartTitle')} (${items.length} ${t('cartItemsCount')})`}</h1>
         
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {cartItems.map(item => (
+            {items.map(item => (
               <Card key={item.id}>
                 <CardContent className="p-4">
                   <div className="flex gap-4">
@@ -191,7 +197,7 @@ export default function Cart({ setCurrentPage, cartItems, updateCartQty, removeF
               </Button>
               <Button
                 variant="outline"
-                onClick={() => clearCart()}
+                onClick={() => clearSafe()}
                 className="text-destructive hover:text-destructive"
               >
                 <Trash2 className="h-4 w-4 ml-2" />

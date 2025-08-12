@@ -1,0 +1,377 @@
+import { RouteContext } from '../../components/Router';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Input } from '../../components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
+import { Textarea } from '../../components/ui/textarea';
+import { 
+  Users, 
+  Search,
+  Filter,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Ban,
+  CheckCircle,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  ArrowRight
+} from 'lucide-react';
+import Header from '../../components/Header';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useState } from 'react';
+
+const mockUsers = [
+  {
+    id: 1,
+    name: 'محمد العلي',
+    email: 'mohammed@example.com',
+    phone: '+966501234567',
+    role: 'customer',
+    status: 'active',
+    joinDate: '2024-01-15',
+    location: 'الرياض',
+    orders: 12,
+    totalSpent: '15,400 ر.س'
+  },
+  {
+    id: 2,
+    name: 'فاطمة أحمد',
+    email: 'fatima@example.com',
+    phone: '+966507654321',
+    role: 'vendor',
+    status: 'pending',
+    joinDate: '2024-01-14',
+    location: 'جدة',
+    orders: 0,
+    totalSpent: '0 ر.س'
+  },
+  {
+    id: 3,
+    name: 'علي محمود',
+    email: 'ali@example.com',
+    phone: '+966501122334',
+    role: 'marketer',
+    status: 'active',
+    joinDate: '2024-01-13',
+    location: 'الدمام',
+    orders: 8,
+    totalSpent: '8,200 ر.س'
+  },
+  {
+    id: 4,
+    name: 'نورا السالم',
+    email: 'nora@example.com',
+    phone: '+966505566778',
+    role: 'customer',
+    status: 'suspended',
+    joinDate: '2024-01-12',
+    location: 'مكة',
+    orders: 25,
+    totalSpent: '32,100 ر.س'
+  },
+  {
+    id: 5,
+    name: 'خالد الأحمد',
+    email: 'khalid@example.com',
+    phone: '+966503344556',
+    role: 'vendor',
+    status: 'active',
+    joinDate: '2024-01-11',
+    location: 'المدينة',
+    orders: 45,
+    totalSpent: '67,800 ر.س'
+  }
+];
+
+export default function AdminUsers(context: RouteContext) {
+  const { t } = useTranslation();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRole, setSelectedRole] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+
+  const filteredUsers = mockUsers.filter(user => {
+    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = selectedRole === 'all' || user.role === selectedRole;
+    const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
+    
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const getRoleText = (role: string) => {
+    switch(role) {
+      case 'customer': return t('customerRole');
+      case 'vendor': return t('vendorRole');
+      case 'marketer': return t('marketerRole');
+      case 'admin': return t('adminRole');
+      default: return role;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch(status) {
+      case 'active': return t('activeStatus');
+      case 'pending': return t('pendingStatus');
+      case 'suspended': return t('suspendedStatus');
+      case 'banned': return t('bannedStatus');
+      default: return status;
+    }
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch(status) {
+      case 'active': return 'default';
+      case 'pending': return 'secondary';
+      case 'suspended': return 'destructive';
+      case 'banned': return 'destructive';
+      default: return 'secondary';
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header {...context} />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <div className="flex items-center mb-4">
+            <Button 
+              variant="outline" 
+              onClick={() => context.setCurrentPage('admin-dashboard')}
+              className="mr-4"
+            >
+              <ArrowRight className="ml-2 h-4 w-4" />
+              {t('backToDashboard')}
+            </Button>
+          </div>
+          <h1 className="mb-2">{t('manageUsersTitle')}</h1>
+          <p className="text-muted-foreground">{t('manageUsersSubtitle')}</p>
+        </div>
+
+        {/* Filters and Search */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Filter className="mr-2 h-5 w-5" />
+              {t('searchAndFilter')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('searchByNameOrEmail')}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pr-10"
+                />
+              </div>
+              
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t('userType')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('allTypes')}</SelectItem>
+                  <SelectItem value="customer">{t('customerRole')}</SelectItem>
+                  <SelectItem value="vendor">{t('vendorRole')}</SelectItem>
+                  <SelectItem value="marketer">{t('marketerRole')}</SelectItem>
+                  <SelectItem value="admin">{t('adminRole')}</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t('statusLabel')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('allStatuses')}</SelectItem>
+                  <SelectItem value="active">{t('activeStatus')}</SelectItem>
+                  <SelectItem value="pending">{t('pendingStatus')}</SelectItem>
+                  <SelectItem value="suspended">{t('suspendedStatus')}</SelectItem>
+                  <SelectItem value="banned">{t('bannedStatus')}</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                {t('addUser')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Users List */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Users className="mr-2 h-5 w-5" />
+                {t('usersList')} ({filteredUsers.length})
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {filteredUsers.map((user) => (
+                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center space-x-4 space-x-reverse">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Users className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2 space-x-reverse">
+                        <h3 className="font-medium">{user.name}</h3>
+                        <Badge variant={getStatusVariant(user.status)}>
+                          {getStatusText(user.status)}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center space-x-4 space-x-reverse text-sm text-muted-foreground">
+                        <div className="flex items-center">
+                          <Mail className="mr-1 h-3 w-3" />
+                          {user.email}
+                        </div>
+                        <div className="flex items-center">
+                          <Phone className="mr-1 h-3 w-3" />
+                          {user.phone}
+                        </div>
+                        <div className="flex items-center">
+                          <MapPin className="mr-1 h-3 w-3" />
+                          {user.location}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4 space-x-reverse text-xs">
+                        <Badge variant="outline">{getRoleText(user.role)}</Badge>
+                        <div className="flex items-center">
+                          <Calendar className="mr-1 h-3 w-3" />
+                          {t('joinedOn')} {user.joinDate}
+                        </div>
+                        <span>{t('ordersCountLabel')}: {user.orders}</span>
+                        <span>{t('totalSpentLabel')}: {user.totalSpent}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setSelectedUser(user)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>{t('userDetails')}</DialogTitle>
+                        </DialogHeader>
+                        {selectedUser && (
+                          <div className="space-y-4">
+                            <div className="flex items-center space-x-4 space-x-reverse">
+                              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                                <Users className="h-8 w-8 text-primary" />
+                              </div>
+                              <div>
+                                <h3 className="font-medium">{selectedUser.name}</h3>
+                                <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                                <Badge variant={getStatusVariant(selectedUser.status)}>
+                                  {getStatusText(selectedUser.status)}
+                                </Badge>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <Label className="text-muted-foreground">{t('userType')}</Label>
+                                <p>{getRoleText(selectedUser.role)}</p>
+                              </div>
+                              <div>
+                                <Label className="text-muted-foreground">{t('phoneNumber')}</Label>
+                                <p>{selectedUser.phone}</p>
+                              </div>
+                              <div>
+                                <Label className="text-muted-foreground">{t('locationLabel')}</Label>
+                                <p>{selectedUser.location}</p>
+                              </div>
+                              <div>
+                                <Label className="text-muted-foreground">{t('joinDate')}</Label>
+                                <p>{selectedUser.joinDate}</p>
+                              </div>
+                              <div>
+                                <Label className="text-muted-foreground">{t('numberOfOrders')}</Label>
+                                <p>{selectedUser.orders}</p>
+                              </div>
+                              <div>
+                                <Label className="text-muted-foreground">{t('totalSpentLabel')}</Label>
+                                <p>{selectedUser.totalSpent}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex space-x-2 space-x-reverse pt-4">
+                              <Button size="sm" className="flex-1">
+                                <Edit className="mr-2 h-4 w-4" />
+                                {t('editAction')}
+                              </Button>
+                              {selectedUser.status === 'active' ? (
+                                <Button size="sm" variant="outline" className="flex-1">
+                                  <Ban className="mr-2 h-4 w-4" />
+                                  {t('suspendAction')}
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="outline" className="flex-1">
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  {t('activateAction')}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </DialogContent>
+                    </Dialog>
+
+                    <Button size="sm" variant="outline">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+
+                    {user.status === 'active' ? (
+                      <Button size="sm" variant="outline">
+                        <Ban className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline">
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
+                    )}
+
+                    <Button size="sm" variant="outline">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {filteredUsers.length === 0 && (
+              <div className="text-center py-8">
+                <Users className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-medium">{t('noResults')}</h3>
+                <p className="text-muted-foreground">{t('noUsersFoundWithCriteria')}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

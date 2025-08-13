@@ -123,6 +123,7 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
   });
   const [additionalBuilders, setAdditionalBuilders] = useState<Builder[]>([]);
   const [userProjects, setUserProjects] = useState<any[]>([]);
+  const [userServices, setUserServices] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState<boolean>(false);
   const [showBuilder, setShowBuilder] = useState<boolean>(false);
@@ -182,6 +183,15 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
         }
       }
 
+      // Load services list
+      try {
+        const rawServices = window.localStorage.getItem('user_services');
+        if (rawServices) {
+          const parsedS = JSON.parse(rawServices);
+          if (Array.isArray(parsedS)) setUserServices(parsedS as any[]);
+        }
+      } catch {}
+
       const migrateBuilder = (b: any) => {
         const origType = b?.ptype || b?.type || '';
         const mapped = typeMap[origType] || (allowedTypes.has(origType) ? origType : undefined);
@@ -219,6 +229,24 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
       window.localStorage.setItem('builders_forms', JSON.stringify(additionalBuilders));
     } catch {}
   }, [additionalBuilders, hydrated]);
+
+  // Persist user services
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      if (!hydrated) return;
+      window.localStorage.setItem('user_services', JSON.stringify(userServices));
+    } catch {}
+  }, [userServices, hydrated]);
+
+  const SERVICE_TYPES = [
+    { id: 'plumber', ar: 'سباك', en: 'Plumber' },
+    { id: 'electrician', ar: 'كهربائي', en: 'Electrician' },
+    { id: 'carpenter', ar: 'نجار', en: 'Carpenter' },
+    { id: 'painter', ar: 'نقاش', en: 'Painter' },
+    { id: 'gypsum_installer', ar: 'فني تركيب جيبس بورد', en: 'Gypsum Board Installer' },
+    { id: 'marble_installer', ar: 'فني تركيب رخام', en: 'Marble Installer' },
+  ];
 
   // Build normalized dataset from userProjects for filters
   const normalizedUserProjects = (userProjects || []).map((up:any) => {
@@ -539,6 +567,9 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
             <p className="text-muted-foreground">{locale==='ar' ? 'استكشف مشاريعنا السابقة باستخدام الفلاتر والبحث' : 'Explore our past projects with rich filters and search'}</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button size="sm" className="flex items-center gap-1" onClick={() => setCurrentPage && setCurrentPage('add-service')}>
+              <Plus className="w-4 h-4" /> {locale==='ar' ? 'إضافة خدمة' : 'Add Service'}
+            </Button>
             <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('grid')}>
               <Grid className="w-4 h-4 mr-1" /> {locale==='ar' ? 'شبكة' : 'Grid'}
             </Button>
@@ -925,6 +956,78 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
 
           {/* Results */}
           <section>
+            {/* Services Section */}
+            {userServices.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold">{locale==='ar' ? 'الخدمات' : 'Services'}</h3>
+                  <Button size="sm" variant="outline" onClick={() => setCurrentPage && setCurrentPage('add-service')}>
+                    <Plus className="w-4 h-4" /> {locale==='ar' ? 'إضافة خدمة' : 'Add Service'}
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {userServices.map((s:any) => (
+                    <Card key={s.id}>
+                      <CardContent className="p-4 flex items-center justify-between gap-4">
+                        <div>
+                          <div className="font-medium">
+                            {locale==='ar' ? 'نوع الفني' : 'Technician'}: {SERVICE_TYPES.find(st=>st.id===s.type)?.[locale==='ar'?'ar':'en'] || s.type}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {locale==='ar' ? 'اليومية' : 'Daily'}: {currency} {Number(s.dailyWage || 0)} • {locale==='ar' ? 'الأيام' : 'Days'}: {Number(s.days || 0)}
+                          </div>
+                          {s.description && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {locale==='ar' ? 'الوصف' : 'Description'}: {s.description}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-muted-foreground">{locale==='ar' ? 'الإجمالي' : 'Total'}</div>
+                          <div className="text-lg font-semibold text-primary">{currency} {Number(s.total || 0).toLocaleString(locale==='ar'?'ar-EG':'en-US')}</div>
+                          <div className="mt-2 flex items-center gap-2 justify-end">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                try { window.localStorage.setItem('selected_service_id', String(s.id)); } catch {}
+                                setCurrentPage && setCurrentPage('service-details');
+                                window?.scrollTo?.({ top: 0, behavior: 'smooth' });
+                              }}
+                              aria-label={locale==='ar' ? 'التفاصيل' : 'Details'}
+                            >
+                              <Eye className="w-4 h-4 ml-1" /> {locale==='ar' ? 'التفاصيل' : 'Details'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => {
+                                try { window.localStorage.setItem('edit_service_id', String(s.id)); } catch {}
+                                setCurrentPage && setCurrentPage('add-service');
+                                window?.scrollTo?.({ top: 0, behavior: 'smooth' });
+                              }}
+                              aria-label={locale==='ar' ? 'تعديل' : 'Edit'}
+                            >
+                              <Pencil className="w-4 h-4 ml-1" /> {locale==='ar' ? 'تعديل' : 'Edit'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="bg-red-600 hover:bg-red-700 text-white border border-red-600"
+                              onClick={() => setUserServices(prev => prev.filter(x => x.id !== s.id))}
+                              aria-label={locale==='ar' ? 'حذف' : 'Delete'}
+                            >
+                              <Trash2 className="w-4 h-4 ml-1" /> {locale==='ar' ? 'حذف' : 'Delete'}
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* User Projects */}
             {filteredUserProjects.length > 0 && (
               <div className="mb-6">

@@ -1,13 +1,6 @@
 import { Search, Filter } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { RouteContext } from "./Router";
 import { useTranslation } from "../hooks/useTranslation";
@@ -15,7 +8,6 @@ import { useState } from "react";
 
 export default function HeroSearch({ setSearchFilters, setCurrentPage }: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
-  const [carType, setCarType] = useState<string | undefined>();
   const [term, setTerm] = useState("");
 
   return (
@@ -52,20 +44,7 @@ export default function HeroSearch({ setSearchFilters, setCurrentPage }: Partial
               {t("searchForPart")}
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <Select value={carType} onValueChange={setCarType}>
-                <SelectTrigger className="text-right">
-                  <SelectValue placeholder={t("carType")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="toyota">{t("toyota")}</SelectItem>
-                  <SelectItem value="honda">{t("honda")}</SelectItem>
-                  <SelectItem value="nissan">{t("nissan")}</SelectItem>
-                  <SelectItem value="hyundai">{t("hyundai")}</SelectItem>
-                  <SelectItem value="bmw">{t("bmw")}</SelectItem>
-                </SelectContent>
-              </Select>
-
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
               <div className="relative">
                 <Input
                   placeholder={t("searchPlaceholder")}
@@ -82,7 +61,7 @@ export default function HeroSearch({ setSearchFilters, setCurrentPage }: Partial
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 shadow-md hover:shadow-lg focus-visible:ring-blue-400"
                 onClick={() => {
-                  setSearchFilters && setSearchFilters({ term, carType });
+                  setSearchFilters && setSearchFilters({ term });
                   setCurrentPage && setCurrentPage("products");
                 }}
               >
@@ -94,7 +73,7 @@ export default function HeroSearch({ setSearchFilters, setCurrentPage }: Partial
                 size="lg"
                 className="px-8 border-gray-300 bg-white text-gray-900 hover:bg-gray-100"
                 onClick={() => {
-                  setSearchFilters && setSearchFilters({ term, carType });
+                  setSearchFilters && setSearchFilters({ term });
                   setCurrentPage && setCurrentPage("products");
                 }}
               >

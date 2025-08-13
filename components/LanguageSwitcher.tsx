@@ -18,6 +18,7 @@ export default function LanguageSwitcher() {
     return (seg === 'en' ? 'en' : 'ar')
   }
   const currentLocale = getCurrentLocale()
+  const displayLabel = currentLocale === 'ar' ? 'AR' : 'EN'
 
   const switchLanguage = (newLocale: 'ar' | 'en') => {
     // 1) Persist selection
@@ -39,13 +40,13 @@ export default function LanguageSwitcher() {
   return (
     <Button
       variant="ghost"
-      size="icon"
       aria-label={currentLocale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
       title={currentLocale === 'ar' ? 'English' : 'العربية'}
-      className="h-8 w-8"
+      className="h-8 px-2 flex items-center gap-1"
       onClick={() => switchLanguage(currentLocale === 'ar' ? 'en' : 'ar')}
     >
       <Globe className="h-5 w-5" />
+      <span className="text-xs font-semibold">{displayLabel}</span>
     </Button>
   )
 }

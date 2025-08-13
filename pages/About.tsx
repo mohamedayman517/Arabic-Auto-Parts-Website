@@ -208,13 +208,16 @@ const team = [
             </div>
           </div>
           
-          <div className="relative">
-            <ImageWithFallback
-              src="https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=600"
-              alt="قصة شركتنا"
-              className="w-full h-80 object-cover rounded-lg shadow-lg"
+          <div className="relative rounded-lg overflow-hidden shadow-lg">
+            <iframe
+              title={locale === 'ar' ? 'خريطة موقعنا' : 'Our Location Map'}
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3623.8310843730234!2d46.67529631500328!3d24.713551184115356!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e2f038c7f4d9b1f%3A0x8f7c9e8a8f8c0f2a!2sRiyadh!5e0!3m2!1sar!2ssa!4v1700000000000!5m2!1sar!2ssa"
+              width="100%"
+              height="320"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-lg" />
           </div>
         </div>
 

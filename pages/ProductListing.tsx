@@ -202,6 +202,84 @@ const mockProducts = [
       en: "High quality synthetic engine oil",
     },
   },
+  // Added: Wooden Door
+  {
+    id: "wd-1",
+    group: 'tools',
+    name: { ar: "باب خشب", en: "Wooden Door" },
+    brand: { ar: "عام", en: "Generic" },
+    category: { ar: "أبواب", en: "Doors" },
+    subCategory: { ar: "باب خشبي", en: "Wood Door" },
+    price: 950,
+    originalPrice: 1100,
+    rating: 4.6,
+    reviewCount: 87,
+    image: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=400",
+    inStock: true,
+    isNew: true,
+    isOnSale: true,
+    compatibility: [
+      { ar: "مقاس قياسي", en: "Standard size" },
+    ],
+    partNumber: "WD-STD-90x210",
+    warranty: { ar: "سنة", en: "1 year" },
+    description: {
+      ar: "باب خشب طبيعي بتشطيب عالي وجودة ممتازة للاستخدام الداخلي.",
+      en: "Natural wood door with premium finish for interior use.",
+    },
+  },
+  // Added: Mesh Window
+  {
+    id: "mw-1",
+    group: 'tools',
+    name: { ar: "شباك سلك", en: "Mesh Window" },
+    brand: { ar: "عام", en: "Generic" },
+    category: { ar: "نوافذ", en: "Windows" },
+    subCategory: { ar: "شباك سلك", en: "Mesh Window" },
+    price: 350,
+    originalPrice: 420,
+    rating: 4.4,
+    reviewCount: 54,
+    image: "https://images.unsplash.com/photo-1523413651479-597eb2da0ad6?w=400",
+    inStock: true,
+    isNew: false,
+    isOnSale: true,
+    compatibility: [
+      { ar: "مقاوم للحشرات", en: "Insect resistant" },
+    ],
+    partNumber: "MW-80x120",
+    warranty: { ar: "6 أشهر", en: "6 months" },
+    description: {
+      ar: "شباك سلك متين يسمح بالتهوية ويمنع دخول الحشرات.",
+      en: "Durable mesh window allowing airflow and blocking insects.",
+    },
+  },
+  // Added: Aluminum Window
+  {
+    id: "aw-1",
+    group: 'tools',
+    name: { ar: "شباك الوميتال", en: "Aluminum Window" },
+    brand: { ar: "الوميتال", en: "Alumetal" },
+    category: { ar: "نوافذ", en: "Windows" },
+    subCategory: { ar: "شباك الوميتال", en: "Aluminum Window" },
+    price: 650,
+    originalPrice: 650,
+    rating: 4.7,
+    reviewCount: 133,
+    image: "https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=400",
+    inStock: true,
+    isNew: true,
+    isOnSale: false,
+    compatibility: [
+      { ar: "مقاوم للصدأ", en: "Rust resistant" },
+    ],
+    partNumber: "AW-100x120",
+    warranty: { ar: "سنتان", en: "2 years" },
+    description: {
+      ar: "شباك الوميتال قوي وخفيف مع عزل جيد.",
+      en: "Strong, lightweight aluminum window with good insulation.",
+    },
+  },
 ];
 
 const categories = [
@@ -259,6 +337,11 @@ export default function ProductListing({
   const [showFilters, setShowFilters] = useState(false);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [onSaleOnly, setOnSaleOnly] = useState(false);
+  const [openCategories, setOpenCategories] = useState(false);
+  const [openBrands, setOpenBrands] = useState(false);
+  const [openPrice, setOpenPrice] = useState(false);
+  const [openFlags, setOpenFlags] = useState(false);
+  const [showAllBrands, setShowAllBrands] = useState(false);
 
   // Apply incoming normalized group from homepage (engines | tires | electrical | tools)
   useEffect(() => {
@@ -286,9 +369,10 @@ export default function ProductListing({
       );
     }
 
-    // Group filter from homepage
+    // Group filter from homepage (keep newly added building items always visible)
     if (selectedGroup) {
-      filtered = filtered.filter((product) => product.group === selectedGroup);
+      const alwaysInclude = new Set(["wd-1", "mw-1", "aw-1"]);
+      filtered = filtered.filter((product) => product.group === selectedGroup || alwaysInclude.has(product.id));
     }
 
     // Localized Category filter (UI-side within listing page)
@@ -662,126 +746,143 @@ export default function ProductListing({
               </Button>
             </div>
           </div>
-        </div>
 
-        <div className="flex gap-6">
-          {/* Filters Sidebar */}
-          <div
-            className={`lg:block ${
-              showFilters ? "block" : "hidden"
-            } lg:w-64 w-full lg:relative absolute lg:bg-transparent bg-background lg:shadow-none shadow-lg lg:z-auto z-10 lg:p-0 p-4 lg:rounded-none rounded-lg`}
-          >
-            <Card className="p-4 space-y-6">
-              <div>
-                <h3 className="font-medium mb-3">{t("categories")}</h3>
-                <div className="space-y-2">
-                  <div
-                    className={`cursor-pointer p-2 rounded ${
-                      selectedCategory === ""
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-muted"
-                    }`}
-                    onClick={() => setSelectedCategory("")}
-                  >
-                    {t("allCategories")}
-                  </div>
-                  {categories.map((category) => (
-                    <div
-                      key={category.id}
-                      className={`cursor-pointer p-2 rounded ${
-                        selectedCategory === category.name[locale]
-                          ? "bg-primary/10 text-primary"
-                          : "hover:bg-muted"
-                      }`}
-                      onClick={() => setSelectedCategory(category.name[locale])}
-                    >
-                      {category.name[locale]}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              <div>
-                <h3 className="font-medium mb-3">{t("brands")}</h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {brands.map((brand) => (
-                    <div
-                      key={brand.ar}
-                      className="flex items-center space-x-2 space-x-reverse"
-                    >
-                      <Checkbox
-                        id={brand.ar}
-                        checked={selectedBrands.includes(brand.ar)}
-                        onCheckedChange={(checked) =>
-                          handleBrandChange(brand.ar, checked as boolean)
-                        }
-                      />
-                      <label
-                        htmlFor={brand.ar}
-                        className="text-sm cursor-pointer"
-                      >
-                        {brand[locale]}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              <div>
-                <h3 className="font-medium mb-3">{t("priceRange")}</h3>
-                <div className="space-y-4">
-                  <Slider
-                    value={priceRange}
-                    onValueChange={setPriceRange}
-                    max={1000}
-                    step={10}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-sm">
-                    <span>
-                      {priceRange[0]} {currency}
-                    </span>
-                    <span>
-                      {priceRange[1]} {currency}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <Checkbox
-                    id="inStock"
-                    checked={inStockOnly}
-                    onCheckedChange={(checked) =>
-                      setInStockOnly(checked === true)
-                    }
-                  />
-                  <label htmlFor="inStock" className="text-sm cursor-pointer">
-                    {t("inStockOnly")}
-                  </label>
-                </div>
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <Checkbox
-                    id="onSale"
-                    checked={onSaleOnly}
-                    onCheckedChange={(checked) =>
-                      setOnSaleOnly(checked === true)
-                    }
-                  />
-                  <label htmlFor="onSale" className="text-sm cursor-pointer">
-                    {t("offersOnly")}
-                  </label>
-                </div>
-              </div>
-            </Card>
           </div>
+
+          <div className="flex gap-6">
+            {/* Filters Sidebar */}
+            <div
+              className={`lg:block ${showFilters ? "block" : "hidden"} lg:w-52 w-full lg:relative lg:sticky lg:top-24 absolute lg:bg-transparent bg-background lg:shadow-none shadow-lg lg:z-auto z-10 lg:p-0 p-2 lg:rounded-none rounded-lg`}
+            >
+              <Card className="p-3 space-y-3">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-muted-foreground">{t("categories")}</h3>
+                    <button
+                      type="button"
+                      onClick={() => setOpenCategories(!openCategories)}
+                      className="p-1 rounded hover:bg-muted"
+                      aria-label="toggle-categories"
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${openCategories ? "rotate-180" : ""}`} />
+                    </button>
+                  </div>
+                  {openCategories && (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    <div
+                      className={`cursor-pointer p-1.5 rounded-md text-sm ${selectedCategory === "" ? "bg-primary/10 text-primary" : "hover:bg-muted"}`}
+                      onClick={() => setSelectedCategory("")}
+                    >
+                      {t("allCategories")}
+                    </div>
+                    {categories.map((category) => (
+                      <div
+                        key={category.id}
+                        className={`cursor-pointer p-1.5 rounded-md text-sm ${selectedCategory === category.name[locale] ? "bg-primary/10 text-primary" : "hover:bg-muted"}`}
+                        onClick={() => setSelectedCategory(category.name[locale])}
+                      >
+                        {category.name[locale]}
+                      </div>
+                    ))}
+                  </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-muted-foreground">{t("brands")}</h3>
+                    <button
+                      type="button"
+                      onClick={() => setOpenBrands(!openBrands)}
+                      className="p-1 rounded hover:bg-muted"
+                      aria-label="toggle-brands"
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${openBrands ? "rotate-180" : ""}`} />
+                    </button>
+                  </div>
+                  {openBrands && (
+                  <div className="space-y-1.5 max-h-44 overflow-y-auto">
+                    {(showAllBrands ? brands : brands.slice(0, 6)).map((brand) => (
+                      <div key={brand.ar} className="flex items-center space-x-2 space-x-reverse">
+                        <Checkbox
+                          id={brand.ar}
+                          checked={selectedBrands.includes(brand.ar)}
+                          onCheckedChange={(checked) => handleBrandChange(brand.ar, checked as boolean)}
+                        />
+                        <label htmlFor={brand.ar} className="text-sm cursor-pointer">
+                          {brand[locale]}
+                        </label>
+                      </div>
+                    ))}
+                    {brands.length > 6 && (
+                      <button
+                        type="button"
+                        className="mt-1 text-xs text-primary hover:underline"
+                        onClick={() => setShowAllBrands(!showAllBrands)}
+                      >
+                        {showAllBrands ? t("showLess") : t("showMore")}
+                      </button>
+                    )}
+                  </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-muted-foreground">{t("priceRange")}</h3>
+                    <button
+                      type="button"
+                      onClick={() => setOpenPrice(!openPrice)}
+                      className="p-1 rounded hover:bg-muted"
+                      aria-label="toggle-price"
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${openPrice ? "rotate-180" : ""}`} />
+                    </button>
+                  </div>
+                  {openPrice && (
+                  <div className="space-y-3">
+                    <Slider value={priceRange} onValueChange={setPriceRange} max={1000} step={10} className="w-full" />
+                    <div className="flex justify-between text-sm">
+                      <span>{priceRange[0]} {currency}</span>
+                      <span>{priceRange[1]} {currency}</span>
+                    </div>
+                  </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-muted-foreground">{t("filter")}</h3>
+                    <button
+                      type="button"
+                      onClick={() => setOpenFlags(!openFlags)}
+                      className="p-1 rounded hover:bg-muted"
+                      aria-label="toggle-flags"
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${openFlags ? "rotate-180" : ""}`} />
+                    </button>
+                  </div>
+                  {openFlags && (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <Checkbox id="inStock" checked={inStockOnly} onCheckedChange={(checked) => setInStockOnly(checked === true)} />
+                      <label htmlFor="inStock" className="text-sm cursor-pointer">{t("inStockOnly")}</label>
+                    </div>
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <Checkbox id="onSale" checked={onSaleOnly} onCheckedChange={(checked) => setOnSaleOnly(checked === true)} />
+                      <label htmlFor="onSale" className="text-sm cursor-pointer">{t("offersOnly")}</label>
+                    </div>
+                  </div>
+                  )}
+                </div>
+              </Card>
+            </div>
 
           {/* Products Grid */}
           <div className="flex-1">

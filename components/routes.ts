@@ -22,6 +22,8 @@ import FAQ from '../pages/FAQ';
 import Projects from '../pages/Projects';
 import ProjectsBuilder from '../pages/ProjectsBuilder';
 import ProjectDetails from '../pages/ProjectDetails';
+import AddService from '../pages/AddService';
+import ServiceDetails from '../pages/ServiceDetails';
 import Support from '../pages/Support';
 import Checkout from '../pages/Checkout';
 import Offers from '../pages/Offers';
@@ -61,6 +63,8 @@ export const routes: Record<string, RouteConfig> = {
   about: { component: About, title: 'من نحن', icon: Globe },
   faq: { component: FAQ, title: 'الأسئلة الشائعة', icon: HelpCircle },
   projects: { component: Projects, title: 'المشاريع', icon: Tag },
+  'add-service': { component: AddService, title: 'إضافة خدمة', icon: Tag },
+  'service-details': { component: ServiceDetails, title: 'تفاصيل الخدمة', icon: Tag },
   'projects-builder': { component: ProjectsBuilder, title: 'إضافة مشروع', icon: Tag },
   'project-details': { component: ProjectDetails, title: 'تفاصيل المشروع', icon: Tag },
   support: { component: Support, title: 'الدعم الفني', icon: Phone },

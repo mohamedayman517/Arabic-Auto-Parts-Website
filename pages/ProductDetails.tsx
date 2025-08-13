@@ -118,6 +118,7 @@ export default function ProductDetails({
     return String(val ?? "");
   };
   const [quantity, setQuantity] = useState(1);
+  const [installSelected, setInstallSelected] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [userRating, setUserRating] = useState<number | null>(null);
   const [userComment, setUserComment] = useState("");
@@ -197,13 +198,24 @@ export default function ProductDetails({
   const normalizedInStock = product.inStock !== false && ((product.stockCount ?? 1) > 0);
   const normalizedStockCount = product.stockCount ?? 99;
 
+  const textName = getText(product?.name || '').toLowerCase();
+  const textCat = getText(product?.category || '').toLowerCase();
+  const textSub = getText(product?.subCategory || '').toLowerCase();
+  const isDoorLike = /باب|door/.test(textName) || /باب|door/.test(textCat) || /باب|door/.test(textSub);
+  const isWindowLike = /شباك|نافذة|window/.test(textName) || /شباك|نافذة|window/.test(textCat) || /شباك|نافذة|window/.test(textSub);
+  const doorWindowIds = new Set(['wd-1','mw-1','aw-1']);
+  const showInstallOption = doorWindowIds.has(product?.id || '') || isDoorLike || isWindowLike;
+  const INSTALL_FEE_PER_UNIT = 50;
+  const priceWithAddon = product.price + (showInstallOption && installSelected ? INSTALL_FEE_PER_UNIT : 0);
+  const subtotal = priceWithAddon * quantity;
+
   const handleAddToCart = () => {
     // Front-only add to cart using context
     if (addToCart) {
       addToCart({
         id: product.id,
         name: getText(product.name),
-        price: product.price,
+        price: priceWithAddon,
         image: images[0],
         partNumber: product.partNumber,
         quantity,
@@ -211,6 +223,13 @@ export default function ProductDetails({
         maxQuantity: normalizedStockCount,
         originalPrice: product.originalPrice,
         brand: getText(product.brand),
+        // metadata
+        addonInstallation: showInstallOption && installSelected ? {
+          enabled: true,
+          feePerUnit: INSTALL_FEE_PER_UNIT,
+          totalFee: INSTALL_FEE_PER_UNIT * quantity,
+          label: locale === 'ar' ? 'خدمة تركيب مع ضمان جودة' : 'Installation service with quality guarantee'
+        } : { enabled: false }
       });
     }
     if (setCurrentPage) {
@@ -223,7 +242,7 @@ export default function ProductDetails({
       addToCart({
         id: product.id,
         name: getText(product.name),
-      price: product.price,
+      price: priceWithAddon,
       image: images[0],
       partNumber: product.partNumber,
       quantity,
@@ -231,6 +250,12 @@ export default function ProductDetails({
       maxQuantity: normalizedStockCount,
       originalPrice: product.originalPrice,
       brand: getText(product.brand),
+      addonInstallation: showInstallOption && installSelected ? {
+        enabled: true,
+        feePerUnit: INSTALL_FEE_PER_UNIT,
+        totalFee: INSTALL_FEE_PER_UNIT * quantity,
+        label: locale === 'ar' ? 'خدمة تركيب مع ضمان جودة' : 'Installation service with quality guarantee'
+      } : { enabled: false }
       });
     }
     if (setCurrentPage) {
@@ -422,6 +447,45 @@ export default function ProductDetails({
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
+              </div>
+
+              {showInstallOption && (
+                <div className="flex items-start gap-3 rounded-md border p-3 bg-muted/40">
+                  <input
+                    id="install-addon"
+                    type="checkbox"
+                    className="mt-1"
+                    checked={installSelected}
+                    onChange={(e) => setInstallSelected(e.target.checked)}
+                  />
+                  <label htmlFor="install-addon" className="text-sm cursor-pointer">
+                    <span className="font-medium">
+                      {locale === 'ar' ? 'خدمة تركيب احترافية' : 'Professional installation service'}
+                    </span>
+                    <span className="mx-1">•</span>
+                    <span className="text-primary font-semibold">{INSTALL_FEE_PER_UNIT} {currency}</span>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {locale === 'ar' ? 'تقديم الخدمة بمعايير عالية مع ضمان جودة الخدمة.' : 'Delivered with high standards and a quality guarantee.'}
+                    </div>
+                    {installSelected && (
+                      <div className="text-xs mt-1">
+                        {locale === 'ar'
+                          ? `إجمالي خدمة التركيب: ${INSTALL_FEE_PER_UNIT * quantity} ${currency} ( ${quantity} × ${INSTALL_FEE_PER_UNIT} )`
+                          : `Installation total: ${INSTALL_FEE_PER_UNIT * quantity} ${currency} ( ${quantity} × ${INSTALL_FEE_PER_UNIT} )`}
+                      </div>
+                    )}
+                  </label>
+                </div>
+              )}
+
+              {/* Subtotal reflecting quantity and installation per unit */}
+              <div className="flex items-center justify-between text-sm bg-muted/30 rounded-md px-3 py-2">
+                <span className="text-muted-foreground">
+                  {locale === 'ar' ? 'الإجمالي (يشمل التركيب إن وجد)' : 'Subtotal (incl. installation if selected)'}
+                </span>
+                <span className="font-semibold text-primary">
+                  {subtotal} {currency}
+                </span>
               </div>
 
               <div className="flex gap-4">

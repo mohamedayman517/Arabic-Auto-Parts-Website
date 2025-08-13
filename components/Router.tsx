@@ -107,30 +107,21 @@ export default function Router() {
     null
   );
   const [prevPage, setPrevPage] = useState<string | null>(null);
+  // Keep an internal navigation history stack of visited pages
+  const [history, setHistory] = useState<string[]>([]);
   const [returnTo, setReturnTo] = useState<string | null>(null);
 
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: "1",
-      name: "فلتر زيت محرك تويوتا كامري",
-      price: 85,
-      image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=200",
-      partNumber: "TOY-OF-2015",
-      quantity: 2,
-      inStock: true,
-      maxQuantity: 10,
-    },
-    {
-      id: "2",
-      name: "إطار ميشلين بريمير 225/65R17",
-      price: 450,
-      image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200",
-      partNumber: "MICH-PREM-225",
-      quantity: 1,
-      inStock: true,
-      maxQuantity: 8,
-    },
-  ]);
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem('mock_cart_items');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed as CartItem[];
+      }
+    } catch {}
+    return [];
+  });
   
   // Initialize wishlist state
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
@@ -163,6 +154,14 @@ export default function Router() {
 
   const clearCart = () => setCartItems([]);
 
+  // Persist cart to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('mock_cart_items', JSON.stringify(cartItems));
+    } catch {}
+  }, [cartItems]);
+
   // Wishlist functions
   const addToWishlist = (item: WishlistItem) => {
     setWishlistItems((prev) => {
@@ -182,13 +181,11 @@ export default function Router() {
     return wishlistItems.some((item) => item.id === id);
   };
 
-  // Navigation wrapper: track previous page then navigate
+  // Navigation wrapper: push current page to history, update prevPage, then navigate
   const navigate = (page: string) => {
-    setPrevPage((prev) => {
-      const p = currentPage || prev || 'home';
-      try { if (typeof window !== 'undefined') localStorage.setItem('mock_prev_page', p); } catch {}
-      return p;
-    });
+    setHistory((h) => [...h, currentPage]);
+    setPrevPage(currentPage);
+    try { if (typeof window !== 'undefined') localStorage.setItem('mock_prev_page', currentPage); } catch {}
     setCurrentPage(page);
   };
 
@@ -199,11 +196,27 @@ export default function Router() {
     setUser,
     prevPage,
     goBack: () => {
-      if (prevPage) {
-        setCurrentPage(prevPage);
-      } else {
-        setCurrentPage('home');
-      }
+      setHistory((h) => {
+        if (h.length > 0) {
+          const newHistory = h.slice(0, -1);
+          const target = h[h.length - 1];
+          setCurrentPage(target);
+          const newPrev = newHistory.length > 0 ? newHistory[newHistory.length - 1] : null;
+          setPrevPage(newPrev);
+          try { if (typeof window !== 'undefined') {
+            if (newPrev) localStorage.setItem('mock_prev_page', newPrev);
+            else localStorage.removeItem('mock_prev_page');
+          }} catch {}
+          return newHistory;
+        }
+        // No history; fallback to prevPage if available, else stay on current page
+        if (prevPage) {
+          setCurrentPage(prevPage);
+          setPrevPage(null);
+          try { if (typeof window !== 'undefined') localStorage.removeItem('mock_prev_page'); } catch {}
+        }
+        return h;
+      });
     },
     selectedProduct,
     setSelectedProduct,

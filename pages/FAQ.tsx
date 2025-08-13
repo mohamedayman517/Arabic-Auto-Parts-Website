@@ -149,11 +149,11 @@ export default function FAQ({ setCurrentPage }: FAQProps) {
             <h3 className="text-xl font-bold mb-4">{t('noAnswerFoundQuestion')}</h3>
             <p className="text-muted-foreground mb-6">{t('supportTeamReady')}</p>
             <div className="flex gap-4 justify-center">
-              <Button onClick={() => setCurrentPage('contact')}>
-                {t('contact')}
+              <Button onClick={() => setCurrentPage('support')}>
+                {t('customerSupport') || (locale==='ar' ? 'الدعم الفني' : 'Customer Support')}
               </Button>
               <Button variant="outline" onClick={() => setCurrentPage('support')}>
-                {t('customerSupport')}
+                {t('customerSupport') || (locale==='ar' ? 'الدعم الفني' : 'Customer Support')}
               </Button>
             </div>
           </CardContent>

@@ -683,7 +683,7 @@ export default function ProductListing({
                     }`}
                     onClick={() => setSelectedCategory("")}
                   >
-                    {t("allCategories")} ({mockProducts.length})
+                    {t("allCategories")}
                   </div>
                   {categories.map((category) => (
                     <div
@@ -695,7 +695,7 @@ export default function ProductListing({
                       }`}
                       onClick={() => setSelectedCategory(category.name[locale])}
                     >
-                      {category.name[locale]} ({category.count})
+                      {category.name[locale]}
                     </div>
                   ))}
                 </div>

@@ -1,4 +1,4 @@
-import { Home, Package, ShoppingCart, User, Truck, FileText, HelpCircle, Phone, Store, BarChart3, Settings, Users, TrendingUp, Target, Shield, Tag, Globe, Percent } from 'lucide-react';
+import { Home, Package, ShoppingCart, User, Truck, FileText, HelpCircle, Store, BarChart3, Settings, Users, TrendingUp, Target, Shield, Tag, Globe, Percent, Phone } from 'lucide-react';
 
 // Define RouteConfig interface
 interface RouteConfig {
@@ -19,12 +19,14 @@ import TrackOrder from '../pages/TrackOrder';
 import MyOrders from '../pages/MyOrders';
 import About from '../pages/About';
 import FAQ from '../pages/FAQ';
-import Contact from '../pages/Contact';
+import Projects from '../pages/Projects';
+import ProjectsBuilder from '../pages/ProjectsBuilder';
 import Support from '../pages/Support';
 import Checkout from '../pages/Checkout';
 import Offers from '../pages/Offers';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import ForgotPassword from '../pages/ForgotPassword';
 
 // Import vendor dashboard components
 import VendorDashboard from '../pages/vendor/VendorDashboard';
@@ -53,10 +55,12 @@ export const routes: Record<string, RouteConfig> = {
   checkout: { component: Checkout, title: 'إتمام الطلب', icon: ShoppingCart },
   login: { component: Login, title: 'تسجيل الدخول', icon: User },
   register: { component: Register, title: 'إنشاء حساب', icon: User },
+  'forgot-password': { component: ForgotPassword, title: 'إعادة تعيين كلمة المرور', icon: User },
   offers: { component: Offers, title: 'العروض والخصومات', icon: Percent },
   about: { component: About, title: 'من نحن', icon: Globe },
   faq: { component: FAQ, title: 'الأسئلة الشائعة', icon: HelpCircle },
-  contact: { component: Contact, title: 'اتصل بنا', icon: Phone },
+  projects: { component: Projects, title: 'المشاريع', icon: Tag },
+  'projects-builder': { component: ProjectsBuilder, title: 'إضافة مشروع', icon: Tag },
   support: { component: Support, title: 'الدعم الفني', icon: Phone },
 
   // User routes (require authentication)

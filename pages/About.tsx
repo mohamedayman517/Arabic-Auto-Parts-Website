@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
 import { RouteContext } from "../components/Router";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -350,6 +351,23 @@ const team = [
             </Card>
             ))}
           </div>
+        </div>
+
+        {/* FAQ Link */}
+        <div className="mb-20">
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="text-2xl font-bold text-center mb-3">{t("faq")}</h2>
+              <p className="text-muted-foreground text-center mb-4">
+                {t("faqQuickHint")}
+              </p>
+              <div className="text-center">
+                <Button variant="outline" onClick={() => setCurrentPage("faq")}>
+                  {t("faq")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Contact Info */}

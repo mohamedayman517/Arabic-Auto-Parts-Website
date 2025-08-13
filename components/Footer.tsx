@@ -155,7 +155,7 @@ export default function Footer({ setCurrentPage }: FooterProps) {
                 <li><button onClick={() => setCurrentPage('products')} className="text-gray-300 hover:text-white transition-colors">{t('products')}</button></li>
                 <li><button onClick={() => setCurrentPage('home')} className="text-gray-300 hover:text-white transition-colors">{t('offers')}</button></li>
                 {/* Removed blog key as it's not present in translations */}
-                <li><button onClick={() => setCurrentPage('contact')} className="text-gray-300 hover:text-white transition-colors">{t('contact')}</button></li>
+                <li><button onClick={() => setCurrentPage('projects')} className="text-gray-300 hover:text-white transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button></li>
               </ul>
             </div>
 

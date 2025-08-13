@@ -313,19 +313,6 @@ export default function Contact({ setCurrentPage, user, setUser, cartItems }: Co
               </CardContent>
             </Card>
 
-            {/* FAQ Link */}
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-medium mb-3">{t("faq")}</h3>
-                <p className="text-muted-foreground mb-4">
-                  {t("faqQuickHint")}
-                </p>
-                <Button variant="outline" onClick={() => setCurrentPage("faq")}>
-                  {t("faq")}
-                </Button>
-              </CardContent>
-            </Card>
-
             {/* Support Hours */}
             <Card>
               <CardContent className="p-6">

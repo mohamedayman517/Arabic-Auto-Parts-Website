@@ -251,30 +251,52 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
       Swal.fire({ title: locale === 'en' ? 'You must be logged in' : 'يجب تسجيل الدخول', icon: 'error' });
       return;
     }
-    const result = await Swal.fire<{ value: string }>({
+    const html = `
+      <div class="space-y-3 text-right">
+        <input id="pwd_current" type="password" class="swal2-input" placeholder="${locale==='en'?'Current password':'كلمة المرور الحالية'}" />
+        <input id="pwd_new" type="password" class="swal2-input" placeholder="${locale==='en'?'New password (min 6)':'كلمة مرور جديدة (حد أدنى 6)'}" />
+        <input id="pwd_confirm" type="password" class="swal2-input" placeholder="${locale==='en'?'Confirm new password':'تأكيد كلمة المرور الجديدة'}" />
+      </div>`;
+    const res = await Swal.fire({
       title: locale === 'en' ? 'Change Password' : 'تغيير كلمة المرور',
-      input: 'password',
-      inputLabel: locale === 'en' ? 'New Password (min 6 chars)' : 'كلمة المرور الجديدة (6 أحرف على الأقل)',
-      inputPlaceholder: locale === 'en' ? 'Enter new password' : 'أدخل كلمة المرور الجديدة',
+      html,
+      focusConfirm: false,
       showCancelButton: true,
       confirmButtonText: locale === 'en' ? 'Save' : 'حفظ',
       cancelButtonText: locale === 'en' ? 'Cancel' : 'إلغاء',
-      preConfirm: (value: string) => {
-        if (!validatePasswordMin(value || '', 6)) {
-          Swal.showValidationMessage(locale === 'en' ? 'Password must be at least 6 characters' : 'يجب أن تكون كلمة المرور 6 أحرف على الأقل');
+      preConfirm: () => {
+        const current = (document.getElementById('pwd_current') as HTMLInputElement)?.value || '';
+        const next = (document.getElementById('pwd_new') as HTMLInputElement)?.value || '';
+        const confirm = (document.getElementById('pwd_confirm') as HTMLInputElement)?.value || '';
+        if (!current || !next || !confirm) {
+          Swal.showValidationMessage(locale==='en'?'All fields are required':'كل الحقول مطلوبة');
+          return null as any;
         }
-        return value;
+        if (!validatePasswordMin(next, 6)) {
+          Swal.showValidationMessage(locale==='en'?'Password must be at least 6 characters':'يجب أن تكون كلمة المرور 6 أحرف على الأقل');
+          return null as any;
+        }
+        if (next !== confirm) {
+          Swal.showValidationMessage(locale==='en'?'New password and confirmation do not match':'كلمة المرور الجديدة وتأكيدها غير متطابقين');
+          return null as any;
+        }
+        return { current, next } as any;
       }
-    } as any);
-    const newPass = (result as any).value as string | undefined;
-    if (!newPass) return;
+    }) as any;
+    if (!res.value) return;
+    const { current, next } = res.value as { current: string; next: string };
     const users = getUsers();
     const idx = users.findIndex(u => u.id === (user as any).id);
     if (idx === -1) {
       Swal.fire({ title: locale === 'en' ? 'User not found' : 'المستخدم غير موجود', icon: 'error' });
       return;
     }
-    users[idx].password = newPass;
+    const stored = (users[idx] as any).password || '';
+    if (stored && stored !== current) {
+      Swal.fire({ title: locale==='en'?'Current password is incorrect':'كلمة المرور الحالية غير صحيحة', icon: 'error' });
+      return;
+    }
+    users[idx].password = next as any;
     saveUsers(users);
     Swal.fire({ title: locale === 'en' ? 'Password updated' : 'تم تحديث كلمة المرور', icon: 'success', timer: 2000, showConfirmButton: false });
   };

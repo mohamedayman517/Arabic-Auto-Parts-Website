@@ -16,8 +16,6 @@ import { useState } from "react";
 export default function HeroSearch({ setSearchFilters, setCurrentPage }: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
   const [carType, setCarType] = useState<string | undefined>();
-  const [model, setModel] = useState<string | undefined>();
-  const [partCategory, setPartCategory] = useState<string | undefined>();
   const [term, setTerm] = useState("");
 
   return (
@@ -54,7 +52,7 @@ export default function HeroSearch({ setSearchFilters, setCurrentPage }: Partial
               {t("searchForPart")}
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <Select value={carType} onValueChange={setCarType}>
                 <SelectTrigger className="text-right">
                   <SelectValue placeholder={t("carType")} />
@@ -65,32 +63,6 @@ export default function HeroSearch({ setSearchFilters, setCurrentPage }: Partial
                   <SelectItem value="nissan">{t("nissan")}</SelectItem>
                   <SelectItem value="hyundai">{t("hyundai")}</SelectItem>
                   <SelectItem value="bmw">{t("bmw")}</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={model} onValueChange={setModel}>
-                <SelectTrigger className="text-right">
-                  <SelectValue placeholder={t("model")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2020">2020</SelectItem>
-                  <SelectItem value="2019">2019</SelectItem>
-                  <SelectItem value="2018">2018</SelectItem>
-                  <SelectItem value="2017">2017</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={partCategory} onValueChange={setPartCategory}>
-                <SelectTrigger className="text-right">
-                  <SelectValue placeholder={t("partCategory")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="engine">{t("engineParts")}</SelectItem>
-                  <SelectItem value="tires">{t("tiresWheels")}</SelectItem>
-                  <SelectItem value="electrical">
-                    {t("electricalParts")}
-                  </SelectItem>
-                  <SelectItem value="tools">{t("workshopTools")}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -110,12 +82,7 @@ export default function HeroSearch({ setSearchFilters, setCurrentPage }: Partial
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 shadow-md hover:shadow-lg focus-visible:ring-blue-400"
                 onClick={() => {
-                  setSearchFilters && setSearchFilters({
-                    term,
-                    carType,
-                    model,
-                    partCategory,
-                  });
+                  setSearchFilters && setSearchFilters({ term, carType });
                   setCurrentPage && setCurrentPage("products");
                 }}
               >
@@ -127,12 +94,7 @@ export default function HeroSearch({ setSearchFilters, setCurrentPage }: Partial
                 size="lg"
                 className="px-8 border-gray-300 bg-white text-gray-900 hover:bg-gray-100"
                 onClick={() => {
-                  setSearchFilters && setSearchFilters({
-                    term,
-                    carType,
-                    model,
-                    partCategory,
-                  });
+                  setSearchFilters && setSearchFilters({ term, carType });
                   setCurrentPage && setCurrentPage("products");
                 }}
               >

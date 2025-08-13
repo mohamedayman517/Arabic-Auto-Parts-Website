@@ -68,9 +68,6 @@ export default function ProductCategories({ setCurrentPage, setSearchFilters }: 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors duration-300"></div>
-                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
-                  {category.count}
-                </div>
               </div>
               <CardContent className="p-6">
                 <h3 className="font-bold text-xl mb-2">{category.title}</h3>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Wrench, Car, Shield, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { cn } from '../components/ui/utils';
 import { RouteContext } from '../components/Router';
 import Header from '../components/Header';
@@ -53,55 +53,14 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
   };
 
   return (
-    <div className="min-h-screen bg-background" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <Header currentPage="register" setCurrentPage={setCurrentPage} user={user} setUser={setUser} cartItems={cartItems} />
-      <div className="w-full px-0 md:px-6 py-6 md:py-8">
-        <div
-          className={cn(
-            "flex flex-col md:flex-row gap-6 md:gap-8 items-stretch md:min-h-[80vh]",
-            locale === 'ar' ? 'md:flex-row-reverse' : 'md:flex-row',
-          )}
-        > 
-          {/* Visual panel */}
-          <div
-            className={cn(
-              "relative rounded-2xl overflow-hidden border bg-muted/30 h-56 md:h-auto md:min-h-[70vh] flex-1",
-            )}
-          >
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{
-                backgroundImage:
-                  "url('https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?q=80&w=1600&auto=format&fit=crop')",
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-tr from-black/60 via-black/30 to-transparent" />
-            <div className="relative z-10 p-8 h-full flex flex-col justify-end text-white">
-              <h2 className="text-2xl font-bold mb-2">
-                {locale === 'en' ? 'Join our auto parts community' : 'انضم إلى مجتمع قطع الغيار'}
-              </h2>
-              <p className="text-sm text-white/90 mb-4">
-                {locale === 'en'
-                  ? 'Create an account to track orders and save your vehicle preferences'
-                  : 'أنشئ حساباً لتتبع الطلبات وحفظ تفضيلات سيارتك'}
-              </p>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center gap-2"><Wrench className="w-4 h-4" /> {locale === 'en' ? 'Expert support' : 'دعم فني خبير'}</li>
-                <li className="flex items-center gap-2"><Car className="w-4 h-4" /> {locale === 'en' ? 'Vehicle profiles' : 'ملفات سيارات'}</li>
-                <li className="flex items-center gap-2"><Shield className="w-4 h-4" /> {locale === 'en' ? 'Protected data' : 'بياناتك محمية'}</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Form panel */}
-          <div
-            className={cn(
-              "w-full md:mx-0 flex-1 flex items-start md:items-center justify-center px-4",
-            )}
-          > 
-            <Card className="w-full max-w-md shadow-xl border border-gray-200 dark:border-gray-800">
+      <div className="w-full px-4 md:px-6 py-10 md:py-12">
+        <div className="max-w-2xl mx-auto min-h-[70vh] flex items-center justify-center">
+          <div className="w-full">
+            <Card className="w-full max-w-xl mx-auto shadow-2xl border border-gray-200/70 dark:border-gray-800/70 rounded-2xl backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-2xl">{locale === 'en' ? 'Create your account' : 'إنشاء حساب جديد'}</CardTitle>
+                <CardTitle className="text-3xl font-extrabold">{locale === 'en' ? 'Create your account' : 'إنشاء حساب جديد'}</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   {locale === 'en' ? 'Fill in your details to get started.' : 'أدخل بياناتك للبدء.'}
                 </p>
@@ -115,7 +74,7 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
                   )}
                   <div className={cn('space-y-1', isAr ? 'text-right' : 'text-left')}>
                     <Label className="font-medium" htmlFor="name">{t('fullName')}</Label>
-                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required className="h-11 rounded-lg text-base" />
+                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required className="h-12 rounded-xl text-base" />
                   </div>
                   <div className={cn('space-y-1', isAr ? 'text-right' : 'text-left')}>
                     <Label className="font-medium" htmlFor="email">{locale === 'en' ? 'Email' : 'البريد الإلكتروني'}</Label>
@@ -126,7 +85,7 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className={cn('h-11 rounded-lg text-base', isAr ? 'pr-11 text-right' : 'pl-11')}
+                        className={cn('h-12 rounded-xl text-base', isAr ? 'pr-11 text-right' : 'pl-11')}
                       />
                       <Mail className={cn('absolute top-1/2 -translate-y-1/2 size-4 text-muted-foreground', isAr ? 'right-3' : 'left-3')} />
                     </div>
@@ -140,7 +99,7 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className={cn('h-11 rounded-lg text-base pl-11 pr-11', isAr && 'text-right')}
+                        className={cn('h-12 rounded-xl text-base pl-11 pr-11', isAr && 'text-right')}
                       />
                       <Lock className={cn('absolute top-1/2 -translate-y-1/2 size-4 text-muted-foreground', isAr ? 'right-3' : 'left-3')} />
                       <button
@@ -170,7 +129,7 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
                       <option value="marketer">{isAr ? 'مسوّق' : 'Marketer'}</option>
                     </select>
                   </div>
-                  <Button className="w-full rounded-lg h-11 text-base font-semibold bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-md hover:shadow-lg hover:brightness-110 hover:-translate-y-[1px] ring-1 ring-indigo-500/30 transition" size="lg" type="submit">{locale === 'en' ? 'Register' : 'تسجيل'}</Button>
+                  <Button className="w-full rounded-xl h-12 text-base font-semibold bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-md hover:shadow-lg hover:brightness-110 hover:-translate-y-[1px] ring-1 ring-indigo-500/30 transition" size="lg" type="submit">{locale === 'en' ? 'Register' : 'تسجيل'}</Button>
                 </form>
                 <div className="my-4 border-t border-gray-200 dark:border-gray-800" />
                 <div className="text-sm text-muted-foreground">

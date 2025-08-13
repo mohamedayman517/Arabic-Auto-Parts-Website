@@ -66,9 +66,18 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 <button
                   onClick={() => {
                     if (goBack) return goBack();
+                    // Try using stored previous page from Router if available
+                    if (typeof window !== 'undefined') {
+                      try {
+                        const prev = localStorage.getItem('mock_prev_page');
+                        if (prev) { go(prev); return; }
+                      } catch {}
+                    }
+                    // Fallback to browser history
                     if (typeof window !== 'undefined' && window.history.length > 1) {
                       try { window.history.back(); return; } catch {}
                     }
+                    // Final fallback
                     go('home');
                   }}
                   className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -103,7 +112,7 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 <button onClick={() => go('products')} className="text-foreground hover:text-primary transition-colors">{t('products')}</button>
                 <button onClick={() => go('offers')} className="text-foreground hover:text-primary transition-colors">{t('offers')}</button>
                 <button onClick={() => go('about')} className="text-foreground hover:text-primary transition-colors">{t('about')}</button>
-                <button onClick={() => go('contact')} className="text-foreground hover:text-primary transition-colors">{t('contact')}</button>
+                <button onClick={() => go('projects')} className="text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
               </nav>
             )}
 
@@ -158,7 +167,8 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                     </button>
                   </div>
                 )}
-                {user && user.role === 'customer' && (
+                {/* Show cart for guests and customers (hide only for restricted roles) */}
+                {!isRestricted && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -203,7 +213,7 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 <button onClick={() => { go('products'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('products')}</button>
                 <button onClick={() => { go('offers'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('offers')}</button>
                 <button onClick={() => { go('about'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('about')}</button>
-                <button onClick={() => { go('contact'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('contact')}</button>
+                <button onClick={() => { go('projects'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
                 <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
               </>
             )}

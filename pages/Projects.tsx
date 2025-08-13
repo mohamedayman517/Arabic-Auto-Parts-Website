@@ -985,6 +985,26 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
                                   description: up.description || ''
                                 };
                                 window.localStorage.setItem('edit_project_draft', JSON.stringify(draft));
+                                // Also store additional items to open multiple forms in builder
+                                if (Array.isArray((up as any).items) && (up as any).items.length > 0) {
+                                  const itemsDraft = (up as any).items.map((it:any) => ({
+                                    id: it.id || Math.random().toString(36).slice(2),
+                                    ptype: it.ptype || it.type || '',
+                                    psubtype: it.psubtype || 'normal',
+                                    material: it.material || '',
+                                    color: it.color || 'white',
+                                    width: Number(it.width) || 0,
+                                    height: Number(it.height) || 0,
+                                    quantity: Number(it.quantity) || 1,
+                                    autoPrice: true,
+                                    pricePerMeter: Number(it.pricePerMeter) || 0,
+                                    selectedAcc: Array.isArray(it.selectedAcc) ? it.selectedAcc : [],
+                                    description: it.description || '',
+                                  }));
+                                  window.localStorage.setItem('edit_project_items_draft', JSON.stringify(itemsDraft));
+                                } else {
+                                  window.localStorage.removeItem('edit_project_items_draft');
+                                }
                               } catch {}
                               setCurrentPage && setCurrentPage('projects-builder');
                               window?.scrollTo?.({ top: 0, behavior: 'smooth' });

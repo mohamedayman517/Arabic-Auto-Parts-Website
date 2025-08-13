@@ -150,6 +150,30 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
       setDescription(d.description || '');
       // keep auto calc for ppm via effect
       window.localStorage.removeItem('edit_project_draft');
+      // Load additional items draft if present
+      const itemsRaw = window.localStorage.getItem('edit_project_items_draft');
+      if (itemsRaw) {
+        const items = JSON.parse(itemsRaw);
+        if (Array.isArray(items)) {
+          // Normalize into Builder shape
+          const normalized = items.map((b:any) => ({
+            id: b.id || Math.random().toString(36).slice(2),
+            ptype: b.ptype || '',
+            psubtype: b.psubtype || 'normal',
+            material: b.material || '',
+            color: b.color || 'white',
+            width: Number(b.width) || 0,
+            height: Number(b.height) || 0,
+            quantity: Number(b.quantity) || 1,
+            autoPrice: true,
+            pricePerMeter: Number(b.pricePerMeter) || 0,
+            selectedAcc: Array.isArray(b.selectedAcc) ? b.selectedAcc : [],
+            description: b.description || '',
+          })) as Builder[];
+          setAdditionalBuilders(normalized);
+        }
+        window.localStorage.removeItem('edit_project_items_draft');
+      }
     } catch {}
   }, []);
 
@@ -211,24 +235,8 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
     // Build main project
     const mainPPM = pricePerMeter;
     const mainTotal = computeTotal(width, height, mainPPM, quantity, selectedAcc);
-    const mainProj = {
-      id: editingId || Math.random().toString(36).slice(2),
-      ptype,
-      psubtype,
-      material,
-      color,
-      width,
-      height,
-      quantity,
-      autoPrice,
-      pricePerMeter: mainPPM,
-      selectedAcc,
-      description,
-      total: mainTotal,
-      createdAt: Date.now(),
-    };
-    // Build additional projects
-    const extra = additionalBuilders.map((b) => {
+    // Build additional items (not as separate projects)
+    const items = additionalBuilders.map((b) => {
       const ppm = computedPPM(b.ptype, b.psubtype, b.color);
       return {
         id: Math.random().toString(36).slice(2),
@@ -247,16 +255,35 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
         createdAt: Date.now(),
       };
     });
+    const mainProj = {
+      id: editingId || Math.random().toString(36).slice(2),
+      ptype,
+      psubtype,
+      material,
+      color,
+      width,
+      height,
+      quantity,
+      autoPrice,
+      pricePerMeter: mainPPM,
+      selectedAcc,
+      description,
+      // total should represent ALL items (main + additional)
+      total: grandTotal,
+      createdAt: Date.now(),
+      // keep additional forms as nested items to avoid multiple saved projects
+      items,
+    };
     try {
       const raw = window.localStorage.getItem('user_projects');
       const prev = raw ? JSON.parse(raw) : [];
       let next;
       if (editingId) {
-        // replace the existing project with same id; keep others and also append extra as new items
+        // replace the existing project with same id; keep others
         next = prev.map((p:any) => p.id === editingId ? mainProj : p);
-        if (extra.length) next = [...extra, ...next];
       } else {
-        next = [mainProj, ...extra, ...prev];
+        // Save only ONE project entry regardless of number of forms
+        next = [mainProj, ...prev];
       }
       window.localStorage.setItem('user_projects', JSON.stringify(next));
     } catch {}

@@ -21,6 +21,7 @@ import About from '../pages/About';
 import FAQ from '../pages/FAQ';
 import Projects from '../pages/Projects';
 import ProjectsBuilder from '../pages/ProjectsBuilder';
+import ProjectDetails from '../pages/ProjectDetails';
 import Support from '../pages/Support';
 import Checkout from '../pages/Checkout';
 import Offers from '../pages/Offers';
@@ -61,6 +62,7 @@ export const routes: Record<string, RouteConfig> = {
   faq: { component: FAQ, title: 'الأسئلة الشائعة', icon: HelpCircle },
   projects: { component: Projects, title: 'المشاريع', icon: Tag },
   'projects-builder': { component: ProjectsBuilder, title: 'إضافة مشروع', icon: Tag },
+  'project-details': { component: ProjectDetails, title: 'تفاصيل المشروع', icon: Tag },
   support: { component: Support, title: 'الدعم الفني', icon: Phone },
 
   // User routes (require authentication)

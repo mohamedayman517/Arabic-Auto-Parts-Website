@@ -4,13 +4,20 @@ import { Button } from './ui/button'
 import { Globe } from 'lucide-react'
 
 export default function LanguageSwitcher() {
-  // Derive current locale from URL path (fallback to 'ar')
+  // Derive current locale: prefer localStorage, then URL path (fallback to 'ar')
   const getPath = () => {
     if (typeof window === 'undefined') return '/ar'
     try { return window.location.pathname || '/ar' } catch { return '/ar' }
   }
-  const safePath = getPath()
-  const currentLocale = (safePath.split('/')[1] || 'ar') as 'ar' | 'en'
+  const getCurrentLocale = (): 'ar' | 'en' => {
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('locale') : null
+      if (stored === 'ar' || stored === 'en') return stored
+    } catch {}
+    const seg = (getPath().split('/')[1] || 'ar')
+    return (seg === 'en' ? 'en' : 'ar')
+  }
+  const currentLocale = getCurrentLocale()
 
   const switchLanguage = (newLocale: 'ar' | 'en') => {
     // 1) Persist selection

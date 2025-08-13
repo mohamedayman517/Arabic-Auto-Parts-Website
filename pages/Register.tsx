@@ -59,7 +59,7 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
         <div className="max-w-2xl mx-auto min-h-[70vh] flex items-center justify-center">
           <div className="w-full">
             <Card className="w-full max-w-xl mx-auto shadow-2xl border border-gray-200/70 dark:border-gray-800/70 rounded-2xl backdrop-blur-sm">
-              <CardHeader>
+              <CardHeader className="text-center">
                 <CardTitle className="text-3xl font-extrabold">{locale === 'en' ? 'Create your account' : 'إنشاء حساب جديد'}</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   {locale === 'en' ? 'Fill in your details to get started.' : 'أدخل بياناتك للبدء.'}

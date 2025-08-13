@@ -18,50 +18,71 @@ import {
 
 // Product types (IDs must match Projects.tsx)
 const productTypes = [
-  { id: 'double_aluminum_door', ar: 'باب دبل المنيو', en: 'Double Aluminum Door' },
-  { id: 'double_window', ar: 'شباك دبل', en: 'Double Window' },
+  { id: 'door', ar: 'باب', en: 'Door' },
+  { id: 'window', ar: 'شباك', en: 'Window' },
   { id: 'railing', ar: 'دربزين', en: 'Railing' },
-  { id: 'structure', ar: 'استركشر', en: 'Structure' },
-  { id: 'securit', ar: 'سكريت', en: 'Securit' },
-  { id: 'laser_door', ar: 'باب ليزر', en: 'Laser Door' },
-  { id: 'steel_door', ar: 'باب صاج', en: 'Steel Door' },
-  { id: 'normal_aluminum_door', ar: 'باب عادي المني', en: 'Normal Aluminum Door' },
-  { id: 'double_fixed', ar: 'ثابت دبل', en: 'Double Fixed' },
-  { id: 'fixed', ar: 'ثابت', en: 'Fixed' },
+];
+
+// Subtypes for product (requested: عادي / وسط / دبل)
+const productSubtypes = [
+  { id: 'normal', ar: 'عادي', en: 'Normal' },
+  { id: 'center', ar: 'وسط', en: 'Center' },
+  { id: 'double', ar: 'دبل', en: 'Double' },
 ];
 
 const materials = [
   { id: 'aluminum', ar: 'ألمنيوم', en: 'Aluminum' },
-  { id: 'steel', ar: 'حديد', en: 'Steel' },
+  { id: 'steel', ar: 'صاج', en: 'Steel' },
   { id: 'laser', ar: 'ليزر', en: 'Laser' },
   { id: 'glass', ar: 'زجاج', en: 'Glass' },
 ];
 
+// Colors to choose from
+const colors = [
+  { id: 'white', ar: 'أبيض', en: 'White' },
+  { id: 'black', ar: 'أسود', en: 'Black' },
+  { id: 'silver', ar: 'فضي', en: 'Silver' },
+  { id: 'bronze', ar: 'برونزي', en: 'Bronze' },
+  { id: 'gray', ar: 'رمادي', en: 'Gray' },
+  { id: 'beige', ar: 'بيج', en: 'Beige' },
+];
+
 const accessoriesCatalog = [
-  { id: 'frame', ar: 'حلق', en: 'Frame', price: 50 },
-  { id: 'leaf', ar: 'درفه', en: 'Leaf', price: 120 },
-  { id: 'covers', ar: 'كفرات', en: 'Covers', price: 40 },
-  { id: 'small_covers', ar: 'كفرات صغير', en: 'Small Covers', price: 25 },
-  { id: 'mesh_leaf', ar: 'درفه سلك', en: 'Mesh Leaf', price: 80 },
-  { id: 'big_screw', ar: 'مسمار كبير', en: 'Big Screw', price: 5 },
-  { id: 'small_screw', ar: 'مسمار صغي', en: 'Small Screw', price: 3 },
-  { id: 'mesh_roller', ar: 'رول شبك', en: 'Mesh Roller', price: 150 },
-  { id: 'gasket', ar: 'جلد', en: 'Gasket', price: 20 },
+  { id: 'brass_handle', ar: 'أوكرة نحاس', en: 'Brass Handle', price: 20 },
+  { id: 'stainless_handle', ar: 'أوكرة سلستين', en: 'Stainless Handle', price: 15 },
+  { id: 'aluminum_lock', ar: 'كالون الومنيوم', en: 'Aluminum Lock', price: 40 },
+  { id: 'computer_lock', ar: 'قفل كمبيوتر', en: 'Computer Lock', price: 60 },
+  { id: 'window_knob', ar: 'مقبض شباك', en: 'Window Knob', price: 20 },
 ];
 
 // Fixed price per m² per product type (must match Projects.tsx)
 const fixedPricePerType: Record<string, number> = {
-  double_aluminum_door: 750,
-  double_window: 400,
+  door: 500,
+  window: 400,
   railing: 380,
-  structure: 480,
-  securit: 200,
-  laser_door: 800,
-  steel_door: 1200,
-  normal_aluminum_door: 500,
-  double_fixed: 450,
-  fixed: 250,
 };
+
+// Cost modifiers
+const subtypeFactor: Record<string, number> = {
+  normal: 1.0,
+  center: 1.1,
+  double: 1.2,
+};
+const colorFactor: Record<string, number> = {
+  white: 1.00,
+  black: 1.05,
+  silver: 1.07,
+  bronze: 1.10,
+  gray: 1.05,
+  beige: 1.05,
+};
+
+function computedPPM(ptype: string, psubtype: string, color: string) {
+  const base = ptype ? (fixedPricePerType[ptype] ?? 0) : 0;
+  const sf = subtypeFactor[psubtype] ?? 1;
+  const cf = colorFactor[color] ?? 1;
+  return Math.round(base * sf * cf);
+}
 
 function computeTotal(w:number, h:number, ppm:number, qty:number, accIds:string[]) {
   const area = Math.max(0, w) * Math.max(0, h);
@@ -78,7 +99,9 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
   const currency = locale === 'ar' ? 'ر.س' : 'SAR';
 
   const [ptype, setPtype] = useState('');
+  const [psubtype, setPsubtype] = useState('');
   const [material, setMaterial] = useState('');
+  const [color, setColor] = useState('');
   const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
@@ -86,10 +109,13 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
   const [autoPrice, setAutoPrice] = useState<boolean>(true);
   const [selectedAcc, setSelectedAcc] = useState<string[]>([]);
   const [description, setDescription] = useState<string>('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   type Builder = {
     id: string;
     ptype: string;
+    psubtype: string;
     material: string;
+    color: string;
     width: number;
     height: number;
     quantity: number;
@@ -101,15 +127,42 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
   const [additionalBuilders, setAdditionalBuilders] = useState<Builder[]>([]);
 
   useEffect(() => {
-    if (autoPrice) {
-      const ppm = ptype ? (fixedPricePerType[ptype] ?? 0) : 0;
-      setPricePerMeter(ppm);
-    }
-  }, [autoPrice, ptype]);
+    // Always auto-calc PPM based on type, subtype, color
+    const ppm = computedPPM(ptype, psubtype, color);
+    setPricePerMeter(ppm);
+  }, [ptype, psubtype, color]);
+
+  // Prefill from edit draft if exists
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem('edit_project_draft');
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      setEditingId(d.id || null);
+      setPtype(d.ptype || '');
+      setPsubtype(d.psubtype || 'normal');
+      setMaterial(d.material || '');
+      setColor(d.color || 'white');
+      setWidth(Number(d.width) || 0);
+      setHeight(Number(d.height) || 0);
+      setQuantity(Number(d.quantity) || 1);
+      setSelectedAcc(Array.isArray(d.selectedAcc) ? d.selectedAcc : []);
+      setDescription(d.description || '');
+      // keep auto calc for ppm via effect
+      window.localStorage.removeItem('edit_project_draft');
+    } catch {}
+  }, []);
 
   const isComplete = Boolean(ptype) && Boolean(material) && width > 0 && height > 0 && quantity > 0 && pricePerMeter > 0;
 
   const total = useMemo(() => computeTotal(width, height, pricePerMeter, quantity, selectedAcc), [width, height, pricePerMeter, quantity, selectedAcc]);
+  const totalExtra = useMemo(() => {
+    return additionalBuilders.reduce((sum, b) => {
+      const ppm = computedPPM(b.ptype, b.psubtype, b.color);
+      return sum + computeTotal(b.width, b.height, ppm, b.quantity, b.selectedAcc);
+    }, 0);
+  }, [additionalBuilders]);
+  const grandTotal = useMemo(() => total + totalExtra, [total, totalExtra]);
 
   function toggleAccessory(id: string, checked: boolean) {
     setSelectedAcc((prev) => {
@@ -135,7 +188,9 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
     const newForm: Builder = {
       id: Math.random().toString(36).slice(2),
       ptype: '',
+      psubtype: '',
       material: '',
+      color: '',
       width: 0,
       height: 0,
       quantity: 1,
@@ -154,12 +209,14 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
   const confirmProject = () => {
     if (!isComplete) return;
     // Build main project
-    const mainPPM = autoPrice ? (ptype ? (fixedPricePerType[ptype] ?? 0) : pricePerMeter) : pricePerMeter;
+    const mainPPM = pricePerMeter;
     const mainTotal = computeTotal(width, height, mainPPM, quantity, selectedAcc);
     const mainProj = {
-      id: Math.random().toString(36).slice(2),
+      id: editingId || Math.random().toString(36).slice(2),
       ptype,
+      psubtype,
       material,
+      color,
       width,
       height,
       quantity,
@@ -172,11 +229,13 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
     };
     // Build additional projects
     const extra = additionalBuilders.map((b) => {
-      const ppm = b.autoPrice ? (b.ptype ? (fixedPricePerType[b.ptype] ?? 0) : b.pricePerMeter) : b.pricePerMeter;
+      const ppm = computedPPM(b.ptype, b.psubtype, b.color);
       return {
         id: Math.random().toString(36).slice(2),
         ptype: b.ptype,
+        psubtype: b.psubtype,
         material: b.material,
+        color: b.color,
         width: b.width,
         height: b.height,
         quantity: b.quantity,
@@ -191,7 +250,14 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
     try {
       const raw = window.localStorage.getItem('user_projects');
       const prev = raw ? JSON.parse(raw) : [];
-      const next = [mainProj, ...extra, ...prev];
+      let next;
+      if (editingId) {
+        // replace the existing project with same id; keep others and also append extra as new items
+        next = prev.map((p:any) => p.id === editingId ? mainProj : p);
+        if (extra.length) next = [...extra, ...next];
+      } else {
+        next = [mainProj, ...extra, ...prev];
+      }
       window.localStorage.setItem('user_projects', JSON.stringify(next));
     } catch {}
     setCurrentPage && setCurrentPage('projects');
@@ -206,7 +272,7 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
           <CardContent className="p-4 md:p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm mb-1">{locale==='ar' ? 'نوع المنتج' : 'Product Type'}</label>
+                <label className="block text-sm mb-1">{locale==='ar' ? ' المنتج' : 'Product Type'}</label>
                 <Select value={ptype} onValueChange={setPtype}>
                   <SelectTrigger>
                     <SelectValue placeholder={locale==='ar' ? 'اختر النوع' : 'Select type'} />
@@ -214,6 +280,19 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
                   <SelectContent>
                     {productTypes.map(pt => (
                       <SelectItem key={pt.id} value={pt.id}>{locale==='ar' ? pt.ar : pt.en}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">{locale==='ar' ? 'النوع' : 'Subtype'}</label>
+                <Select value={psubtype} onValueChange={setPsubtype}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={locale==='ar' ? 'اختر النوع (عادي/وسط/دبل)' : 'Select subtype'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {productSubtypes.map(st => (
+                      <SelectItem key={st.id} value={st.id}>{locale==='ar' ? st.ar : st.en}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -231,40 +310,38 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <label className="block text-sm mb-1">{locale==='ar' ? 'اللون' : 'Color'}</label>
+                <Select value={color} onValueChange={setColor}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={locale==='ar' ? 'اختر اللون' : 'Select color'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {colors.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{locale==='ar' ? c.ar : c.en}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-sm mb-1">{locale==='ar' ? 'العرض (متر)' : 'Width (m)'}</label>
-                  <Input type="number" min={0} step={0.01} value={Number.isFinite(width) ? width : 0} onChange={(e) => setWidth(parseFloat(e.target.value || '0'))} placeholder={locale==='ar' ? '0.00' : '0.00'} />
+                  <Input type="text" inputMode="decimal" value={Number.isFinite(width) ? width : ''} onChange={(e) => setWidth(parseFloat(e.target.value || '0'))} placeholder={locale==='ar' ? '0.00' : '0.00'} />
                 </div>
                 <div>
                   <label className="block text-sm mb-1">{locale==='ar' ? 'الطول (متر)' : 'Height (m)'}</label>
-                  <Input type="number" min={0} step={0.01} value={Number.isFinite(height) ? height : 0} onChange={(e) => setHeight(parseFloat(e.target.value || '0'))} placeholder={locale==='ar' ? '0.00' : '0.00'} />
+                  <Input type="text" inputMode="decimal" value={Number.isFinite(height) ? height : ''} onChange={(e) => setHeight(parseFloat(e.target.value || '0'))} placeholder={locale==='ar' ? '0.00' : '0.00'} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 items-end">
-                <div>
-                  <label className="block text-sm mb-1">{locale==='ar' ? 'سعر المتر المربع' : 'Price per m²'}</label>
-                  <Input type="number" min={0} step={1} value={Number.isFinite(pricePerMeter) ? pricePerMeter : 0} onChange={(e)=> { setPricePerMeter(parseFloat(e.target.value || '0')); setAutoPrice(false); }} disabled={autoPrice} placeholder={locale==='ar' ? '0' : '0'} />
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {(() => {
-                      const area = Math.max(0,width) * Math.max(0,height);
-                      const accCost = selectedAcc.map(id => accessoriesCatalog.find(a => a.id === id)?.price || 0).reduce((a,b)=>a+b,0);
-                      const subtotal = area * (pricePerMeter || 0);
-                      const totalOne = subtotal + accCost;
-                      const totalCalc = Math.max(0, Math.round(totalOne * Math.max(1, quantity)));
-                      return `${locale==='ar' ? 'الحد الأدنى (الإجمالي المحسوب)' : 'Minimum (computed total)'}: ${currency} ${totalCalc.toLocaleString(locale==='ar'?'ar-EG':'en-US')}`;
-                    })()}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 mt-6">
-                  <Checkbox checked={autoPrice} onCheckedChange={(v) => setAutoPrice(!!v)} />
-                  <span className="text-sm text-muted-foreground">{locale==='ar' ? 'حساب تلقائي' : 'Auto-calculate'}</span>
-                </div>
+              <div>
+                <label className="block text-sm mb-1">{locale==='ar' ? 'سعر المتر المربع' : 'Price per m²'}</label>
+                <Input type="number" min={0} step={1} value={Number.isFinite(pricePerMeter) ? pricePerMeter : 0} disabled placeholder={locale==='ar' ? '0' : '0'} />
               </div>
               <div>
                 <label className="block text-sm mb-1">{locale==='ar' ? 'الكمية' : 'Quantity'}</label>
                 <Input type="number" min={1} step={1} value={Number.isFinite(quantity) ? quantity : 0} onChange={(e) => setQuantity(parseInt(e.target.value || '0', 10) || 0)} placeholder={locale==='ar' ? '0' : '0'} />
               </div>
+              
               <div className="md:col-span-2 lg:col-span-2">
                 <label className="block text-sm mb-2">{locale==='ar' ? 'ملحقات إضافية' : 'Additional Accessories'}</label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -279,7 +356,7 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
                 </div>
               </div>
               <div className="md:col-span-2 lg:col-span-3">
-                <label className="block text-sm mb-1">{locale==='ar' ? 'وصف المشروع (اختياري)' : 'Project Description (optional)'}</label>
+                <label className="block text-sm mb-1">{locale==='ar' ? 'وصف المنتج (اختياري)' : 'Project Description (optional)'}</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -303,7 +380,7 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
         {additionalBuilders.length > 0 && (
           <div className="space-y-6 mt-6">
             {additionalBuilders.map((b, idx) => {
-              const ppm = b.autoPrice ? (b.ptype ? (fixedPricePerType[b.ptype] ?? 0) : 0) : b.pricePerMeter;
+              const ppm = computedPPM(b.ptype, b.psubtype, b.color);
               const bTotal = computeTotal(b.width, b.height, ppm, b.quantity, b.selectedAcc);
               return (
                 <Card key={b.id} className="p-4">
@@ -329,6 +406,19 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
                         </Select>
                       </div>
                       <div>
+                        <label className="block text-sm mb-1">{locale==='ar' ? 'النوع' : 'Subtype'}</label>
+                        <Select value={b.psubtype} onValueChange={(v) => setAdditionalBuilders((prev)=>{ const c=[...prev]; c[idx] = { ...c[idx], psubtype: v }; return c; })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={locale==='ar' ? 'اختر النوع (عادي/وسط/دبل)' : 'Select subtype'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {productSubtypes.map((st) => (
+                              <SelectItem key={st.id} value={st.id}>{locale==='ar' ? st.ar : st.en}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
                         <label className="block text-sm mb-1">{locale==='ar' ? 'الخامة' : 'Material'}</label>
                         <Select value={b.material} onValueChange={(v) => setAdditionalBuilders((prev)=>{ const c=[...prev]; c[idx] = { ...c[idx], material: v }; return c; })}>
                           <SelectTrigger>
@@ -341,29 +431,34 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
                           </SelectContent>
                         </Select>
                       </div>
+                      <div>
+                        <label className="block text-sm mb-1">{locale==='ar' ? 'اللون' : 'Color'}</label>
+                        <Select value={b.color} onValueChange={(v) => setAdditionalBuilders((prev)=>{ const c=[...prev]; c[idx] = { ...c[idx], color: v }; return c; })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={locale==='ar' ? 'اختر اللون' : 'Select color'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {colors.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>{locale==='ar' ? c.ar : c.en}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className="block text-sm mb-1">{locale==='ar' ? 'العرض (متر)' : 'Width (m)'}</label>
-                          <Input type="number" min={0} step={0.01} value={Number.isFinite(b.width) ? b.width : 0} onChange={(e)=> setAdditionalBuilders((prev)=>{ const c=[...prev]; c[idx] = { ...c[idx], width: parseFloat(e.target.value || '0') }; return c; })} />
+                          <Input type="text" inputMode="decimal" value={Number.isFinite(b.width) ? b.width : ''} onChange={(e)=> setAdditionalBuilders((prev)=>{ const c=[...prev]; c[idx] = { ...c[idx], width: parseFloat(e.target.value || '0') }; return c; })} />
                         </div>
                         <div>
                           <label className="block text-sm mb-1">{locale==='ar' ? 'الطول (متر)' : 'Height (m)'}</label>
-                          <Input type="number" min={0} step={0.01} value={Number.isFinite(b.height) ? b.height : 0} onChange={(e)=> setAdditionalBuilders((prev)=>{ const c=[...prev]; c[idx] = { ...c[idx], height: parseFloat(e.target.value || '0') }; return c; })} />
+                          <Input type="text" inputMode="decimal" value={Number.isFinite(b.height) ? b.height : ''} onChange={(e)=> setAdditionalBuilders((prev)=>{ const c=[...prev]; c[idx] = { ...c[idx], height: parseFloat(e.target.value || '0') }; return c; })} />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 items-end">
-                        <div>
-                          <label className="block text-sm mb-1">{locale==='ar' ? 'سعر المتر المربع' : 'Price per m²'}</label>
-                          <Input type="number" min={0} step={1} value={Number.isFinite(b.pricePerMeter) ? (b.autoPrice ? (b.ptype ? (fixedPricePerType[b.ptype] ?? 0) : 0) : b.pricePerMeter) : 0} onChange={(e)=> setAdditionalBuilders((prev)=>{ const c=[...prev]; c[idx] = { ...c[idx], pricePerMeter: parseFloat(e.target.value || '0'), autoPrice: false }; return c; })} disabled={b.autoPrice} />
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {`${locale==='ar' ? 'الحد الأدنى (الإجمالي المحسوب)' : 'Minimum (computed total)'}: ${currency} ${bTotal.toLocaleString(locale==='ar'?'ar-EG':'en-US')}`}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 mt-6">
-                          <Checkbox checked={b.autoPrice} onCheckedChange={(v)=> setAdditionalBuilders((prev)=>{ const c=[...prev]; c[idx] = { ...c[idx], autoPrice: !!v }; return c; })} />
-                          <span className="text-sm text-muted-foreground">{locale==='ar' ? 'حساب تلقائي' : 'Auto-calculate'}</span>
-                        </div>
+                      <div>
+                        <label className="block text-sm mb-1">{locale==='ar' ? 'سعر المتر المربع' : 'Price per m²'}</label>
+                        <Input type="number" min={0} step={1} value={ppm} disabled />
                       </div>
+                      
                       <div>
                         <label className="block text-sm mb-1">{locale==='ar' ? 'الكمية' : 'Quantity'}</label>
                         <Input type="number" min={1} step={1} value={Number.isFinite(b.quantity) ? b.quantity : 0} onChange={(e)=> setAdditionalBuilders((prev)=>{ const c=[...prev]; c[idx] = { ...c[idx], quantity: parseInt(e.target.value || '0', 10) || 0 }; return c; })} />
@@ -399,8 +494,20 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
           </div>
         )}
 
+        {/* Grand Total at the very end */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between p-4 rounded-md border bg-muted/40">
+            <div className="text-sm text-muted-foreground">
+              {locale==='ar' ? 'الإجمالي التقديري بعد كل الاختيارات' : 'Estimated total after all selections'}
+            </div>
+            <div className="text-xl font-bold text-primary">
+              {currency} {grandTotal.toLocaleString(locale==='ar'?'ar-EG':'en-US')}
+            </div>
+          </div>
+        </div>
+
         {/* Bottom Actions under the last form */}
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-between mt-4">
           <Button variant="outline" onClick={() => setCurrentPage && setCurrentPage('projects')}>
             {locale==='ar' ? 'رجوع للمشاريع' : 'Back to Projects'}
           </Button>

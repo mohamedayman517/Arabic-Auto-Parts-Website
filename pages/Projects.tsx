@@ -55,18 +55,11 @@ const stacks = [
 ];
 
 // Project builder dictionaries
-// Updated product types per user request
+// Updated product types per user request: only Door, Window, Railing
 const productTypes = [
-  { id: 'double_aluminum_door', ar: 'باب دبل المنيو', en: 'Double Aluminum Door' },
-  { id: 'double_window', ar: 'شباك دبل', en: 'Double Window' },
+  { id: 'door', ar: 'باب', en: 'Door' },
+  { id: 'window', ar: 'شباك', en: 'Window' },
   { id: 'railing', ar: 'دربزين', en: 'Railing' },
-  { id: 'structure', ar: 'استركشر', en: 'Structure' },
-  { id: 'securit', ar: 'سكريت', en: 'Securit (Glass)' },
-  { id: 'laser_door', ar: 'باب ليزر', en: 'Laser Door' },
-  { id: 'steel_door', ar: 'باب صاج', en: 'Steel Door' },
-  { id: 'normal_aluminum_door', ar: 'باب عادي المني', en: 'Normal Aluminum Door' },
-  { id: 'double_fixed', ar: 'ثابت دبل', en: 'Double Fixed' },
-  { id: 'fixed', ar: 'ثابت', en: 'Fixed' },
 ];
 
 const materials = [
@@ -77,15 +70,11 @@ const materials = [
 ];
 
 const accessoriesCatalog = [
-  { id: 'frame', ar: 'حلق', en: 'Frame', price: 40 },
-  { id: 'leaf', ar: 'درفه', en: 'Leaf', price: 35 },
-  { id: 'covers', ar: 'كفرات', en: 'Covers', price: 25 },
-  { id: 'covers_small', ar: 'كفرات صغير', en: 'Small Covers', price: 15 },
-  { id: 'leaf_mesh', ar: 'درفه سلك', en: 'Mesh Leaf', price: 50 },
-  { id: 'screw_big', ar: 'مسمار كبير', en: 'Big Screw', price: 12 },
-  { id: 'screw_small', ar: 'مسمار صغي', en: 'Small Screw', price: 8 },
-  { id: 'meshRoller', ar: 'رول شبك', en: 'Mesh Roller', price: 60 },
-  { id: 'gasket', ar: 'جلد', en: 'Gasket', price: 20 },
+  { id: 'brass_handle', ar: 'أوكرة نحاس', en: 'Brass Handle', price: 20 },
+  { id: 'stainless_handle', ar: 'أوكرة سلستين', en: 'Stainless Handle', price: 15 },
+  { id: 'aluminum_lock', ar: 'كالون الومنيوم', en: 'Aluminum Lock', price: 40 },
+  { id: 'computer_lock', ar: 'قفل كمبيوتر', en: 'Computer Lock', price: 60 },
+  { id: 'window_knob', ar: 'مقبض شباك', en: 'Window Knob', price: 20 },
 ];
 
 interface ProjectsProps extends Partial<RouteContext> {}
@@ -155,18 +144,58 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
   useEffect(() => {
     try {
       if (typeof window === 'undefined') return;
+      // Map old product types to the new limited set
+      const allowedTypes = new Set(productTypes.map(p => p.id));
+      const typeMap: Record<string, string> = {
+        double_aluminum_door: 'door',
+        normal_aluminum_door: 'door',
+        steel_door: 'door',
+        laser_door: 'door',
+        double_window: 'window',
+        fixed: 'window',
+        double_fixed: 'window',
+        securit: 'window',
+        railing: 'railing',
+        structure: 'railing',
+      };
+
+      const migrateProject = (p: any) => {
+        const origType = p?.type || p?.ptype || '';
+        const mapped = typeMap[origType] || (allowedTypes.has(origType) ? origType : undefined);
+        if (!mapped) return null; // drop unsupported old entries
+        const selAcc = Array.isArray(p?.selectedAcc)
+          ? p.selectedAcc
+          : Array.isArray(p?.accessories)
+            ? p.accessories.map((a: any) => a?.id).filter(Boolean)
+            : [];
+        return { ...p, type: mapped, selectedAcc: selAcc };
+      };
+
       const raw = window.localStorage.getItem('user_projects');
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          setUserProjects(parsed);
+          const migrated = parsed.map(migrateProject).filter(Boolean);
+          setUserProjects(migrated as any[]);
+          // persist migration immediately
+          window.localStorage.setItem('user_projects', JSON.stringify(migrated));
         }
       }
+
+      const migrateBuilder = (b: any) => {
+        const origType = b?.ptype || b?.type || '';
+        const mapped = typeMap[origType] || (allowedTypes.has(origType) ? origType : undefined);
+        if (!mapped) return null;
+        return { ...b, ptype: mapped };
+      };
+
       const rawBuilders = window.localStorage.getItem('builders_forms');
       if (rawBuilders) {
         const parsedB = JSON.parse(rawBuilders);
         if (Array.isArray(parsedB)) {
-          setAdditionalBuilders(parsedB);
+          const migratedB = parsedB.map(migrateBuilder).filter(Boolean);
+          setAdditionalBuilders(migratedB as any[]);
+          window.localStorage.setItem('builders_forms', JSON.stringify(migratedB));
         }
       }
       setHydrated(true);
@@ -314,18 +343,10 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
 
   // Fixed price per m² per product type (SAR)
   const fixedPricePerType: Record<string, number> = {
-    double_aluminum_door: 750,
-    double_window: 400,
+    door: 500,
+    window: 400,
     railing: 380,
-    structure: 480,
-    securit: 200,
-    laser_door: 800,
-    steel_door: 1200,
-    normal_aluminum_door: 500,
-    double_fixed: 450,
-    fixed: 250,
   };
-  // الحد الأدنى يُعرض ديناميكياً بناءً على نوع المنتج عبر fixedPricePerType
 
   useEffect(() => {
     if (autoPrice) {
@@ -937,17 +958,34 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
                           <div className="text-sm text-muted-foreground">{locale==='ar' ? 'الإجمالي' : 'Total'}</div>
                           <div className="text-lg font-semibold text-primary">{currency} {up.total.toLocaleString(locale==='ar'?'ar-EG':'en-US')}</div>
                           <div className="mt-2 flex items-center gap-2 justify-end">
+                            <Button size="sm" variant="outline" onClick={() => {
+                              try { window.localStorage.setItem('selected_project_id', String(up.id)); } catch {}
+                              setCurrentPage && setCurrentPage('project-details');
+                              window?.scrollTo?.({ top: 0, behavior: 'smooth' });
+                            }} aria-label={locale==='ar' ? 'التفاصيل' : 'Details'}>
+                              <Eye className="w-4 h-4 ml-1" /> {locale==='ar' ? 'التفاصيل' : 'Details'}
+                            </Button>
                             <Button size="sm" variant="secondary" onClick={() => {
-                              setPtype(up.type);
-                              setMaterial(up.material);
-                              setWidth(up.width);
-                              setHeight(up.height);
-                              setQuantity(up.quantity);
-                              setSelectedAcc(up.accessories.map((a:any)=>a.id));
-                              setAutoPrice(false);
-                              setPricePerMeter(up.pricePerMeter);
-                              setDescription(up.description || "");
-                              setEditingId(up.id);
+                              try {
+                                const draft = {
+                                  id: up.id,
+                                  ptype: up.ptype || up.type || '',
+                                  psubtype: up.psubtype || 'normal',
+                                  material: up.material || '',
+                                  color: up.color || 'white',
+                                  width: up.width || 0,
+                                  height: up.height || 0,
+                                  quantity: up.quantity || 1,
+                                  // normalize accessories ids
+                                  selectedAcc: Array.isArray(up.selectedAcc)
+                                    ? up.selectedAcc
+                                    : Array.isArray(up.accessories)
+                                      ? up.accessories.map((a:any)=>a?.id).filter(Boolean)
+                                      : [],
+                                  description: up.description || ''
+                                };
+                                window.localStorage.setItem('edit_project_draft', JSON.stringify(draft));
+                              } catch {}
                               setCurrentPage && setCurrentPage('projects-builder');
                               window?.scrollTo?.({ top: 0, behavior: 'smooth' });
                             }} aria-label={locale==='ar' ? 'تعديل' : 'Edit'}>

@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import type { RouteContext } from '../components/Router';
+import type { RouteContext } from '../components/routerTypes';
 import { useTranslation } from '../hooks/useTranslation';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
-import { Ruler, Package, Layers, Boxes, ClipboardList, Calendar, ArrowRight, Edit3, Info } from 'lucide-react';
+import { Ruler, Package, Layers, Boxes, ClipboardList, Calendar, ArrowRight, Edit3, Info, Check, X } from 'lucide-react';
 
 // Keep catalogs in sync with ProjectsBuilder/Projects
 const productTypes = [
@@ -36,6 +36,7 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
   const currency = locale === 'ar' ? 'ر.س' : 'SAR';
   const [project, setProject] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [proposals, setProposals] = useState<any[]>([]);
 
   // Load selected project by id from localStorage
   useEffect(() => {
@@ -49,6 +50,13 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
         const found = list.find((p: any) => p.id === id);
         setProject(found || null);
       }
+      // Load proposals addressed to this project
+      try {
+        const propRaw = localStorage.getItem('vendor_proposals');
+        const propList = propRaw ? JSON.parse(propRaw) : [];
+        const filtered = Array.isArray(propList) ? propList.filter((p:any)=> p.targetType === 'project' && String(p.targetId) === String(id)) : [];
+        setProposals(filtered);
+      } catch {}
     } catch {}
     finally { setLoading(false); }
   }, []);
@@ -142,7 +150,7 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
   };
 
   return (
-    <div className="min-h-screen bg-background" dir={locale==='ar'?'rtl':'ltr'}>
+    <div className="min-h-screen bg-background" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <Header currentPage="project-details" setCurrentPage={setCurrentPage as any} />
 
       <div className="container mx-auto px-4 py-8">
@@ -378,44 +386,60 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
               </CardContent>
             </Card>
 
-            {/* Sticky price/breakdown */}
-            <Card className="h-fit lg:sticky lg:top-24 shadow-sm">
-              <CardContent className="p-6 space-y-4">
-                <div>
-                  <div className="text-sm text-muted-foreground">{locale==='ar' ? 'ملخص التكلفة' : 'Cost Summary'}</div>
-                  <div className="text-3xl font-bold text-primary mt-1">{currency} {(project.total || 0).toLocaleString(locale==='ar'?'ar-EG':'en-US')}</div>
-                </div>
-                <Separator />
-                <div className="space-y-2 text-sm">
+            {/* Sidebar: Proposals for this project */}
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{locale==='ar' ? 'العنصر الأساسي' : 'Main item'}</span>
-                    <span>{currency} {mainItemTotal.toLocaleString(locale==='ar'?'ar-EG':'en-US')}</span>
+                    <h2 className="text-lg font-semibold">{locale==='ar' ? 'عروض مقدّمة' : 'Submitted Proposals'}</h2>
+                    <Badge variant="outline">{proposals.length}</Badge>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{locale==='ar' ? 'العناصر الإضافية' : 'Additional items'}</span>
-                    <span>{currency} {addItemsTotal.toLocaleString(locale==='ar'?'ar-EG':'en-US')}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{locale==='ar' ? 'عدد العناصر' : 'Items count'}</span>
-                    <span>{itemsCount + 1}</span>
-                  </div>
-                </div>
-                {itemsCount > 0 && (
-                  <div className="pt-2">
-                    <div className="text-xs text-muted-foreground mb-1">{locale==='ar' ? 'تفصيل العناصر' : 'Items breakdown'}</div>
-                    <div className="space-y-1 text-sm">
-                      {itemsArray.map((it:any, idx:number) => (
-                        <div key={it?.id || idx} className="flex items-center justify-between">
-                          <span className="truncate text-muted-foreground">{locale==='ar' ? `عنصر #${idx+2}` : `Item #${idx+2}`}</span>
-                          <span>{currency} {(Number(it?.total)||0).toLocaleString(locale==='ar'?'ar-EG':'en-US')}</span>
+                  {proposals.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">{locale==='ar' ? 'لا توجد عروض حتى الآن.' : 'No proposals yet.'}</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {proposals.map((pp:any)=> (
+                        <div key={pp.id} className="border rounded-md p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-medium">{locale==='ar' ? 'السعر' : 'Price'}: {currency} {Number(pp.price||0).toLocaleString(locale==='ar'?'ar-EG':'en-US')}</div>
+                            <Badge variant={pp.status==='accepted'? 'secondary' : pp.status==='rejected'? 'destructive' : 'outline'} className="text-xs capitalize">{locale==='ar' ? (pp.status==='pending'?'معلق': pp.status==='accepted'?'مقبول':'مرفوض') : pp.status}</Badge>
+                          </div>
+                          <div className="text-sm text-muted-foreground">{locale==='ar' ? 'المدة' : 'Days'}: {Number(pp.days||0)}</div>
+                          {pp.message && <div className="mt-1 text-xs bg-muted/20 rounded p-2">{pp.message}</div>}
+                          {pp.status === 'pending' && (
+                            <div className="mt-2 flex items-center gap-2">
+                              <Button size="sm" className="flex-1" onClick={() => {
+                                try {
+                                  const raw = localStorage.getItem('vendor_proposals');
+                                  const list = raw ? JSON.parse(raw) : [];
+                                  const next = list.map((x:any)=> x.id===pp.id ? { ...x, status: 'accepted' } : x);
+                                  localStorage.setItem('vendor_proposals', JSON.stringify(next));
+                                  setProposals((prev)=> prev.map((x:any)=> x.id===pp.id ? { ...x, status: 'accepted' } : x));
+                                } catch {}
+                              }}>
+                                <Check className="w-4 h-4 ml-1" /> {locale==='ar' ? 'قبول' : 'Accept'}
+                              </Button>
+                              <Button size="sm" variant="destructive" className="flex-1 bg-red-600 hover:bg-red-700 text-white border border-red-600" onClick={() => {
+                                try {
+                                  const raw = localStorage.getItem('vendor_proposals');
+                                  const list = raw ? JSON.parse(raw) : [];
+                                  const next = list.map((x:any)=> x.id===pp.id ? { ...x, status: 'rejected' } : x);
+                                  localStorage.setItem('vendor_proposals', JSON.stringify(next));
+                                  setProposals((prev)=> prev.map((x:any)=> x.id===pp.id ? { ...x, status: 'rejected' } : x));
+                                } catch {}
+                              }}>
+                                <X className="w-4 h-4 ml-1" /> {locale==='ar' ? 'رفض' : 'Reject'}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+        </div>
         )}
       </div>
 

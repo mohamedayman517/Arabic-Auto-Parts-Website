@@ -11,7 +11,7 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { useTranslation } from '../../hooks/useTranslation';
 
-interface VendorAnalyticsProps extends RouteContext {}
+type VendorAnalyticsProps = Partial<RouteContext>;
 
 // Mock analytics data
 const salesData = [
@@ -49,10 +49,12 @@ const customerData = [
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-export default function VendorAnalytics({ setCurrentPage }: VendorAnalyticsProps) {
+export default function VendorAnalytics({ setCurrentPage, ...context }: VendorAnalyticsProps) {
   const [mounted, setMounted] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('6months');
   const { t, locale } = useTranslation();
+  // Provide a safe fallback to satisfy components requiring a non-optional setter
+  const safeSetCurrentPage = setCurrentPage ?? (() => {});
 
   const currentMonth = new Date().toLocaleDateString(locale === 'en' ? 'en' : 'ar', { month: 'long' });
   const totalSales = salesData.reduce((sum, item) => sum + item.sales, 0);
@@ -80,7 +82,7 @@ export default function VendorAnalytics({ setCurrentPage }: VendorAnalyticsProps
 
   return (
     <div className="min-h-screen bg-background">
-      <Header currentPage="vendor-analytics" setCurrentPage={setCurrentPage} />
+      <Header currentPage="vendor-analytics" setCurrentPage={setCurrentPage} {...context} />
       
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
@@ -388,11 +390,8 @@ export default function VendorAnalytics({ setCurrentPage }: VendorAnalyticsProps
               </Card>
             </div>
           </TabsContent>
-
-          {/* Ensure Tabs is properly closed */}
         </Tabs>
-        
-        <Footer setCurrentPage={setCurrentPage} />
+        <Footer setCurrentPage={safeSetCurrentPage} />
       </div>
     </div>
   );

@@ -41,7 +41,8 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
   const [mobileOpen, setMobileOpen] = useState(false);
   const isAdmin = user?.role === 'admin';
   const isMarketer = user?.role === 'marketer';
-  const isRestricted = !!(isAdmin || isMarketer);
+  const isVendor = user?.role === 'vendor';
+  const isRestricted = !!(isAdmin || isMarketer || isVendor);
   
   return (
     <header className="w-full">

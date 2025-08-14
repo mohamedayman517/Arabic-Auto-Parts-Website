@@ -1,7 +1,6 @@
-import { Edit, Trash2, Eye, MoreVertical, Package } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { getStatusColor, getStatusText, formatCurrency, getStockStatus } from '../../utils/vendorHelpers';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -60,35 +59,18 @@ export default function ProductItem({ product, onEdit, onDelete, onView }: Produ
         </div>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap justify-end">
         <Badge className={getStatusColor(product.status)}>
           {getStatusText(product.status)}
         </Badge>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onView(product)}>
-              <Package className="h-4 w-4 ml-2" />
-              {locale === 'en' ? 'View' : 'عرض'}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(product)}>
-              <Edit className="h-4 w-4 ml-2" />
-              {locale === 'en' ? 'Edit' : 'تعديل'}
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => onDelete(product.id)}
-              className="text-destructive"
-            >
-              <Trash2 className="h-4 w-4 ml-2" />
-              {locale === 'en' ? 'Delete' : 'حذف'}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button variant="outline" size="sm" onClick={() => onEdit(product)}>
+          <Edit className="h-4 w-4 ml-1" />
+          {locale === 'en' ? 'Edit' : 'تعديل'}
+        </Button>
+        <Button type="button" size="sm" className="bg-red-600 text-white hover:bg-red-700" onClick={() => onDelete(product.id)}>
+          <Trash2 className="h-4 w-4 ml-1" />
+          {locale === 'en' ? 'Delete' : 'حذف'}
+        </Button>
       </div>
     </div>
   );

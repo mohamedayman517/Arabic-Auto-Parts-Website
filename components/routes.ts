@@ -37,6 +37,8 @@ import VendorProducts from '../pages/vendor/VendorProducts';
 import VendorOrders from '../pages/vendor/VendorOrders';
 import VendorAnalytics from '../pages/vendor/VendorAnalytics';
 import VendorSettings from '../pages/vendor/VendorSettings';
+import VendorProjects from '../pages/vendor/VendorProjects';
+import VendorServices from '../pages/vendor/VendorServices';
 
 // Import marketer dashboard components
 import MarketerDashboard from '../pages/marketer/MarketerDashboard';
@@ -80,6 +82,8 @@ export const routes: Record<string, RouteConfig> = {
   'vendor-orders': { component: VendorOrders, title: 'الطلبات', icon: FileText, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-analytics': { component: VendorAnalytics, title: 'التحليلات', icon: TrendingUp, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-settings': { component: VendorSettings, title: 'الإعدادات', icon: Settings, requiresAuth: true, allowedRoles: ['vendor'] },
+  'vendor-projects': { component: VendorProjects, title: 'مشاريعي', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
+  'vendor-services': { component: VendorServices, title: 'خدماتي', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
 
   // Marketer routes (require marketer role)
   'marketer-dashboard': { component: MarketerDashboard, title: 'لوحة التحكم التسويقية', icon: Target, requiresAuth: true, allowedRoles: ['marketer'] },

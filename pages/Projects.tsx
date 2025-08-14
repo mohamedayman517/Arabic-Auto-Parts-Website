@@ -961,9 +961,6 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg font-semibold">{locale==='ar' ? 'الخدمات' : 'Services'}</h3>
-                  <Button size="sm" variant="outline" onClick={() => setCurrentPage && setCurrentPage('add-service')}>
-                    <Plus className="w-4 h-4" /> {locale==='ar' ? 'إضافة خدمة' : 'Add Service'}
-                  </Button>
                 </div>
                 <div className="space-y-3">
                   {userServices.map((s:any) => (
@@ -1031,7 +1028,7 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
             {/* User Projects */}
             {filteredUserProjects.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">{locale==='ar' ? 'مشاريعك' : 'Your Projects'}</h3>
+                <h3 className="text-lg font-semibold mb-3">{locale==='ar' ? 'المشاريع' : ' Projects'}</h3>
                 <div className="space-y-3">
                   {filteredUserProjects.map((up) => (
                     <Card key={up.id}>

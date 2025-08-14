@@ -12,7 +12,7 @@ import Footer from '../../components/Footer';
 import { getStatusColor, getStatusText, formatCurrency, formatDate } from '../../utils/vendorHelpers';
 import { useTranslation } from '../../hooks/useTranslation';
 
-interface VendorOrdersProps extends RouteContext {}
+type VendorOrdersProps = Partial<RouteContext>;
 
 const mockOrders = [
   {
@@ -54,13 +54,16 @@ const mockOrders = [
   }
 ];
 
-export default function VendorOrders({ setCurrentPage }: VendorOrdersProps) {
+export default function VendorOrders({ setCurrentPage, ...context }: VendorOrdersProps) {
   const [mounted, setMounted] = useState(false);
   const [orders, setOrders] = useState(mockOrders);
   const [filteredOrders, setFilteredOrders] = useState(mockOrders);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const { t, locale } = useTranslation();
+
+  // Safe navigation fallback to avoid undefined setter and preserve SPA context
+  const safeSetCurrentPage = setCurrentPage ?? (() => {});
 
   const filterOrders = () => {
     let filtered = orders;
@@ -110,7 +113,7 @@ export default function VendorOrders({ setCurrentPage }: VendorOrdersProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header currentPage="vendor-orders" setCurrentPage={setCurrentPage} />
+      <Header currentPage="vendor-orders" setCurrentPage={safeSetCurrentPage} {...context} />
       
       <div className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-6">
@@ -277,7 +280,7 @@ export default function VendorOrders({ setCurrentPage }: VendorOrdersProps) {
         </Card>
       </div>
 
-      <Footer setCurrentPage={setCurrentPage} />
+      <Footer setCurrentPage={safeSetCurrentPage} />
     </div>
   );
 }

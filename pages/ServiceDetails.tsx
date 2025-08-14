@@ -3,9 +3,10 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 import { useTranslation } from "../hooks/useTranslation";
 import type { RouteContext } from "../components/routerTypes";
-import { Eye, Pencil, Trash2, ArrowLeft } from "lucide-react";
+import { Eye, Pencil, Trash2, ArrowLeft, Check, X } from "lucide-react";
 
 interface ServiceDetailsProps extends Partial<RouteContext> {}
 
@@ -33,6 +34,7 @@ export default function ServiceDetails({ setCurrentPage }: ServiceDetailsProps) 
   const { locale } = useTranslation();
   const currency = locale === 'ar' ? 'ر.س' : 'SAR';
   const [service, setService] = useState<Service | null>(null);
+  const [proposals, setProposals] = useState<any[]>([]);
 
   // Load selected service by id from localStorage
   useEffect(() => {
@@ -46,6 +48,13 @@ export default function ServiceDetails({ setCurrentPage }: ServiceDetailsProps) 
       if (!Array.isArray(list)) return;
       const found = list.find((s: any) => String(s.id) === String(id));
       if (found) setService(found as Service);
+      // Load proposals for this service
+      try {
+        const pRaw = window.localStorage.getItem('vendor_proposals');
+        const plist = pRaw ? JSON.parse(pRaw) : [];
+        const filtered = Array.isArray(plist) ? plist.filter((p:any)=> p.targetType === 'service' && String(p.targetId) === String(id)) : [];
+        setProposals(filtered);
+      } catch {}
     } catch {}
   }, []);
 
@@ -145,6 +154,58 @@ export default function ServiceDetails({ setCurrentPage }: ServiceDetailsProps) 
               {service.createdAt ? (locale === 'ar' ? `أُنشئت: ${new Date(service.createdAt).toLocaleString('ar-EG')}` : `Created: ${new Date(service.createdAt).toLocaleString('en-US')}`) : null}
               {service.updatedAt ? (locale === 'ar' ? ` • آخر تحديث: ${new Date(service.updatedAt).toLocaleString('ar-EG')}` : ` • Updated: ${new Date(service.updatedAt).toLocaleString('en-US')}`) : null}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Proposals for this service */}
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">{locale === 'ar' ? 'عروض مقدّمة' : 'Submitted Proposals'}</h2>
+              <Badge variant="outline">{proposals.length}</Badge>
+            </div>
+            {proposals.length === 0 ? (
+              <div className="text-sm text-muted-foreground">{locale === 'ar' ? 'لا توجد عروض حتى الآن.' : 'No proposals yet.'}</div>
+            ) : (
+              <div className="space-y-3">
+                {proposals.map((pp:any)=> (
+                  <div key={pp.id} className="border rounded-md p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium">{locale === 'ar' ? 'السعر' : 'Price'}: {currency} {Number(pp.price||0).toLocaleString(locale==='ar'?'ar-EG':'en-US')}</div>
+                      <Badge variant={pp.status==='accepted'? 'secondary' : pp.status==='rejected'? 'destructive' : 'outline'} className="text-xs capitalize">{locale==='ar' ? (pp.status==='pending'?'معلق': pp.status==='accepted'?'مقبول':'مرفوض') : pp.status}</Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">{locale === 'ar' ? 'المدة' : 'Days'}: {Number(pp.days||0)}</div>
+                    {pp.message && <div className="mt-1 text-xs bg-muted/20 rounded p-2">{pp.message}</div>}
+                    {pp.status === 'pending' && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <Button size="sm" className="flex-1" onClick={() => {
+                          try {
+                            const raw = window.localStorage.getItem('vendor_proposals');
+                            const list = raw ? JSON.parse(raw) : [];
+                            const next = list.map((x:any)=> x.id===pp.id ? { ...x, status: 'accepted' } : x);
+                            window.localStorage.setItem('vendor_proposals', JSON.stringify(next));
+                            setProposals((prev)=> prev.map((x:any)=> x.id===pp.id ? { ...x, status: 'accepted' } : x));
+                          } catch {}
+                        }}>
+                          <Check className="w-4 h-4 ml-1" /> {locale === 'ar' ? 'قبول' : 'Accept'}
+                        </Button>
+                        <Button size="sm" variant="destructive" className="flex-1 bg-red-600 hover:bg-red-700 text-white border border-red-600" onClick={() => {
+                          try {
+                            const raw = window.localStorage.getItem('vendor_proposals');
+                            const list = raw ? JSON.parse(raw) : [];
+                            const next = list.map((x:any)=> x.id===pp.id ? { ...x, status: 'rejected' } : x);
+                            window.localStorage.setItem('vendor_proposals', JSON.stringify(next));
+                            setProposals((prev)=> prev.map((x:any)=> x.id===pp.id ? { ...x, status: 'rejected' } : x));
+                          } catch {}
+                        }}>
+                          <X className="w-4 h-4 ml-1" /> {locale === 'ar' ? 'رفض' : 'Reject'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -343,6 +343,19 @@ export default function ProductListing({
   const [openFlags, setOpenFlags] = useState(false);
   const [showAllBrands, setShowAllBrands] = useState(false);
 
+  // Load vendor-added products from localStorage and merge with defaults
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      const raw = window.localStorage.getItem('user_products');
+      if (!raw) return;
+      const list = JSON.parse(raw);
+      if (Array.isArray(list) && list.length > 0) {
+        setProducts([...list, ...mockProducts]);
+      }
+    } catch {}
+  }, []);
+
   // Apply incoming normalized group from homepage (engines | tires | electrical | tools)
   useEffect(() => {
     if (rest?.searchFilters) {

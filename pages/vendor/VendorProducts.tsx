@@ -13,9 +13,9 @@ import ProductItem from '../../components/vendor/ProductItem';
 import { mockVendorProducts, productCategories, productBrands } from '../../data/vendorMockData';
 import { useTranslation } from '../../hooks/useTranslation';
 
-interface VendorProductsProps extends RouteContext {}
+type VendorProductsProps = Partial<RouteContext>;
 
-export default function VendorProducts({ setCurrentPage, setSelectedProduct }: VendorProductsProps) {
+export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...context }: VendorProductsProps) {
   const { locale } = useTranslation();
   const [products, setProducts] = useState(mockVendorProducts);
   const [filteredProducts, setFilteredProducts] = useState(mockVendorProducts);
@@ -25,6 +25,47 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct }: V
   const [selectedBrand, setSelectedBrand] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+
+  // Safe navigation fallback to avoid TS issues and preserve SPA context
+  const safeSetCurrentPage = setCurrentPage ?? (() => {});
+  // Load vendor-added products from localStorage and merge
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user_products');
+      const list = raw ? (JSON.parse(raw) as any[]) : [];
+      // Map listing items to this page's product shape
+      const vendorList = list.map((it) => ({
+        id: it.id, // e.g., v-<timestamp>
+        name: it.name?.ar || it.name?.en || '',
+        nameAr: it.name?.ar || '',
+        nameEn: it.name?.en || '',
+        brand: it.brand?.ar || it.brand?.en || 'عام',
+        category: it.category?.ar || it.category || '',
+        subCategoryAr: it.subCategory?.ar || '',
+        subCategoryEn: it.subCategory?.en || '',
+        price: Number(it.price || 0),
+        originalPrice: Number(it.originalPrice || it.price || 0),
+        stock: it.inStock ? 1 : 0,
+        status: 'active',
+        image: it.image,
+        images: it.images || (it.image ? [it.image] : []),
+        isNew: Boolean(it.isNew),
+        isOnSale: Boolean(it.isOnSale),
+        partNumber: it.partNumber || '',
+        descriptionAr: it.description?.ar || '',
+        descriptionEn: it.description?.en || '',
+        createdAt: new Date().toISOString().split('T')[0],
+        sales: 0,
+        views: 0,
+      }));
+      // Merge uniquely by id (prefer vendor list over mocks when id duplicates)
+      const all = [
+        ...vendorList,
+        ...mockVendorProducts.filter(m => !vendorList.some(v => v.id === m.id)),
+      ];
+      setProducts(all);
+    } catch {}
+  }, []);
 
   // Filter products based on search and filters
   const filterProducts = () => {
@@ -59,33 +100,111 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct }: V
   }, [searchTerm, selectedCategory, selectedStatus, selectedBrand, products]);
 
   const handleAddProduct = (productData: any) => {
+    const genId = Date.now().toString();
     const newProduct = {
       ...productData,
-      id: Date.now().toString(),
+      id: `v-${genId}`,
       sales: 0,
       views: 0,
-      image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=200',
+      image: productData?.image || 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=200',
       createdAt: new Date().toISOString().split('T')[0]
     };
-    
+
+    // Persist a ProductListing-compatible record to localStorage
+    try {
+      const arCategory = productData?.category === 'نوافذ' ? 'نوافذ' : 'أبواب';
+      const enCategory = productData?.category === 'نوافذ' ? 'Windows' : 'Doors';
+      const imgs: string[] = Array.isArray(productData?.images) ? productData.images : [];
+      const mainImg = newProduct.image || imgs[0] || '';
+      const listingItem = {
+        id: `v-${genId}`,
+        group: 'tools',
+        name: { ar: productData?.nameAr || String(productData?.name || ''), en: productData?.nameEn || String(productData?.name || '') },
+        brand: { ar: productData?.brand || 'عام', en: productData?.brand || 'Generic' },
+        category: { ar: arCategory, en: enCategory },
+        subCategory: { 
+          ar: (productData?.subCategoryAr) || (productData?.subCategory?.ar) || arCategory, 
+          en: (productData?.subCategoryEn) || (productData?.subCategory?.en) || enCategory 
+        },
+        price: Number(productData?.price || 0),
+        originalPrice: Number(productData?.originalPrice || productData?.price || 0),
+        rating: 0,
+        reviewCount: 0,
+        image: mainImg,
+        images: Array.from(new Set([mainImg, ...imgs.filter(Boolean)])),
+        inStock: Boolean(productData?.inStock ?? (Number(productData?.stock || 0) > 0)),
+        isNew: Boolean(productData?.isNew || false),
+        isOnSale: Boolean(productData?.isOnSale || false),
+        compatibility: [],
+        partNumber: productData?.partNumber || '',
+        warranty: { ar: 'سنة', en: '1 year' },
+        description: { ar: productData?.descriptionAr || '', en: productData?.descriptionEn || '' },
+      };
+      const raw = localStorage.getItem('user_products');
+      const list = raw ? (JSON.parse(raw) as any[]) : [];
+      localStorage.setItem('user_products', JSON.stringify([listingItem, ...list]));
+    } catch {}
+
     setProducts([...products, newProduct]);
     setIsAddDialogOpen(false);
   };
 
   const handleEditProduct = (productData: any) => {
+    // Update UI list
     setProducts(products.map(p => p.id === productData.id ? productData : p));
+    // Sync to localStorage if this is a vendor-added product
+    try {
+      const raw = localStorage.getItem('user_products');
+      const list = raw ? (JSON.parse(raw) as any[]) : [];
+      const idx = list.findIndex((it: any) => it.id === productData.id || it.id === `v-${productData.id}`);
+      if (idx >= 0) {
+        const arCategory = productData?.category === 'نوافذ' ? 'نوافذ' : 'أبواب';
+        const enCategory = productData?.category === 'نوافذ' ? 'Windows' : 'Doors';
+        const imgs: string[] = Array.isArray(productData?.images) ? productData.images : [];
+        const mainImg = productData.image || imgs[0] || '';
+        const updated = {
+          ...list[idx],
+          id: list[idx].id, // keep same id
+          name: { ar: productData?.nameAr || productData?.name || list[idx]?.name?.ar || '', en: productData?.nameEn || list[idx]?.name?.en || '' },
+          brand: { ar: productData?.brand || list[idx]?.brand?.ar || 'عام', en: productData?.brand || list[idx]?.brand?.en || 'Generic' },
+          category: { ar: arCategory, en: enCategory },
+          subCategory: { 
+            ar: (productData?.subCategoryAr) || (productData?.subCategory?.ar) || list[idx]?.subCategory?.ar || arCategory, 
+            en: (productData?.subCategoryEn) || (productData?.subCategory?.en) || list[idx]?.subCategory?.en || enCategory 
+          },
+          price: Number(productData?.price || 0),
+          originalPrice: Number(productData?.originalPrice || productData?.price || 0),
+          image: mainImg,
+          images: Array.from(new Set([mainImg, ...imgs.filter(Boolean)])),
+          inStock: Boolean(productData?.inStock ?? (Number(productData?.stock || 0) > 0)),
+          isNew: Boolean(productData?.isNew || false),
+          isOnSale: Boolean(productData?.isOnSale || false),
+          partNumber: productData?.partNumber || list[idx]?.partNumber || '',
+          description: { ar: productData?.descriptionAr || list[idx]?.description?.ar || '', en: productData?.descriptionEn || list[idx]?.description?.en || '' },
+        };
+        list[idx] = updated;
+        localStorage.setItem('user_products', JSON.stringify(list));
+      }
+    } catch {}
     setEditingProduct(null);
   };
 
   const handleDeleteProduct = (productId: string) => {
     if (confirm(locale === 'en' ? 'Are you sure you want to delete this product?' : 'هل أنت متأكد من حذف هذا المنتج؟')) {
       setProducts(products.filter(p => p.id !== productId));
+      // Remove from localStorage if vendor-added
+      try {
+        const raw = localStorage.getItem('user_products');
+        const list = raw ? (JSON.parse(raw) as any[]) : [];
+        const filtered = list.filter((it: any) => it.id !== productId && it.id !== `v-${productId}`);
+        localStorage.setItem('user_products', JSON.stringify(filtered));
+      } catch {}
     }
   };
 
   const handleViewProduct = (product: any) => {
-    setSelectedProduct(product);
-    setCurrentPage('product-details');
+    // Stay within vendor context: open edit dialog instead of routing to public product details
+    setEditingProduct(product);
   };
 
   const getStatsCards = () => {
@@ -104,7 +223,7 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct }: V
 
   return (
     <div className="min-h-screen bg-background">
-      <Header currentPage="vendor-products" setCurrentPage={setCurrentPage} />
+      <Header currentPage="vendor-products" setCurrentPage={safeSetCurrentPage} {...context} />
       
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
@@ -244,7 +363,7 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct }: V
         )}
       </div>
       
-      <Footer setCurrentPage={setCurrentPage} />
+      <Footer setCurrentPage={safeSetCurrentPage} />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { RouteContext } from "../../components/Router";
 import {
   Card,
@@ -153,24 +154,88 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
   ];
 
   // وظائف التاجر (مترجمة)
-  const vendorFunctions = [
+  const vendorFunctions: Array<{
+    icon: string;
+    label: { ar: string; en: string };
+    route?: string;
+  }> = [
     {
       icon: "ShoppingCart",
       label: { ar: "عرض الطلبات والمبيعات", en: "View Orders & Sales" },
+      route: "vendor-orders",
     },
-    { icon: "Package", label: { ar: "إدارة المنتجات", en: "Manage Products" } },
+    {
+      icon: "Package",
+      label: { ar: "إدارة المنتجات", en: "Manage Products" },
+      route: "vendor-products",
+    },
     {
       icon: "DollarSign",
       label: { ar: "النظام المحاسبي", en: "Accounting System" },
+      route: "vendor-analytics",
     },
     {
       icon: "BarChart3",
-      label: {
-        ar: "الفواتير وتحليل الأرباح",
-        en: "Invoices & Profit Analysis",
-      },
+      label: { ar: "الفواتير وتحليل الأرباح", en: "Invoices & Profit Analysis" },
+      route: "vendor-analytics",
+    },
+    // View sections instead of add
+    {
+      icon: "Eye",
+      label: { ar: "عرض المشاريع", en: "View Projects" },
+      route: "vendor-projects",
+    },
+    {
+      icon: "Eye",
+      label: { ar: "عرض الخدمات", en: "View Services" },
+      route: "vendor-services",
     },
   ];
+
+  // عرض المشاريع والخدمات من localStorage
+  const [userProjects, setUserProjects] = useState<any[]>([]);
+  const [userServices, setUserServices] = useState<any[]>([]);
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const pRaw = window.localStorage.getItem("user_projects");
+      const sRaw = window.localStorage.getItem("user_services");
+      const p = pRaw ? JSON.parse(pRaw) : [];
+      const s = sRaw ? JSON.parse(sRaw) : [];
+      if (Array.isArray(p)) setUserProjects(p);
+      if (Array.isArray(s)) setUserServices(s);
+    } catch {}
+  }, []);
+
+  const currency = locale === "ar" ? "ر.س" : "SAR";
+  const labelForProductType = (id: string) => {
+    const map: any = {
+      door: { ar: "باب", en: "Door" },
+      window: { ar: "شباك", en: "Window" },
+      railing: { ar: "دربزين", en: "Railing" },
+    };
+    return map[id]?.[locale === "ar" ? "ar" : "en"] || id;
+  };
+  const labelForMaterial = (id: string) => {
+    const map: any = {
+      aluminum: { ar: "ألمنيوم", en: "Aluminum" },
+      steel: { ar: "صاج", en: "Steel" },
+      laser: { ar: "ليزر", en: "Laser-cut" },
+      glass: { ar: "سكريت", en: "Glass (Securit)" },
+    };
+    return map[id]?.[locale === "ar" ? "ar" : "en"] || id;
+  };
+  const labelForServiceType = (id: string) => {
+    const map: any = {
+      plumber: { ar: "سباك", en: "Plumber" },
+      electrician: { ar: "كهربائي", en: "Electrician" },
+      carpenter: { ar: "نجار", en: "Carpenter" },
+      painter: { ar: "نقاش", en: "Painter" },
+      gypsum_installer: { ar: "فني تركيب جيبس بورد", en: "Gypsum Board Installer" },
+      marble_installer: { ar: "فني تركيب رخام", en: "Marble Installer" },
+    };
+    return map[id]?.[locale === "ar" ? "ar" : "en"] || id;
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -224,7 +289,8 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
               return (
                 <div
                   key={i}
-                  className="flex flex-col items-center p-4 bg-muted rounded-lg shadow-sm"
+                  className={`flex flex-col items-center p-4 bg-muted rounded-lg shadow-sm ${func.route ? 'cursor-pointer hover:bg-muted/80 transition' : ''}`}
+                  onClick={() => func.route && setCurrentPage && setCurrentPage(func.route)}
                 >
                   <Icon className="h-8 w-8 mb-2 text-primary" />
                   <span className="text-sm font-medium text-center">
@@ -336,6 +402,24 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
               <CardTitle>{t("quickActions")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {/* View Projects */}
+              <Button
+                className="w-full justify-start"
+                variant="secondary"
+                onClick={() => setCurrentPage && setCurrentPage("vendor-projects")}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                {locale === 'ar' ? 'عرض المشاريع' : 'View Projects'}
+              </Button>
+              {/* View Services */}
+              <Button
+                className="w-full justify-start"
+                variant="secondary"
+                onClick={() => setCurrentPage && setCurrentPage("vendor-services")}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                {locale === 'ar' ? 'عرض الخدمات' : 'View Services'}
+              </Button>
               <Button
                 className="w-full justify-start"
                 onClick={() => setCurrentPage && setCurrentPage("vendor-products")}
@@ -369,6 +453,101 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
               </Button>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Projects & Services Overview */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4">
+            {locale === "ar" ? "المشاريع والخدمات" : "Projects & Services"}
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Projects Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{locale === "ar" ? "مشاريعي" : "My Projects"}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage && setCurrentPage("vendor-projects")}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    {locale === "ar" ? "عرض الكل" : "View All"}
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {userProjects.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">
+                    {locale === "ar" ? "لا توجد مشاريع بعد" : "No projects yet"}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {userProjects.map((p: any) => (
+                      <div key={p.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <div className="font-medium text-sm">
+                            {labelForProductType(p.ptype || p.type)}
+                            {p.material ? ` • ${labelForMaterial(p.material)}` : ""}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {locale === "ar" ? "الأبعاد" : "Size"}: {Number(p.width || 0)}×{Number(p.height || 0)} | {locale === "ar" ? "الكمية" : "Qty"}: {Number(p.quantity || 0)}
+                          </div>
+                        </div>
+                        <div className="text-left">
+                          <div className="text-sm font-semibold">
+                            {currency} {Number(p.total || 0).toLocaleString(locale === "ar" ? "ar-EG" : "en-US")}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Services Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{locale === "ar" ? "خدماتي" : "My Services"}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage && setCurrentPage("vendor-services")}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    {locale === "ar" ? "عرض الكل" : "View All"}
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {userServices.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">
+                    {locale === "ar" ? "لا توجد خدمات بعد" : "No services yet"}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {userServices.map((s: any) => (
+                      <div key={s.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <div className="font-medium text-sm">{labelForServiceType(s.type)}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {locale === "ar" ? "اليومية" : "Daily"}: {currency} {Number(s.dailyWage || 0).toLocaleString(locale === "ar" ? "ar-EG" : "en-US")} • {locale === "ar" ? "الأيام" : "Days"}: {Number(s.days || 0)}
+                          </div>
+                        </div>
+                        <div className="text-left">
+                          <div className="text-sm font-semibold">
+                            {currency} {Number(s.total || 0).toLocaleString(locale === "ar" ? "ar-EG" : "en-US")}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Detailed Tabs */}

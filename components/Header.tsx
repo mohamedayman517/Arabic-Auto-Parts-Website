@@ -38,6 +38,17 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
     }
     return false;
   })();
+  const current = (() => {
+    if (currentPage) return currentPage;
+    if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        return (url.searchParams.get('page') || 'home');
+      } catch {}
+    }
+    return 'home';
+  })();
+  const hideBack = current === 'vendor-dashboard' || current === 'admin-dashboard';
   const [mobileOpen, setMobileOpen] = useState(false);
   const isAdmin = user?.role === 'admin';
   const isMarketer = user?.role === 'marketer';
@@ -63,7 +74,7 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
             {/* Logo */}
             <div className="flex items-center gap-3">
               {/* Back button */}
-              {!isHome && (
+              {!isHome && !hideBack && (
                 <button
                   onClick={() => {
                     if (goBack) return goBack();
@@ -136,22 +147,31 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 <LanguageSwitcher />
                 {/* Auth area */}
                 {user ? (
-                  <div className="hidden md:flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground">
-                      {locale === 'ar' ? 'أهلاً،' : 'Welcome,'} <span className="font-semibold text-foreground">{user.name}</span>
-                    </span>
-                    {!isRestricted && (
-                      <Button variant="ghost" size="icon" onClick={() => go('profile')} aria-label="Profile">
-                        <User className="w-5 h-5" />
-                      </Button>
+                  <>
+                    {/* Desktop greeting */}
+                    <div className="hidden md:flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground">
+                        {locale === 'ar' ? 'أهلاً،' : 'Welcome,'} <span className="font-semibold text-foreground">{user.name}</span>
+                      </span>
+                      {!isRestricted && (
+                        <Button variant="ghost" size="icon" onClick={() => go('profile')} aria-label="Profile">
+                          <User className="w-5 h-5" />
+                        </Button>
+                      )}
+                      <button
+                        onClick={() => { setUser && setUser(null); go('home'); }}
+                        className="text-foreground hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        {locale === 'ar' ? 'تسجيل الخروج' : 'Logout'}
+                      </button>
+                    </div>
+                    {/* Mobile minimal greeting for restricted roles */}
+                    {isRestricted && (
+                      <span className="md:hidden text-sm text-muted-foreground">
+                        {locale==='ar' ? (isVendor ? 'أهلاً تاجر' : 'أهلاً مدير') : (isVendor ? 'Hello Vendor' : 'Hello Admin')}
+                      </span>
                     )}
-                    <button
-                      onClick={() => { setUser && setUser(null); go('home'); }}
-                      className="text-foreground hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-                    >
-                      {locale === 'ar' ? 'تسجيل الخروج' : 'Logout'}
-                    </button>
-                  </div>
+                  </>
                 ) : (
                   <div className="hidden md:flex items-center gap-4">
                     <button
@@ -186,18 +206,16 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                     )}
                   </Button>
                 )}
-                {!isRestricted && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="md:hidden"
-                    aria-label="Open menu"
-                    aria-expanded={mobileOpen}
-                    onClick={() => setMobileOpen((v) => !v)}
-                  >
-                    <Menu className="w-5 h-5" />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  aria-label="Open menu"
+                  aria-expanded={mobileOpen}
+                  onClick={() => setMobileOpen((v) => !v)}
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
               </div>
             </div>
           </div>
@@ -218,12 +236,20 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
               </>
             )}
+            {/* Restricted (vendor/admin): show only Logout in menu */}
+            {(isVendor || isAdmin) && (
+              <>
+                <button onClick={() => { setUser && setUser(null); go('home'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{locale === 'ar' ? 'تسجيل الخروج' : 'Logout'}</button>
+              </>
+            )}
             {user ? (
               <>
                 {!isRestricted && (
                   <button onClick={() => { go('profile'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{locale === 'ar' ? 'الملف الشخصي' : 'Profile'}</button>
                 )}
-                <button onClick={() => { setUser && setUser(null); go('home'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{locale === 'ar' ? 'تسجيل الخروج' : 'Logout'}</button>
+                {!isRestricted && (
+                  <button onClick={() => { setUser && setUser(null); go('home'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{locale === 'ar' ? 'تسجيل الخروج' : 'Logout'}</button>
+                )}
               </>
             ) : (
               !isRestricted && (

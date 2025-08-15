@@ -21,6 +21,9 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const isAr = locale === 'ar';
   const [role, setRole] = useState<Role>('customer');
+  const [phone, setPhone] = useState('');
+  const [dob, setDob] = useState('');
+  const [profession, setProfession] = useState<'plumber' | 'electrician' | 'carpenter' | 'painter' | 'gypsum' | 'marble' | ''>('');
   const [error, setError] = useState<string | null>(null);
 
   const handleRegister = (e: React.FormEvent) => {
@@ -38,8 +41,19 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
       setError(isAr ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters');
       return;
     }
+    if (role === 'technician') {
+      if (!phone.trim()) { setError(isAr ? 'رقم الهاتف مطلوب' : 'Phone number is required'); return; }
+      if (!dob.trim()) { setError(isAr ? 'تاريخ الميلاد مطلوب' : 'Date of birth is required'); return; }
+      if (!profession) { setError(isAr ? 'اختر المهنة' : 'Please select a profession'); return; }
+    }
 
-    const res = addUser({ name: name.trim(), email: email.trim(), password, role });
+    const base = { name: name.trim(), email: email.trim(), password, role } as any;
+    if (role === 'technician') {
+      base.phone = phone.trim();
+      base.dob = dob.trim();
+      base.profession = profession;
+    }
+    const res = addUser(base);
     if (!res.ok) {
       setError(isAr ? 'هذا البريد مستخدم بالفعل' : 'Email already in use');
       return;
@@ -47,7 +61,7 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
     setError(null);
     const u = res.user;
     setUser({ id: u.id, name: u.name, email: u.email, role: u.role });
-    const dest = returnTo || (role === 'admin' ? 'admin-dashboard' : role === 'vendor' ? 'vendor-dashboard' : role === 'marketer' ? 'marketer-dashboard' : 'home');
+    const dest = returnTo || (role === 'admin' ? 'admin-dashboard' : role === 'vendor' ? 'vendor-dashboard' : 'home');
     setReturnTo(null);
     setCurrentPage(dest);
   };
@@ -126,9 +140,38 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
                     >
                       <option value="customer">{isAr ? 'مستخدم' : 'Customer'}</option>
                       <option value="vendor">{isAr ? 'بائع' : 'Vendor'}</option>
-                      <option value="marketer">{isAr ? 'مسوّق' : 'Marketer'}</option>
+                      <option value="technician">{isAr ? 'فني' : 'Technician'}</option>
                     </select>
                   </div>
+                  {role === 'technician' && (
+                    <>
+                      <div className={cn('space-y-1', isAr ? 'text-right' : 'text-left')}>
+                        <Label className="font-medium" htmlFor="phone">{isAr ? 'رقم الهاتف' : 'Phone Number'}</Label>
+                        <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required className="h-12 rounded-xl text-base" />
+                      </div>
+                      <div className={cn('space-y-1', isAr ? 'text-right' : 'text-left')}>
+                        <Label className="font-medium" htmlFor="dob">{isAr ? 'تاريخ الميلاد' : 'Date of Birth'}</Label>
+                        <Input id="dob" type="date" value={dob} onChange={(e) => setDob(e.target.value)} required className="h-12 rounded-xl text-base" />
+                      </div>
+                      <div className={cn('space-y-1', isAr ? 'text-right' : 'text-left')}>
+                        <Label className="font-medium" htmlFor="profession">{isAr ? 'المهنة' : 'Profession'}</Label>
+                        <select
+                          id="profession"
+                          value={profession}
+                          onChange={(e) => setProfession(e.target.value as any)}
+                          className="h-11 w-full rounded-lg border border-input bg-background px-3 text-base"
+                        >
+                          <option value="">{isAr ? 'اختر المهنة' : 'Select profession'}</option>
+                          <option value="plumber">{isAr ? 'سباك' : 'Plumber'}</option>
+                          <option value="electrician">{isAr ? 'كهربائي' : 'Electrician'}</option>
+                          <option value="carpenter">{isAr ? 'نجار' : 'Carpenter'}</option>
+                          <option value="painter">{isAr ? 'دهان' : 'Painter'}</option>
+                          <option value="gypsum">{isAr ? 'فني جبس' : 'Gypsum Installer'}</option>
+                          <option value="marble">{isAr ? 'فني رخام' : 'Marble Installer'}</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
                   <Button className="w-full rounded-xl h-12 text-base font-semibold bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-md hover:shadow-lg hover:brightness-110 hover:-translate-y-[1px] ring-1 ring-indigo-500/30 transition" size="lg" type="submit">{locale === 'en' ? 'Register' : 'تسجيل'}</Button>
                 </form>
                 <div className="my-4 border-t border-gray-200 dark:border-gray-800" />

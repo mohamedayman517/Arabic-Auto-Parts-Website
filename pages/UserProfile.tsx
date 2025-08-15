@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Edit, Save, X, MapPin, Mail, CreditCard, Shield, Package, Heart, History } from 'lucide-react';
+import { User, Edit, Save, X, MapPin, Mail, CreditCard, Shield, Package, Heart, History, Phone, Calendar } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -9,7 +9,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import { RouteContext } from '../components/Router';
+import { RouteContext, User as RouterUser } from '../components/Router';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useTranslation } from '../hooks/useTranslation';
@@ -33,6 +33,17 @@ interface Address {
   address: string;
   phone: string;
   isDefault: boolean;
+}
+
+// Local user view-model used in this page
+interface ProfileUser {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  birthdate?: string;
+  avatar?: string;
+  role?: 'admin' | 'vendor' | 'technician' | 'customer' | string;
 }
 
 interface UserProfileProps extends RouteContext {
@@ -93,14 +104,36 @@ const seedAddresses: Address[] = [
 export default function UserProfile({ user, setUser, setCurrentPage, wishlistItems, removeFromWishlist, addToCart }: UserProfileProps) {
   const { t, locale } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
-  const [editedUser, setEditedUser] = useState(user || {
-    id: '1',
-    name: 'أحمد محمد',
-    email: 'ahmed@example.com',
-    phone: '+966 50 123 4567',
-    avatar: '',
-    role: 'customer' as const
-  });
+  const [editedUser, setEditedUser] = useState<ProfileUser>((() => {
+    if (user) {
+      // Merge current session from localStorage to capture extra fields like dob/birthdate
+      let stored: any = null;
+      try {
+        const raw = localStorage.getItem('mock_current_user');
+        if (raw) stored = JSON.parse(raw);
+      } catch {}
+      const u: any = { ...(user as any), ...(stored || {}) };
+      return {
+        id: String(u.id ?? '1'),
+        name: String(u.name ?? ''),
+        email: typeof u.email === 'string' ? u.email : '',
+        phone: typeof u.phone === 'string' ? u.phone : '',
+        // accept either birthdate (from our UI) or dob (from auth store)
+        birthdate: typeof u.birthdate === 'string' ? u.birthdate : (typeof u.dob === 'string' ? u.dob : ''),
+        avatar: typeof u.avatar === 'string' ? u.avatar : '',
+        role: (u.role as any) ?? 'customer'
+      } as ProfileUser;
+    }
+    return {
+      id: '1',
+      name: 'أحمد محمد',
+      email: 'ahmed@example.com',
+      phone: '+966 50 123 4567',
+      birthdate: '',
+      avatar: '',
+      role: 'customer'
+    } as ProfileUser;
+  })());
 
   // LocalStorage helpers for per-user data
   const addrKey = user ? `mock_addresses_${user.id}` : '';
@@ -152,7 +185,17 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
   const persistAddresses = (next: typeof addresses) => { setAddresses(next); if (user) writeLS(addrKey, next); };
 
   const handleSave = () => {
-    setUser?.(editedUser);
+    const newUser: RouterUser = {
+      id: String(editedUser.id),
+      name: editedUser.name || '',
+      email: editedUser.email || '',
+      role: (editedUser.role as any) || 'customer',
+      avatar: editedUser.avatar,
+      phone: editedUser.phone,
+    };
+    setUser?.(newUser);
+    // Persist with extra optional fields like birthdate for this page's UI
+    try { localStorage.setItem('mock_current_user', JSON.stringify({ ...newUser, birthdate: editedUser.birthdate, dob: editedUser.birthdate })); } catch {}
     setIsEditing(false);
   };
 
@@ -325,7 +368,7 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
     const map: Record<string, { ar: string; en: string }> = {
       admin: { ar: 'مشرف', en: 'Admin' },
       vendor: { ar: 'بائع', en: 'Vendor' },
-      marketer: { ar: 'مسوّق', en: 'Marketer' },
+      technician: { ar: 'فني', en: 'Technician' },
       customer: { ar: 'عميل', en: 'Customer' }
     };
     const entry = map[r] || { ar: r, en: r };
@@ -374,7 +417,13 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
                 </Avatar>
                 
                 <h2 className="text-xl font-medium mb-2">{editedUser.name}</h2>
-                <p className="text-muted-foreground mb-4">{editedUser.email}</p>
+                <p className="text-muted-foreground mb-2">{editedUser.email}</p>
+                <p className="text-muted-foreground mb-1 flex items-center justify-center gap-2">
+                  <Phone className="h-3 w-3" /> {editedUser.phone || (locale==='en'?'Not set':'غير محدد')}
+                </p>
+                <p className="text-muted-foreground mb-4 flex items-center justify-center gap-2">
+                  <Calendar className="h-3 w-3" /> {editedUser.birthdate || (locale==='en'?'Birth date not set':'تاريخ الميلاد غير محدد')}
+                </p>
                 
                 <div className="space-y-2">
                   <Badge variant="outline" className="w-full justify-center gap-2">
@@ -454,6 +503,8 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
                         <Input
                           id="birthdate"
                           type="date"
+                          value={editedUser.birthdate || ''}
+                          onChange={(e) => setEditedUser({ ...editedUser, birthdate: e.target.value })}
                           disabled={!isEditing}
                           className={!isEditing ? 'bg-muted' : ''}
                         />

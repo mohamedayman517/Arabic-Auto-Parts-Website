@@ -119,7 +119,7 @@ export default function AdminReports({ setCurrentPage, ...context }: Partial<Rou
                     <Progress value={60} className="h-2" />
                   </div>
                   <div>
-                    <div className="flex justify-between text-sm mb-1"><span>Marketers</span><span>25%</span></div>
+                    <div className="flex justify-between text-sm mb-1"><span>Technicians</span><span>25%</span></div>
                     <Progress value={25} className="h-2" />
                   </div>
                 </div>

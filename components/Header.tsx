@@ -3,6 +3,7 @@
 import { Search, ShoppingCart, User, Menu, Phone, MapPin, ArrowLeft, ArrowRight, Bell } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useTranslation } from '../hooks/useTranslation';
 import type { RouteContext } from './Router';
@@ -51,11 +52,24 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
   const hideBack = current === 'vendor-dashboard' || current === 'admin-dashboard';
   const [mobileOpen, setMobileOpen] = useState(false);
   const isAdmin = user?.role === 'admin';
-  const isMarketer = user?.role === 'marketer';
   const isVendor = user?.role === 'vendor';
-  const isRestricted = !!(isAdmin || isMarketer || isVendor);
+  const isTechnician = user?.role === 'technician';
+  const isRestricted = !!(isAdmin || isVendor);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const loadNotifications = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = window.localStorage.getItem('notifications');
+        const list = raw ? JSON.parse(raw) : [];
+        const arr = Array.isArray(list) ? list : [];
+        setNotifications(arr.slice(0, 2));
+      }
+    } catch { setNotifications([]); }
+  };
   
   return (
+    <>
     <header className="w-full">
       {/* Top promotional banner */}
       <div className="bg-red-600 text-white py-2 px-4">
@@ -125,8 +139,11 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 <button onClick={() => go('home')} className="text-foreground hover:text-primary transition-colors">{t('home')}</button>
                 <button onClick={() => go('products')} className="text-foreground hover:text-primary transition-colors">{t('products')}</button>
                 <button onClick={() => go('offers')} className="text-foreground hover:text-primary transition-colors">{t('offers')}</button>
-                {user && (
-                  <button onClick={() => go('projects')} className="text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                {/* Always show Projects for guests and customers */}
+                <button onClick={() => go('projects')} className="text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                {/* Technicians quick link to their services */}
+                {user && isTechnician && (
+                  <button onClick={() => go('technician-services')} className="text-foreground hover:text-primary transition-colors">{locale==='ar' ? 'الخدمات' : 'Services'}</button>
                 )}
                 <button onClick={() => go('about')} className="text-foreground hover:text-primary transition-colors">{t('about')}</button>
               </nav>
@@ -149,17 +166,55 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
               
               <div className="flex items-center gap-2">
                 <LanguageSwitcher />
-                {user && !isMarketer && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative"
-                    onClick={() => go('notifications')}
-                    aria-label={locale==='ar' ? 'التنبيهات' : 'Notifications'}
-                    title={locale==='ar' ? 'التنبيهات' : 'Notifications'}
-                  >
-                    <Bell className="w-5 h-5" />
-                  </Button>
+                {user && (
+                  <Popover open={notifOpen} onOpenChange={(o)=>{ setNotifOpen(o); if (o) loadNotifications(); }}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="relative"
+                        onMouseDown={(e)=>{ e.preventDefault(); if (!notifOpen) { setNotifOpen(true); loadNotifications(); } }}
+                        onClick={(e)=>{ e.preventDefault(); }}
+                        aria-label={locale==='ar' ? 'التنبيهات' : 'Notifications'}
+                        title={locale==='ar' ? 'التنبيهات' : 'Notifications'}
+                      >
+                        <Bell className="w-5 h-5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align={locale==='ar' ? 'start' : 'end'} side="bottom" sideOffset={10} className="w-80 p-0 bg-white">
+                      <div className="p-3 border-b font-semibold text-sm">
+                        {locale==='ar' ? 'التنبيهات' : 'Notifications'}
+                      </div>
+                      <div className="p-3 space-y-3 max-h-80 overflow-auto">
+                        {notifications.length === 0 && (
+                          <div className="text-sm text-muted-foreground">
+                            {locale==='ar' ? 'لا توجد تنبيهات حالياً.' : 'No notifications yet.'}
+                          </div>
+                        )}
+                        {notifications.map((n:any, idx:number) => (
+                          <div key={idx} className="p-3 border rounded-md">
+                            <div className="text-sm font-medium">{n.title || (locale==='ar' ? 'تنبيه' : 'Notification')}</div>
+                            {n.message && (
+                              <div className="text-xs text-muted-foreground mt-1">{n.message}</div>
+                            )}
+                            {n.createdAt && (
+                              <div className="text-[11px] text-muted-foreground mt-1">
+                                {new Date(n.createdAt).toLocaleString(locale==='ar' ? 'ar-EG' : 'en-US')}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-3 border-t">
+                        <Button
+                          className="w-full"
+                          onClick={() => { setNotifOpen(false); if (setCurrentPage) setCurrentPage('notifications'); else { if (typeof window!=='undefined'){ try { const url=new URL(window.location.href); url.searchParams.set('page','notifications'); window.location.href=url.toString(); } catch {} } } }}
+                        >
+                          {locale==='ar' ? 'عرض المزيد' : 'Show more'}
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 )}
                 {/* Auth area */}
                 {user ? (
@@ -247,8 +302,9 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 <button onClick={() => { go('home'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('home')}</button>
                 <button onClick={() => { go('products'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('products')}</button>
                 <button onClick={() => { go('offers'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('offers')}</button>
-                {user && (
-                  <button onClick={() => { go('projects'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                <button onClick={() => { go('projects'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                {user && isTechnician && (
+                  <button onClick={() => { go('technician-services'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{locale==='ar' ? 'الخدمات' : 'Services'}</button>
                 )}
                 <button onClick={() => { go('about'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('about')}</button>
                 <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
@@ -281,5 +337,8 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
         </div>
       )}
     </header>
+
+    {/* Notifications popover handled above */}
+    </>
   );
 }

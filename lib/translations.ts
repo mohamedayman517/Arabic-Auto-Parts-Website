@@ -510,7 +510,7 @@ export const translations = {
     adminRole: "مدير",
     vendorRole: "بائع",
     customerRole: "عميل",
-    marketerRole: "مسوق",
+    technicianRole: "فني",
     
     // Vendor Dashboard
     vendorFunctions: "وظائف التاجر",
@@ -525,10 +525,10 @@ export const translations = {
     performance: "الأداء",
     customers: "العملاء",
     vendors: "البائعون",
-    marketers: "المسوقون",
+    technicians: "الفنيون",
     customer: "عميل",
     vendor: "بائع",
-    marketer: "مسوق",
+    technician: "فني",
     goals: "الأهداف",
     conversionRate: "معدل التحويل",
     visitorsToCustomers: "الزوار إلى عملاء",
@@ -929,7 +929,7 @@ export const translations = {
     recentlyRegisteredUsers: "Recently Registered Users",
     customer: "Customer",
     vendor: "Vendor",
-    marketer: "Marketer",
+    technician: "Technician",
     activeStatus: "Active",
     pendingStatus: "Pending",
     by: "By:",
@@ -938,7 +938,7 @@ export const translations = {
     userGrowth: "User Growth",
     // customers: duplicate key (also defined later in vendor dashboard)
     vendors: "Vendors",
-    marketers: "Marketers",
+    technicians: "Technicians",
     salesPerformance: "Sales Performance",
     dailySales: "Daily Sales",
     weeklySales: "Weekly Sales",
@@ -978,7 +978,7 @@ export const translations = {
     adminRole: "Admin",
     vendorRole: "Vendor",
     customerRole: "Customer",
-    marketerRole: "Marketer",
+    technicianRole: "Technician",
     
     // Vendor Dashboard
     vendorFunctions: "Vendor Functions",

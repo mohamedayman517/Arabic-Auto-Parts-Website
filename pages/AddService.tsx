@@ -96,8 +96,8 @@ export default function AddService({ setCurrentPage, ...rest }: AddServiceProps)
         };
         window.localStorage.setItem("user_services", JSON.stringify([item, ...list]));
       }
-      // Navigate back to projects page
-      setCurrentPage && setCurrentPage("projects");
+      // Navigate to vendor services page after saving
+      setCurrentPage && setCurrentPage("vendor-services");
     } catch {}
   };
 
@@ -128,7 +128,7 @@ export default function AddService({ setCurrentPage, ...rest }: AddServiceProps)
 
   return (
     <div className="min-h-screen bg-background" dir={locale === "ar" ? "rtl" : "ltr"}>
-      <Header currentPage="projects" setCurrentPage={setCurrentPage as any} />
+      <Header currentPage="vendor-services" setCurrentPage={setCurrentPage as any} />
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -136,7 +136,7 @@ export default function AddService({ setCurrentPage, ...rest }: AddServiceProps)
             <p className="text-muted-foreground text-sm">{locale === 'ar' ? 'أدخل تفاصيل الخدمة لحساب السعر تلقائياً' : 'Enter service details to auto-calculate the price'}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setCurrentPage && setCurrentPage("projects")}>{locale === 'ar' ? 'رجوع' : 'Back'}</Button>
+            <Button variant="outline" onClick={() => setCurrentPage && setCurrentPage("vendor-services")}>{locale === 'ar' ? 'رجوع' : 'Back'}</Button>
             <Button onClick={saveService} disabled={!canSubmit} className={!canSubmit ? 'opacity-50 cursor-not-allowed' : ''}>
               {locale === 'ar' ? 'حفظ الخدمة' : 'Save Service'}
             </Button>
@@ -178,16 +178,7 @@ export default function AddService({ setCurrentPage, ...rest }: AddServiceProps)
                   />
                   <span className="text-sm text-muted-foreground">{currency}</span>
                 </div>
-                {!!minForSelected && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {locale === 'ar' ? `الحد الأدنى: ${minForSelected} ${currency}` : `Minimum: ${currency} ${minForSelected}`}
-                  </div>
-                )}
-                {!!minForSelected && Number.isFinite(dailyWage) && dailyWage === minForSelected && (
-                  <div className="text-xs mt-1 text-amber-600">
-                    {locale === 'ar' ? 'تم تطبيق الحد الأدنى تلقائياً لهذه الخدمة.' : 'Minimum wage applied automatically for this service.'}
-                  </div>
-                )}
+                {/* Removed minimum helper text under daily wage input as requested */}
               </div>
               <div>
                 <label className="block text-sm mb-1">{locale === 'ar' ? 'عدد الأيام (الدوام)' : 'Duration (days)'}</label>

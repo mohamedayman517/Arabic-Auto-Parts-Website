@@ -77,7 +77,7 @@ const recentUsers = [
     id: 3,
     name: 'علي محمود',
     email: 'ali@example.com',
-    role: 'marketer',
+    role: 'technician',
     joinDate: '2024-01-13',
     status: 'active'
   }
@@ -306,7 +306,7 @@ export default function AdminDashboard({ setCurrentPage, ...context }: Partial<R
                           <div className="flex items-center mt-1">
                             <Badge variant="outline">
                               {user.role === 'customer' ? t('customer') : 
-                               user.role === 'vendor' ? t('vendor') : t('marketer')}
+                               user.role === 'vendor' ? t('vendor') : t('technician')}
                             </Badge>
                             <Badge 
                               className="mr-2"
@@ -359,7 +359,7 @@ export default function AdminDashboard({ setCurrentPage, ...context }: Partial<R
                     </div>
                     <div>
                       <div className="flex justify-between text-sm mb-2">
-                        <span>{t('marketers')}</span>
+                        <span>{t('technicians')}</span>
                         <span>25%</span>
                       </div>
                       <Progress value={25} className="h-2" />

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RouteContext } from "../../components/Router";
 import {
   Card,
@@ -7,6 +7,9 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
+import { Textarea } from "../../components/ui/textarea";
 import { Badge } from "../../components/ui/badge";
 import { Progress } from "../../components/ui/progress";
 import {
@@ -28,11 +31,12 @@ import {
   Store,
   Users,
   Star,
-  AlertCircle,
   Clock,
   XCircle,
   Truck,
   MessageSquare,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import Header from "../../components/Header";
 import { useTranslation } from "../../hooks/useTranslation";
@@ -66,26 +70,7 @@ const recentOrders = [
   },
 ];
 
-const lowStockProducts = [
-  {
-    name: "فلتر هواء K&N",
-    current: 3,
-    minimum: 10,
-    status: "critical",
-  },
-  {
-    name: "زيت محرك 5W-30",
-    current: 8,
-    minimum: 20,
-    status: "low",
-  },
-  {
-    name: "مكابح ATE",
-    current: 15,
-    minimum: 25,
-    status: "moderate",
-  },
-];
+// Removed low stock sample data and alert section
 
 // Removed inline notifications in favor of dedicated Notifications page
 
@@ -145,7 +130,7 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
     {
       icon: "DollarSign",
       label: { ar: "النظام المحاسبي", en: "Accounting System" },
-      route: "vendor-analytics",
+      route: "vendor-accounting",
     },
     {
       icon: "BarChart3",
@@ -163,12 +148,23 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
       label: { ar: "عرض الخدمات", en: "View Services" },
       route: "vendor-services",
     },
+    {
+      icon: "Plus",
+      label: { ar: "إضافة خدمة", en: "Add Service" },
+      route: "add-service",
+    },
   ];
 
   // عرض المشاريع والخدمات من localStorage
   const [userProjects, setUserProjects] = useState<any[]>([]);
   const [userServices, setUserServices] = useState<any[]>([]);
   const [vendorProposals, setVendorProposals] = useState<any[]>([]);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [editPrice, setEditPrice] = useState<string>("");
+  const [editDays, setEditDays] = useState<string>("");
+  const [editMessage, setEditMessage] = useState<string>("");
+  const [editSaving, setEditSaving] = useState(false);
   useEffect(() => {
     try {
       if (typeof window === "undefined") return;
@@ -186,6 +182,31 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
       setVendorProposals(mine);
     } catch {}
   }, []);
+
+  // Helpers to derive constraints from target snapshot (project)
+  const deriveProjectBaseTotal = (snap: any): number => {
+    if (!snap) return 0;
+    if (typeof snap.total === 'number') return Math.max(0, Number(snap.total));
+    const area = Math.max(0, Number(snap.width || 0)) * Math.max(0, Number(snap.height || 0));
+    const accessoriesCost = Array.isArray(snap.accessories)
+      ? snap.accessories.map((a: any) => Number(a?.price || 0)).reduce((a: number, b: number) => a + b, 0)
+      : 0;
+    const pricePerM = Number(snap.pricePerMeter || 0);
+    const qty = Math.max(1, Number(snap.quantity || 1));
+    const subtotalOne = (area * pricePerM) + accessoriesCost;
+    return Math.max(0, Math.round(subtotalOne * qty));
+  };
+  const editMinPrice = useMemo(() => {
+    if (!editing) return 0;
+    if (editing.targetType === 'project') return deriveProjectBaseTotal(editing.targetSnapshot);
+    return 0;
+  }, [editing]);
+  const editMaxPrice = useMemo(() => Math.max(editMinPrice, editMinPrice * 2), [editMinPrice]);
+  const editMaxDays = useMemo(() => {
+    if (!editing) return Infinity;
+    const d = Number(editing?.targetSnapshot?.days);
+    return Number.isFinite(d) && d > 0 ? d : Infinity;
+  }, [editing]);
 
   const currency = locale === "ar" ? "ر.س" : "SAR";
   const labelForProductType = (id: string) => {
@@ -316,18 +337,7 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
     }
   };
 
-  const getStockStatusColor = (status: string) => {
-    switch (status) {
-      case "critical":
-        return "destructive";
-      case "low":
-        return "secondary";
-      case "moderate":
-        return "outline";
-      default:
-        return "secondary";
-    }
-  };
+  // Removed stock status color helper - section deleted
 
   return (
     <div className="min-h-screen bg-background">
@@ -416,6 +426,40 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
                       <div className="text-xs text-muted-foreground mt-2">
                         {locale === 'ar' ? 'تاريخ الإرسال' : 'Submitted'}: {new Date(pr.createdAt).toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-US')}
                       </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditing(pr);
+                            setEditPrice(String(pr.price ?? ''));
+                            setEditDays(String(pr.days ?? ''));
+                            setEditMessage(String(pr.message ?? ''));
+                            setEditOpen(true);
+                          }}
+                        >
+                          <Pencil className="w-4 h-4 mr-1" /> {locale === 'ar' ? 'تعديل' : 'Edit'}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="bg-red-600 hover:bg-red-700 text-white border-0"
+                          onClick={() => {
+                            // Simple confirm
+                            const ok = window.confirm(locale === 'ar' ? 'هل تريد حذف هذا العرض؟' : 'Delete this proposal?');
+                            if (!ok) return;
+                            try {
+                              const raw = window.localStorage.getItem('vendor_proposals');
+                              const list = raw ? JSON.parse(raw) : [];
+                              const filtered = Array.isArray(list) ? list.filter((x:any)=> x.id !== pr.id) : [];
+                              window.localStorage.setItem('vendor_proposals', JSON.stringify(filtered));
+                              setVendorProposals((prev)=> prev.filter((x:any)=> x.id !== pr.id));
+                            } catch {}
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" /> {locale === 'ar' ? 'حذف' : 'Delete'}
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -455,38 +499,6 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Low Stock Alert */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <AlertCircle className="mr-2 h-5 w-5 text-orange-500" />
-                {t("stockAlert")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {lowStockProducts.map((product, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{product.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {t("available")}: {product.current} | {t("minimum")}: {product.minimum}
-                    </p>
-                  </div>
-                  <Badge variant={getStockStatusColor(product.status)}>
-                    {product.status === "critical"
-                      ? t("critical")
-                      : product.status === "low"
-                      ? t("low")
-                      : t("moderate")}
-                  </Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
           {/* Quick Actions */}
           <Card>
             <CardHeader>
@@ -511,6 +523,14 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
                 <Eye className="mr-2 h-4 w-4" />
                 {locale === 'ar' ? 'عرض الخدمات' : 'View Services'}
               </Button>
+              {/* Add Service */}
+              <Button
+                className="w-full justify-start"
+                onClick={() => setCurrentPage && setCurrentPage("add-service")}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                {locale === 'ar' ? 'إضافة خدمة' : 'Add Service'}
+              </Button>
               <Button
                 className="w-full justify-start"
                 onClick={() => setCurrentPage && setCurrentPage("vendor-products")}
@@ -525,6 +545,15 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
               >
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 {t("manageOrders")}
+              </Button>
+              {/* Accounting System */}
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                onClick={() => setCurrentPage && setCurrentPage("vendor-accounting")}
+              >
+                <DollarSign className="mr-2 h-4 w-4" />
+                {locale === 'ar' ? 'النظام المحاسبي' : 'Accounting System'}
               </Button>
               <Button
                 className="w-full justify-start"
@@ -712,6 +741,112 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
           {/* Removed Goals tab content */}
         </Tabs>
       </div>
+      {/* Edit Proposal Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="bg-white">
+          <DialogHeader>
+            <DialogTitle>{locale === 'ar' ? 'تعديل العرض' : 'Edit Proposal'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <label className="text-sm">{locale === 'ar' ? 'السعر المقترح' : 'Proposed Price'}</label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                value={editPrice}
+                onChange={(e)=> setEditPrice(e.target.value)}
+                min={editMinPrice || 0}
+                max={editMaxPrice || undefined}
+                placeholder={locale === 'ar'
+                  ? `الحد الأدنى: ${currency} ${editMinPrice.toLocaleString('ar-EG')} • الحد الأقصى: ${currency} ${editMaxPrice.toLocaleString('ar-EG')}`
+                  : `Min: ${currency} ${editMinPrice.toLocaleString('en-US')} • Max: ${currency} ${editMaxPrice.toLocaleString('en-US')}`}
+              />
+              {(() => {
+                const v = Number(editPrice);
+                const invalid = editPrice !== '' && (!isFinite(v) || v < (editMinPrice||0) || v > (editMaxPrice||Number.POSITIVE_INFINITY));
+                if (!invalid) return null;
+                return (
+                  <span className="text-xs text-red-600">
+                    {locale === 'ar'
+                      ? `السعر يجب أن يكون بين ${currency} ${editMinPrice.toLocaleString('ar-EG')} و ${currency} ${editMaxPrice.toLocaleString('ar-EG')}`
+                      : `Price must be between ${currency} ${editMinPrice.toLocaleString('en-US')} and ${currency} ${editMaxPrice.toLocaleString('en-US')}`}
+                  </span>
+                );
+              })()}
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm">{locale === 'ar' ? 'المدة (أيام)' : 'Duration (days)'}</label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                value={editDays}
+                onChange={(e)=> setEditDays(e.target.value)}
+                min={1}
+                max={Number.isFinite(editMaxDays) ? Number(editMaxDays) : undefined}
+                placeholder={Number.isFinite(editMaxDays)
+                  ? (locale === 'ar' ? `من 1 إلى ${Number(editMaxDays)}` : `From 1 to ${Number(editMaxDays)}`)
+                  : (locale === 'ar' ? 'أقل قيمة: 1 يوم' : 'Minimum: 1 day')}
+              />
+              {(() => {
+                const v = Number(editDays);
+                const invalid = editDays !== '' && (!Number.isFinite(v) || v < 1 || v > (Number.isFinite(editMaxDays) ? Number(editMaxDays) : Infinity));
+                if (!invalid) return null;
+                return (
+                  <span className="text-xs text-red-600">
+                    {Number.isFinite(editMaxDays)
+                      ? (locale === 'ar' ? `عدد الأيام يجب أن يكون بين 1 و ${Number(editMaxDays)}` : `Days must be between 1 and ${Number(editMaxDays)}`)
+                      : (locale === 'ar' ? 'عدد الأيام يجب ألا يقل عن 1' : 'Days must be at least 1')}
+                  </span>
+                );
+              })()}
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm">{locale === 'ar' ? 'رسالة' : 'Message'}</label>
+              <Textarea rows={4} value={editMessage} onChange={(e)=> setEditMessage(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditOpen(false)}
+            >
+              {locale === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button
+              disabled={(() => {
+                if (editSaving || !editing) return true;
+                const vP = Number(editPrice);
+                const vD = Number(editDays);
+                const validP = editPrice !== '' && isFinite(vP) && vP >= (editMinPrice||0) && vP <= (editMaxPrice||Number.POSITIVE_INFINITY);
+                const validD = editDays !== '' && Number.isFinite(vD) && vD >= 1 && vD <= (Number.isFinite(editMaxDays) ? Number(editMaxDays) : Infinity);
+                return !(validP && validD);
+              })()}
+              onClick={() => {
+                if (!editing) return;
+                const vP = Number(editPrice);
+                const vD = Number(editDays);
+                if (!isFinite(vP) || vP < (editMinPrice||0) || vP > (editMaxPrice||Number.POSITIVE_INFINITY)) return;
+                if (!Number.isFinite(vD) || vD < 1 || vD > (Number.isFinite(editMaxDays) ? Number(editMaxDays) : Infinity)) return;
+                try {
+                  setEditSaving(true);
+                  const raw = window.localStorage.getItem('vendor_proposals');
+                  const list = raw ? JSON.parse(raw) : [];
+                  const updated = Array.isArray(list)
+                    ? list.map((x:any)=> x.id === editing.id ? { ...x, price: vP, days: vD, message: editMessage } : x)
+                    : [];
+                  window.localStorage.setItem('vendor_proposals', JSON.stringify(updated));
+                  setVendorProposals((prev)=> prev.map((x:any)=> x.id === editing.id ? { ...x, price: vP, days: vD, message: editMessage } : x));
+                  setEditOpen(false);
+                } finally {
+                  setEditSaving(false);
+                }
+              }}
+            >
+              {editSaving ? (locale === 'ar' ? 'جارٍ الحفظ...' : 'Saving...') : (locale === 'ar' ? 'حفظ' : 'Save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -22,11 +22,11 @@ export default function Login({ setCurrentPage, setUser, returnTo, setReturnTo, 
   const [error, setError] = useState<string | null>(null);
 
   // Map role to landing page
-  const roleDest = (role: 'admin' | 'vendor' | 'marketer' | 'customer') => {
+  const roleDest = (role: 'admin' | 'vendor' | 'technician' | 'customer') => {
     if (returnTo) return returnTo;
     if (role === 'admin') return 'admin-dashboard';
     if (role === 'vendor') return 'vendor-dashboard';
-    if (role === 'marketer') return 'marketer-dashboard';
+    if (role === 'technician') return 'home';
     return 'home';
   };
 
@@ -56,7 +56,11 @@ export default function Login({ setCurrentPage, setUser, returnTo, setReturnTo, 
     setError(null);
     const u = user;
     const cleanName = typeof u.name === 'string' ? u.name.replace(/\s*User$/i, '').trim() : u.name;
-    setUser({ id: u.id, name: cleanName, email: u.email, role: u.role });
+    // set session user (Router.User) and persist full object for profile extras
+    setUser({ id: u.id, name: cleanName, email: u.email, role: u.role, phone: u.phone });
+    try {
+      localStorage.setItem('mock_current_user', JSON.stringify({ ...u, name: cleanName }));
+    } catch {}
     setReturnTo(null);
     setCurrentPage(roleDest(user.role));
   };

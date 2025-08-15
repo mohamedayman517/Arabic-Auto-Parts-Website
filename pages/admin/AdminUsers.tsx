@@ -111,7 +111,7 @@ export default function AdminUsers({ setCurrentPage, ...context }: Partial<Route
     switch(role) {
       case 'customer': return t('customerRole');
       case 'vendor': return t('vendorRole');
-      case 'marketer': return t('marketerRole');
+      case 'technician': return t('technicianRole');
       case 'admin': return t('adminRole');
       default: return role;
     }
@@ -185,7 +185,7 @@ export default function AdminUsers({ setCurrentPage, ...context }: Partial<Route
                   <SelectItem value="all">{t('allTypes')}</SelectItem>
                   <SelectItem value="customer">{t('customerRole')}</SelectItem>
                   <SelectItem value="vendor">{t('vendorRole')}</SelectItem>
-                  <SelectItem value="marketer">{t('marketerRole')}</SelectItem>
+                  <SelectItem value="technician">{t('technicianRole')}</SelectItem>
                   <SelectItem value="admin">{t('adminRole')}</SelectItem>
                 </SelectContent>
               </Select>
@@ -401,7 +401,7 @@ export default function AdminUsers({ setCurrentPage, ...context }: Partial<Route
                   <SelectContent>
                     <SelectItem value="customer">{t('customerRole')}</SelectItem>
                     <SelectItem value="vendor">{t('vendorRole')}</SelectItem>
-                    <SelectItem value="marketer">{t('marketerRole')}</SelectItem>
+                    <SelectItem value="technician">{t('technicianRole')}</SelectItem>
                     <SelectItem value="admin">{t('adminRole')}</SelectItem>
                   </SelectContent>
                 </Select>

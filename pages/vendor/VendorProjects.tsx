@@ -164,10 +164,35 @@ export default function VendorProjects({ setCurrentPage, ...context }: Props) {
                 id="price"
                 type="number"
                 inputMode="decimal"
-                placeholder={locale === 'ar' ? 'مثال: 2500' : 'e.g. 2500'}
+                min={Number(((selectedProject?.total ?? 0)))}
+                max={Number(((selectedProject?.total ?? 0) * 2))}
+                placeholder={(() => {
+                  const base = Number(selectedProject?.total || 0);
+                  const min = base;
+                  const max = base * 2;
+                  const numLocale = locale === 'ar' ? 'ar-EG' : 'en-US';
+                  return locale === 'ar'
+                    ? `الحد الأدنى ${currency} ${Number(min).toLocaleString(numLocale)} والحد الأقصى ${currency} ${Number(max).toLocaleString(numLocale)}`
+                    : `Min ${currency} ${Number(min).toLocaleString(numLocale)} • Max ${currency} ${Number(max).toLocaleString(numLocale)}`;
+                })()}
                 value={offerPrice}
                 onChange={(e) => setOfferPrice(e.target.value)}
               />
+              {(() => {
+                const base = Number(selectedProject?.total || 0);
+                const min = base;
+                const max = base * 2;
+                const v = Number(offerPrice);
+                const invalid = offerPrice !== '' && (!isFinite(v) || v < min || v > max);
+                if (!invalid) return null;
+                return (
+                  <div className="text-xs text-red-600">
+                    {locale === 'ar'
+                      ? `السعر يجب أن يكون بين ${currency} ${min.toLocaleString('ar-EG')} و ${currency} ${max.toLocaleString('ar-EG')}`
+                      : `Price must be between ${currency} ${min.toLocaleString('en-US')} and ${currency} ${max.toLocaleString('en-US')}`}
+                  </div>
+                );
+              })()}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="days">{locale === 'ar' ? 'المدة (أيام)' : 'Duration (days)'}</Label>
@@ -175,10 +200,30 @@ export default function VendorProjects({ setCurrentPage, ...context }: Props) {
                 id="days"
                 type="number"
                 inputMode="numeric"
-                placeholder={locale === 'ar' ? 'مثال: 7' : 'e.g. 7'}
+                min={1}
+                max={Number(selectedProject?.days || undefined)}
+                placeholder={(() => {
+                  const maxDays = Number(selectedProject?.days || 0);
+                  return maxDays > 0
+                    ? (locale === 'ar' ? `بين 1 و ${maxDays}` : `Between 1 and ${maxDays}`)
+                    : (locale === 'ar' ? 'بحد أدنى 1' : 'Minimum 1');
+                })()}
                 value={offerDays}
                 onChange={(e) => setOfferDays(e.target.value)}
               />
+              {(() => {
+                const maxDays = Number(selectedProject?.days || Infinity);
+                const v = Number(offerDays);
+                const invalid = offerDays !== '' && (!Number.isFinite(v) || v < 1 || (Number.isFinite(maxDays) && v > maxDays));
+                if (!invalid) return null;
+                return (
+                  <div className="text-xs text-red-600">
+                    {Number.isFinite(maxDays)
+                      ? (locale === 'ar' ? `عدد الأيام يجب أن يكون بين 1 و ${maxDays}` : `Days must be between 1 and ${maxDays}`)
+                      : (locale === 'ar' ? 'عدد الأيام يجب ألا يقل عن 1' : 'Days must be at least 1')}
+                  </div>
+                );
+              })()}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="message">{locale === 'ar' ? 'رسالة' : 'Message'}</Label>
@@ -193,14 +238,49 @@ export default function VendorProjects({ setCurrentPage, ...context }: Props) {
           </div>
           <DialogFooter>
             <Button
-              disabled={
-                saving || !selectedProject || !offerPrice || !offerDays ||
-                (selectedProject && submittedProjects.has(String(selectedProject.id)))
-              }
+              disabled={(() => {
+                if (saving || !selectedProject || submittedProjects.has(String(selectedProject.id))) return true;
+                const base = Number(selectedProject?.total || 0);
+                const minP = base, maxP = base * 2;
+                const vP = Number(offerPrice);
+                const maxD = Number(selectedProject?.days || Infinity);
+                const vD = Number(offerDays);
+                const validP = offerPrice !== '' && isFinite(vP) && vP >= minP && vP <= maxP;
+                const validD = offerDays !== '' && Number.isFinite(vD) && vD >= 1 && (!Number.isFinite(maxD) || vD <= maxD);
+                return !(validP && validD);
+              })()}
               onClick={() => {
                 if (!selectedProject) return;
                 if (submittedProjects.has(String(selectedProject.id))) {
                   Swal.fire({ icon: 'info', title: locale==='ar' ? 'تم الإرسال مسبقاً' : 'Already Submitted', text: locale==='ar' ? 'لا يمكنك إرسال عرض آخر لهذا المشروع.' : 'You have already submitted a proposal for this project.' });
+                  return;
+                }
+                // Validate ranges strictly
+                const basePrice = Number(selectedProject?.total || 0);
+                const minPrice = basePrice;
+                const maxPrice = basePrice * 2;
+                const priceNum = Number(offerPrice);
+                const daysNum = Number(offerDays);
+                const numLocale = locale === 'ar' ? 'ar-EG' : 'en-US';
+                if (!isFinite(priceNum) || priceNum < minPrice || priceNum > maxPrice) {
+                  Swal.fire({
+                    icon: 'error',
+                    title: locale === 'ar' ? 'قيمة السعر غير صحيحة' : 'Invalid price',
+                    text: locale === 'ar'
+                      ? `يجب أن يكون السعر بين ${currency} ${minPrice.toLocaleString(numLocale)} و ${currency} ${maxPrice.toLocaleString(numLocale)}`
+                      : `Price must be between ${currency} ${minPrice.toLocaleString(numLocale)} and ${currency} ${maxPrice.toLocaleString(numLocale)}`,
+                  });
+                  return;
+                }
+                const maxDays = Number(selectedProject?.days || Infinity);
+                if (!Number.isFinite(daysNum) || daysNum < 1 || (Number.isFinite(maxDays) && daysNum > maxDays)) {
+                  Swal.fire({
+                    icon: 'error',
+                    title: locale === 'ar' ? 'قيمة الأيام غير صحيحة' : 'Invalid days',
+                    text: Number.isFinite(maxDays)
+                      ? (locale === 'ar' ? `عدد الأيام يجب أن يكون بين 1 و ${maxDays}` : `Days must be between 1 and ${maxDays}`)
+                      : (locale === 'ar' ? 'عدد الأيام يجب ألا يقل عن 1' : 'Days must be at least 1'),
+                  });
                   return;
                 }
                 try {
@@ -210,8 +290,8 @@ export default function VendorProjects({ setCurrentPage, ...context }: Props) {
                     targetType: 'project',
                     targetId: selectedProject.id,
                     targetSnapshot: selectedProject,
-                    price: Number(offerPrice),
-                    days: Number(offerDays),
+                    price: priceNum,
+                    days: daysNum,
                     message: offerMessage,
                     vendorId: (context as any)?.user?.id || null,
                     status: 'pending',

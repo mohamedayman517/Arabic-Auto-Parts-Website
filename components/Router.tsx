@@ -5,7 +5,7 @@ import { routes } from "./routes";
 import Homepage from "../pages/Homepage";
 import { useTranslation } from "../hooks/useTranslation";
 
-export type UserRole = "customer" | "vendor" | "marketer" | "admin";
+export type UserRole = "customer" | "vendor" | "technician" | "admin";
 
 export interface User {
   id: string;
@@ -294,7 +294,14 @@ export default function Router() {
     if (typeof window === "undefined") return;
     try {
       if (user) {
-        localStorage.setItem("mock_current_user", JSON.stringify(user));
+        // Preserve any extra fields (e.g., dob, birthdate, phone) that may exist
+        let existing: any = null;
+        try {
+          const raw = localStorage.getItem("mock_current_user");
+          if (raw) existing = JSON.parse(raw);
+        } catch {}
+        const merged = existing ? { ...existing, ...user } : user;
+        localStorage.setItem("mock_current_user", JSON.stringify(merged));
       } else {
         localStorage.removeItem("mock_current_user");
       }

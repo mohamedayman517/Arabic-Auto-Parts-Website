@@ -1,4 +1,4 @@
-import { Home, Package, ShoppingCart, User, Truck, FileText, HelpCircle, Store, BarChart3, Settings, Users, TrendingUp, Target, Shield, Tag, Globe, Percent, Phone, Bell } from 'lucide-react';
+import { Home, Package, ShoppingCart, User, Truck, FileText, HelpCircle, Store, BarChart3, Settings, Users, TrendingUp, Shield, Tag, Globe, Percent, Phone, Bell } from 'lucide-react';
 
 // Define RouteConfig interface
 interface RouteConfig {
@@ -37,13 +37,14 @@ import VendorDashboard from '../pages/vendor/VendorDashboard';
 import VendorProducts from '../pages/vendor/VendorProducts';
 import VendorOrders from '../pages/vendor/VendorOrders';
 import VendorAnalytics from '../pages/vendor/VendorAnalytics';
+import VendorAccounting from '../pages/vendor/VendorAccounting';
 import VendorSettings from '../pages/vendor/VendorSettings';
 import VendorProjects from '../pages/vendor/VendorProjects';
 import VendorServices from '../pages/vendor/VendorServices';
 import VendorProjectDetails from '../pages/vendor/VendorProjectDetails';
 
 // Import marketer dashboard components
-import MarketerDashboard from '../pages/marketer/MarketerDashboard';
+// Marketer role removed
 
 // Import admin dashboard components
 import AdminDashboard from '../pages/admin/AdminDashboard';
@@ -52,6 +53,11 @@ import AdminVendors from '../pages/admin/AdminVendors';
 import AdminProducts from '../pages/admin/AdminProducts';
 import AdminReports from '../pages/admin/AdminReports';
 import AdminSettings from '../pages/admin/AdminSettings';
+// Technician pages
+import TechnicianServices from '../pages/technician/TechnicianServices';
+import TechnicianProjects from '../pages/technician/TechnicianProjects';
+import TechnicianProjectDetails from '../pages/technician/TechnicianProjectDetails';
+import TechnicianServiceDetails from '../pages/technician/TechnicianServiceDetails';
 
 export const routes: Record<string, RouteConfig> = {
   // Public routes
@@ -66,10 +72,10 @@ export const routes: Record<string, RouteConfig> = {
   offers: { component: Offers, title: 'العروض والخصومات', icon: Percent },
   about: { component: About, title: 'من نحن', icon: Globe },
   faq: { component: FAQ, title: 'الأسئلة الشائعة', icon: HelpCircle },
-  projects: { component: Projects, title: 'المشاريع', icon: Tag, requiresAuth: true },
+  projects: { component: Projects, title: 'المشاريع', icon: Tag },
   'add-service': { component: AddService, title: 'إضافة خدمة', icon: Tag },
   'service-details': { component: ServiceDetails, title: 'تفاصيل الخدمة', icon: Tag },
-  'projects-builder': { component: ProjectsBuilder, title: 'إضافة مشروع', icon: Tag },
+  'projects-builder': { component: ProjectsBuilder, title: 'إضافة مشروع', icon: Tag, requiresAuth: true },
   'project-details': { component: ProjectDetails, title: 'تفاصيل المشروع', icon: Tag },
   support: { component: Support, title: 'الدعم الفني', icon: Phone },
 
@@ -77,20 +83,20 @@ export const routes: Record<string, RouteConfig> = {
   profile: { component: UserProfile, title: 'الملف الشخصي', icon: User, requiresAuth: true },
   'track-order': { component: TrackOrder, title: 'تتبع الطلب', icon: Truck, requiresAuth: true },
   'my-orders': { component: MyOrders, title: 'طلباتي', icon: FileText, requiresAuth: true },
-  notifications: { component: NotificationsPage, title: 'التنبيهات', icon: Bell, requiresAuth: true, allowedRoles: ['customer', 'vendor', 'admin'] },
+  notifications: { component: NotificationsPage, title: 'التنبيهات', icon: Bell, requiresAuth: true, allowedRoles: ['customer', 'vendor', 'admin', 'technician'] },
 
   // Vendor routes (require vendor role)
   'vendor-dashboard': { component: VendorDashboard, title: 'لوحة التحكم', icon: BarChart3, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-products': { component: VendorProducts, title: 'منتجاتي', icon: Package, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-orders': { component: VendorOrders, title: 'الطلبات', icon: FileText, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-analytics': { component: VendorAnalytics, title: 'التحليلات', icon: TrendingUp, requiresAuth: true, allowedRoles: ['vendor'] },
+  'vendor-accounting': { component: VendorAccounting, title: 'النظام المحاسبي', icon: TrendingUp, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-settings': { component: VendorSettings, title: 'الإعدادات', icon: Settings, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-projects': { component: VendorProjects, title: 'مشاريعي', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-project-details': { component: VendorProjectDetails, title: 'تفاصيل مشروع', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-services': { component: VendorServices, title: 'خدماتي', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
 
-  // Marketer routes (require marketer role)
-  'marketer-dashboard': { component: MarketerDashboard, title: 'لوحة التحكم التسويقية', icon: Target, requiresAuth: true, allowedRoles: ['marketer'] },
+  // Marketer routes removed
 
   // Admin routes (require admin role)
   'admin-dashboard': { component: AdminDashboard, title: 'لوحة التحكم الإدارية', icon: Shield, requiresAuth: true, allowedRoles: ['admin'] },
@@ -99,4 +105,9 @@ export const routes: Record<string, RouteConfig> = {
   'admin-products': { component: AdminProducts, title: 'إدارة المنتجات', icon: Package, requiresAuth: true, allowedRoles: ['admin'] },
   'admin-reports': { component: AdminReports, title: 'Reports & Analytics', icon: BarChart3, requiresAuth: true, allowedRoles: ['admin'] },
   'admin-settings': { component: AdminSettings, title: 'System Settings', icon: Settings, requiresAuth: true, allowedRoles: ['admin'] },
+  // Technician routes (require technician role)
+  'technician-services': { component: TechnicianServices, title: 'الخدمات', icon: Tag, requiresAuth: true, allowedRoles: ['technician'] },
+  'technician-service-details': { component: TechnicianServiceDetails, title: 'تفاصيل خدمة', icon: Tag, requiresAuth: true, allowedRoles: ['technician'] },
+  'technician-projects': { component: TechnicianProjects, title: 'المشاريع', icon: Tag, requiresAuth: true, allowedRoles: ['technician'] },
+  'technician-project-details': { component: TechnicianProjectDetails, title: 'تفاصيل مشروع', icon: Tag, requiresAuth: true, allowedRoles: ['technician'] },
 };

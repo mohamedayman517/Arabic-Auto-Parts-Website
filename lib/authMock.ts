@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'customer' | 'vendor' | 'marketer';
+export type Role = 'admin' | 'customer' | 'vendor' | 'technician';
 
 export interface MockUser {
   id: string;
@@ -6,13 +6,19 @@ export interface MockUser {
   email: string;
   password: string;
   role: Role;
+  // Optional fields for technicians
+  phone?: string;
+  dob?: string; // ISO date string (YYYY-MM-DD)
+  profession?: 'plumber' | 'electrician' | 'carpenter' | 'painter' | 'gypsum' | 'marble';
 }
 
 const SEED_USERS: MockUser[] = [
   { id: '1', name: 'Admin', email: 'admin@demo.com', password: 'admin123', role: 'admin' },
   { id: '2', name: 'Vendor', email: 'vendor@demo.com', password: 'vendor123', role: 'vendor' },
-  { id: '3', name: 'Marketer', email: 'marketer@demo.com', password: 'marketer123', role: 'marketer' },
   { id: '4', name: 'Customer', email: 'user@demo.com', password: 'user12345', role: 'customer' },
+  { id: '5', name: 'Technician Sample', email: 'tech@demo.com', password: 'tech12345', role: 'technician', phone: '+966500000000', dob: '1990-01-01', profession: 'plumber' },
+  // Guaranteed demo technician for QA
+  { id: '6', name: 'Technician', email: 'Technician@demo.com', password: 'Technician123', role: 'technician', phone: '+966512345678', dob: '1992-05-10', profession: 'electrician' },
 ];
 
 const STORAGE_KEY = 'mock_users';
@@ -39,7 +45,17 @@ function writeStore(users: MockUser[]) {
 
 export function getUsers(): MockUser[] {
   const existing = readStore();
-  if (existing && existing.length) return existing;
+  // If store exists, ensure demo technician is present
+  if (existing && existing.length) {
+    const hasDemo = existing.some(u => u.email.toLowerCase() === 'technician@demo.com'.toLowerCase());
+    if (!hasDemo) {
+      const demo: MockUser = { id: '6', name: 'Technician', email: 'Technician@demo.com', password: 'Technician123', role: 'technician', phone: '+966512345678', dob: '1992-05-10', profession: 'electrician' };
+      const withDemo: MockUser[] = [...existing, demo];
+      writeStore(withDemo);
+      return withDemo;
+    }
+    return existing;
+  }
   writeStore(SEED_USERS);
   return [...SEED_USERS];
 }

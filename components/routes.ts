@@ -1,4 +1,4 @@
-import { Home, Package, ShoppingCart, User, Truck, FileText, HelpCircle, Store, BarChart3, Settings, Users, TrendingUp, Target, Shield, Tag, Globe, Percent, Phone } from 'lucide-react';
+import { Home, Package, ShoppingCart, User, Truck, FileText, HelpCircle, Store, BarChart3, Settings, Users, TrendingUp, Target, Shield, Tag, Globe, Percent, Phone, Bell } from 'lucide-react';
 
 // Define RouteConfig interface
 interface RouteConfig {
@@ -30,6 +30,7 @@ import Offers from '../pages/Offers';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';
+import NotificationsPage from '../pages/Notifications';
 
 // Import vendor dashboard components
 import VendorDashboard from '../pages/vendor/VendorDashboard';
@@ -39,6 +40,7 @@ import VendorAnalytics from '../pages/vendor/VendorAnalytics';
 import VendorSettings from '../pages/vendor/VendorSettings';
 import VendorProjects from '../pages/vendor/VendorProjects';
 import VendorServices from '../pages/vendor/VendorServices';
+import VendorProjectDetails from '../pages/vendor/VendorProjectDetails';
 
 // Import marketer dashboard components
 import MarketerDashboard from '../pages/marketer/MarketerDashboard';
@@ -64,7 +66,7 @@ export const routes: Record<string, RouteConfig> = {
   offers: { component: Offers, title: 'العروض والخصومات', icon: Percent },
   about: { component: About, title: 'من نحن', icon: Globe },
   faq: { component: FAQ, title: 'الأسئلة الشائعة', icon: HelpCircle },
-  projects: { component: Projects, title: 'المشاريع', icon: Tag },
+  projects: { component: Projects, title: 'المشاريع', icon: Tag, requiresAuth: true },
   'add-service': { component: AddService, title: 'إضافة خدمة', icon: Tag },
   'service-details': { component: ServiceDetails, title: 'تفاصيل الخدمة', icon: Tag },
   'projects-builder': { component: ProjectsBuilder, title: 'إضافة مشروع', icon: Tag },
@@ -75,6 +77,7 @@ export const routes: Record<string, RouteConfig> = {
   profile: { component: UserProfile, title: 'الملف الشخصي', icon: User, requiresAuth: true },
   'track-order': { component: TrackOrder, title: 'تتبع الطلب', icon: Truck, requiresAuth: true },
   'my-orders': { component: MyOrders, title: 'طلباتي', icon: FileText, requiresAuth: true },
+  notifications: { component: NotificationsPage, title: 'التنبيهات', icon: Bell, requiresAuth: true, allowedRoles: ['customer', 'vendor', 'admin'] },
 
   // Vendor routes (require vendor role)
   'vendor-dashboard': { component: VendorDashboard, title: 'لوحة التحكم', icon: BarChart3, requiresAuth: true, allowedRoles: ['vendor'] },
@@ -83,6 +86,7 @@ export const routes: Record<string, RouteConfig> = {
   'vendor-analytics': { component: VendorAnalytics, title: 'التحليلات', icon: TrendingUp, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-settings': { component: VendorSettings, title: 'الإعدادات', icon: Settings, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-projects': { component: VendorProjects, title: 'مشاريعي', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
+  'vendor-project-details': { component: VendorProjectDetails, title: 'تفاصيل مشروع', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-services': { component: VendorServices, title: 'خدماتي', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
 
   // Marketer routes (require marketer role)

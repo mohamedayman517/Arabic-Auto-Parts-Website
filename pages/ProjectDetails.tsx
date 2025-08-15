@@ -110,6 +110,7 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
         width: project.width || 0,
         height: project.height || 0,
         quantity: project.quantity || 1,
+        days: Number(project.days) || 1,
         selectedAcc: Array.isArray(project.selectedAcc)
           ? project.selectedAcc
           : Array.isArray(project.accessories)
@@ -130,6 +131,7 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
           width: Number(it.width) || 0,
           height: Number(it.height) || 0,
           quantity: Number(it.quantity) || 1,
+          days: Number(it.days) || 1,
           autoPrice: true,
           pricePerMeter: Number(it.pricePerMeter) || 0, // builder recalculates
           selectedAcc: Array.isArray(it.selectedAcc) ? it.selectedAcc : [],
@@ -203,6 +205,12 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
                       </Badge>
                     )}
                   </div>
+                  <div className="rounded-lg border p-4 bg-background shadow-sm">
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <Calendar className="w-4 h-4" /> {locale==='ar' ? 'المدة (أيام)' : 'Duration (days)'}
+                    </div>
+                    <div className="mt-1 font-medium">{Number(project?.days) > 0 ? project.days : '-'}</div>
+                  </div>
                 </div>
                 {/* Quick summary chips */}
                 <div className="flex flex-wrap gap-2 mt-4">
@@ -213,11 +221,16 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
                     {(project.width||0)} × {(project.height||0)} m
                   </Badge>
                   <Badge variant="outline" className="rounded-full text-xs">
-                    {locale==='ar' ? `الكمية: ${project.quantity||0}` : `Qty: ${project.quantity||0}`}
+                    {locale==='ar' ? `الكمية: ${project.quantity||0}` : `Quantity: ${project.quantity||0}`}
                   </Badge>
                   <Badge variant="outline" className="rounded-full text-xs">
-                    {locale==='ar' ? `سعر المتر: ${project.pricePerMeter||0}` : `Price/m²: ${project.pricePerMeter||0}`}
+                    {locale==='ar' ? `سعر المتر: ${project.pricePerMeter||0}` : `Price per m²: ${project.pricePerMeter||0}`}
                   </Badge>
+                  {Number(project?.days) > 0 && (
+                    <Badge variant="outline" className="rounded-full text-xs">
+                      {locale==='ar' ? `الأيام: ${project.days}` : `Days: ${project.days}`}
+                    </Badge>
+                  )}
                 </div>
               </div>
               <CardContent className="p-6 space-y-6">
@@ -321,6 +334,12 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
                               </div>
                               <div>
                                 <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                  <Calendar className="w-4 h-4" /> {locale==='ar' ? 'أيام التنفيذ' : 'Days to complete'}
+                                </div>
+                                <div className="mt-1 font-medium">{Number(it?.days) > 0 ? it.days : '-'}</div>
+                              </div>
+                              <div>
+                                <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                                   <ClipboardList className="w-4 h-4" /> {locale==='ar' ? 'سعر المتر المربع' : 'Price per m²'}
                                 </div>
                                 <div className="mt-1 font-medium">{it?.pricePerMeter || 0} {currency}</div>
@@ -415,6 +434,28 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
                                   const next = list.map((x:any)=> x.id===pp.id ? { ...x, status: 'accepted' } : x);
                                   localStorage.setItem('vendor_proposals', JSON.stringify(next));
                                   setProposals((prev)=> prev.map((x:any)=> x.id===pp.id ? { ...x, status: 'accepted' } : x));
+                                  // Notify vendor about acceptance
+                                  try {
+                                    const nraw = localStorage.getItem('app_notifications');
+                                    const nlist = nraw ? JSON.parse(nraw) : [];
+                                    const numLocale = locale==='ar' ? 'ar-EG' : 'en-US';
+                                    const title = locale==='ar' ? 'تم قبول عرضك' : 'Your proposal was accepted';
+                                    const desc = locale==='ar'
+                                      ? `تم قبول عرضك بقيمة ${currency} ${Number(pp.price||0).toLocaleString(numLocale)} لمدة ${Number(pp.days||0)} يوم`
+                                      : `Your offer of ${currency} ${Number(pp.price||0).toLocaleString(numLocale)} for ${Number(pp.days||0)} days was accepted`;
+                                    const notif = {
+                                      id: `ntf_${Date.now()}`,
+                                      type: 'proposal-status',
+                                      recipientId: pp.vendorId,
+                                      recipientRole: 'vendor',
+                                      title,
+                                      desc,
+                                      createdAt: new Date().toISOString(),
+                                      meta: { targetType: 'project', targetId: (project as any)?.id, proposalId: pp.id, status: 'accepted' }
+                                    };
+                                    const combined = Array.isArray(nlist) ? [notif, ...nlist] : [notif];
+                                    localStorage.setItem('app_notifications', JSON.stringify(combined));
+                                  } catch {}
                                 } catch {}
                               }}>
                                 <Check className="w-4 h-4 ml-1" /> {locale==='ar' ? 'قبول' : 'Accept'}
@@ -426,6 +467,28 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
                                   const next = list.map((x:any)=> x.id===pp.id ? { ...x, status: 'rejected' } : x);
                                   localStorage.setItem('vendor_proposals', JSON.stringify(next));
                                   setProposals((prev)=> prev.map((x:any)=> x.id===pp.id ? { ...x, status: 'rejected' } : x));
+                                  // Notify vendor about rejection
+                                  try {
+                                    const nraw = localStorage.getItem('app_notifications');
+                                    const nlist = nraw ? JSON.parse(nraw) : [];
+                                    const numLocale = locale==='ar' ? 'ar-EG' : 'en-US';
+                                    const title = locale==='ar' ? 'تم رفض عرضك' : 'Your proposal was rejected';
+                                    const desc = locale==='ar'
+                                      ? `تم رفض عرضك بقيمة ${currency} ${Number(pp.price||0).toLocaleString(numLocale)} لمدة ${Number(pp.days||0)} يوم`
+                                      : `Your offer of ${currency} ${Number(pp.price||0).toLocaleString(numLocale)} for ${Number(pp.days||0)} days was rejected`;
+                                    const notif = {
+                                      id: `ntf_${Date.now()}`,
+                                      type: 'proposal-status',
+                                      recipientId: pp.vendorId,
+                                      recipientRole: 'vendor',
+                                      title,
+                                      desc,
+                                      createdAt: new Date().toISOString(),
+                                      meta: { targetType: 'project', targetId: (project as any)?.id, proposalId: pp.id, status: 'rejected' }
+                                    };
+                                    const combined = Array.isArray(nlist) ? [notif, ...nlist] : [notif];
+                                    localStorage.setItem('app_notifications', JSON.stringify(combined));
+                                  } catch {}
                                 } catch {}
                               }}>
                                 <X className="w-4 h-4 ml-1" /> {locale==='ar' ? 'رفض' : 'Reject'}

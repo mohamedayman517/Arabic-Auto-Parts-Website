@@ -557,7 +557,7 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
 
   return (
     <div className="min-h-screen bg-background" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-      <Header currentPage="projects" setCurrentPage={setCurrentPage as any} />
+      <Header currentPage="projects" setCurrentPage={setCurrentPage as any} {...(rest as any)} />
 
       <div className="container mx-auto px-4 py-8">
         {/* Header */}

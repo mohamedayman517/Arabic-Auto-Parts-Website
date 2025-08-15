@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
@@ -24,6 +25,21 @@ export default function VendorProjects({ setCurrentPage, ...context }: Props) {
   const [offerDays, setOfferDays] = useState<string>("");
   const [offerMessage, setOfferMessage] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const vendorId = (context as any)?.user?.id;
+
+  // Build a fast lookup for already-submitted project IDs by this vendor
+  const submittedProjects = useMemo(() => {
+    try {
+      const raw = window.localStorage.getItem('vendor_proposals');
+      const list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) return new Set<string>();
+      return new Set<string>(
+        list
+          .filter((x:any)=> x.targetType==='project' && (!vendorId || x.vendorId === vendorId))
+          .map((x:any)=> String(x.targetId))
+      );
+    } catch { return new Set<string>(); }
+  }, [vendorId, userProjects.length]);
 
   useEffect(() => {
     try {
@@ -83,7 +99,7 @@ export default function VendorProjects({ setCurrentPage, ...context }: Props) {
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm">
                   <div className="text-muted-foreground">
-                    {locale === 'ar' ? 'الأبعاد' : 'Size'}: {Number(p.width || 0)}×{Number(p.height || 0)}
+                    {locale === 'ar' ? 'الأبعاد' : 'Dimensions'}: {Number(p.width || 0)}×{Number(p.height || 0)}
                   </div>
                   <div className="text-muted-foreground">
                     {locale === 'ar' ? 'الكمية' : 'Quantity'}: {Number(p.quantity || 0)}
@@ -94,11 +110,28 @@ export default function VendorProjects({ setCurrentPage, ...context }: Props) {
                   {!!p.description && (
                     <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</div>
                   )}
-                  <div className="pt-2">
+                  <div className="pt-2 grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        try {
+                          window.localStorage.setItem('selected_vendor_project_id', String(p.id));
+                        } catch {}
+                        setCurrentPage && setCurrentPage('vendor-project-details');
+                      }}
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      {locale === 'ar' ? 'تفاصيل' : 'Details'}
+                    </Button>
                     <Button
                       size="sm"
-                      className="w-full"
+                      disabled={submittedProjects.has(String(p.id))}
                       onClick={() => {
+                        if (submittedProjects.has(String(p.id))) {
+                          Swal.fire({ icon: 'info', title: locale==='ar' ? 'تم الإرسال مسبقاً' : 'Already Submitted', text: locale==='ar' ? 'لا يمكنك إرسال عرض آخر لهذا المشروع.' : 'You have already submitted a proposal for this project.' });
+                          return;
+                        }
                         setSelectedProject(p);
                         setOfferPrice("");
                         setOfferDays("");
@@ -107,7 +140,7 @@ export default function VendorProjects({ setCurrentPage, ...context }: Props) {
                       }}
                     >
                       <Send className="mr-2 h-4 w-4" />
-                      {locale === 'ar' ? 'تقديم عرض' : 'Submit Proposal'}
+                      {submittedProjects.has(String(p.id)) ? (locale==='ar' ? 'تم الإرسال' : 'Submitted') : (locale === 'ar' ? 'تقديم عرض' : 'Submit Proposal')}
                     </Button>
                   </div>
                 </CardContent>
@@ -152,7 +185,7 @@ export default function VendorProjects({ setCurrentPage, ...context }: Props) {
               <Textarea
                 id="message"
                 rows={4}
-                placeholder={locale === 'ar' ? 'عرّف بنفسك وقدّم تفاصيل العرض' : 'Introduce yourself and detail your offer'}
+                placeholder={locale === 'ar' ? 'عرّف بنفسك وقدّم تفاصيل العرض' : 'Introduce yourself and provide details of your offer'}
                 value={offerMessage}
                 onChange={(e) => setOfferMessage(e.target.value)}
               />
@@ -160,9 +193,16 @@ export default function VendorProjects({ setCurrentPage, ...context }: Props) {
           </div>
           <DialogFooter>
             <Button
-              disabled={saving || !selectedProject || !offerPrice || !offerDays}
+              disabled={
+                saving || !selectedProject || !offerPrice || !offerDays ||
+                (selectedProject && submittedProjects.has(String(selectedProject.id)))
+              }
               onClick={() => {
                 if (!selectedProject) return;
+                if (submittedProjects.has(String(selectedProject.id))) {
+                  Swal.fire({ icon: 'info', title: locale==='ar' ? 'تم الإرسال مسبقاً' : 'Already Submitted', text: locale==='ar' ? 'لا يمكنك إرسال عرض آخر لهذا المشروع.' : 'You have already submitted a proposal for this project.' });
+                  return;
+                }
                 try {
                   setSaving(true);
                   const proposal = {
@@ -179,8 +219,35 @@ export default function VendorProjects({ setCurrentPage, ...context }: Props) {
                   };
                   const raw = window.localStorage.getItem('vendor_proposals');
                   const list = raw ? JSON.parse(raw) : [];
-                  list.push(proposal);
+                  // Prevent double insert as a final guard
+                  const exists = Array.isArray(list) && list.some((x:any)=> x.targetType==='project' && String(x.targetId)===String(selectedProject.id) && (!vendorId || x.vendorId===vendorId));
+                  if (!exists) list.push(proposal);
                   window.localStorage.setItem('vendor_proposals', JSON.stringify(list));
+
+                  // Create user notification for the project owner
+                  try {
+                    const recipientId = selectedProject.userId || selectedProject.user?.id || null;
+                    const vendorName = (context as any)?.user?.name || (context as any)?.user?.username || (context as any)?.user?.email || (locale==='ar' ? 'بائع' : 'Vendor');
+                    const title = locale==='ar' ? 'تم تقديم عرض على مشروعك' : 'New proposal on your project';
+                    const numLocale = locale==='ar' ? 'ar-EG' : 'en-US';
+                    const desc = locale==='ar'
+                      ? `${vendorName} قدّم عرضًا بقيمة ${currency} ${Number(offerPrice).toLocaleString(numLocale)} لمدة ${Number(offerDays)} يوم`
+                      : `${vendorName} submitted an offer of ${currency} ${Number(offerPrice).toLocaleString(numLocale)} for ${Number(offerDays)} days`;
+                    const nraw = window.localStorage.getItem('app_notifications');
+                    const nlist = nraw ? JSON.parse(nraw) : [];
+                    const notif = {
+                      id: `ntf_${Date.now()}`,
+                      type: 'proposal',
+                      recipientId,
+                      recipientRole: 'user',
+                      title,
+                      desc,
+                      createdAt: new Date().toISOString(),
+                      meta: { targetType: 'project', targetId: selectedProject.id }
+                    };
+                    const combined = Array.isArray(nlist) ? [notif, ...nlist] : [notif];
+                    window.localStorage.setItem('app_notifications', JSON.stringify(combined));
+                  } catch {}
                   setProposalOpen(false);
                 } finally {
                   setSaving(false);

@@ -105,6 +105,7 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
   const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
+  const [days, setDays] = useState<number>(1);
   const [pricePerMeter, setPricePerMeter] = useState<number>(0);
   const [autoPrice, setAutoPrice] = useState<boolean>(true);
   const [selectedAcc, setSelectedAcc] = useState<string[]>([]);
@@ -119,6 +120,7 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
     width: number;
     height: number;
     quantity: number;
+    days: number;
     autoPrice: boolean;
     pricePerMeter: number;
     selectedAcc: string[];
@@ -146,6 +148,7 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
       setWidth(Number(d.width) || 0);
       setHeight(Number(d.height) || 0);
       setQuantity(Number(d.quantity) || 1);
+      setDays(Number(d.days) || 1);
       setSelectedAcc(Array.isArray(d.selectedAcc) ? d.selectedAcc : []);
       setDescription(d.description || '');
       // keep auto calc for ppm via effect
@@ -165,6 +168,7 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
             width: Number(b.width) || 0,
             height: Number(b.height) || 0,
             quantity: Number(b.quantity) || 1,
+            days: Number(b.days) || 1,
             autoPrice: true,
             pricePerMeter: Number(b.pricePerMeter) || 0,
             selectedAcc: Array.isArray(b.selectedAcc) ? b.selectedAcc : [],
@@ -176,6 +180,11 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
       }
     } catch {}
   }, []);
+
+  // Keep additional builders' days in sync with main days
+  useEffect(() => {
+    setAdditionalBuilders((prev) => prev.map((b) => ({ ...b, days })));
+  }, [days]);
 
   const isComplete = Boolean(ptype) && Boolean(material) && width > 0 && height > 0 && quantity > 0 && pricePerMeter > 0;
 
@@ -218,6 +227,7 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
       width: 0,
       height: 0,
       quantity: 1,
+      days: days,
       autoPrice: true,
       pricePerMeter: 0,
       selectedAcc: [],
@@ -247,6 +257,7 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
         width: b.width,
         height: b.height,
         quantity: b.quantity,
+        days: b.days,
         autoPrice: b.autoPrice,
         pricePerMeter: ppm,
         selectedAcc: b.selectedAcc,
@@ -255,6 +266,13 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
         createdAt: Date.now(),
       };
     });
+    // Attach current user info so vendors can see the requester name
+    let currentUser: any = null;
+    try {
+      const uRaw = window.localStorage.getItem('mock_current_user');
+      currentUser = uRaw ? JSON.parse(uRaw) : null;
+    } catch {}
+
     const mainProj = {
       id: editingId || Math.random().toString(36).slice(2),
       ptype,
@@ -264,6 +282,7 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
       width,
       height,
       quantity,
+      days,
       autoPrice,
       pricePerMeter: mainPPM,
       selectedAcc,
@@ -273,6 +292,10 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
       createdAt: Date.now(),
       // keep additional forms as nested items to avoid multiple saved projects
       items,
+      // requester info for vendor views
+      customerName: currentUser?.name || currentUser?.username || currentUser?.email || null,
+      userId: currentUser?.id ?? null,
+      user: currentUser ? { id: currentUser.id, name: currentUser.name || currentUser.username || currentUser.email } : undefined,
     };
     try {
       const raw = window.localStorage.getItem('user_projects');
@@ -292,7 +315,7 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header currentPage="projects-builder" setCurrentPage={setCurrentPage as any} {...(rest as any)} />
       <main className="container mx-auto px-4 py-6 flex-1">
         <h1 className="text-2xl font-bold mb-4">{locale==='ar' ? 'إضافة مشروع' : 'Add Project'}</h1>
         <Card className="mb-8">
@@ -367,6 +390,21 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
               <div>
                 <label className="block text-sm mb-1">{locale==='ar' ? 'الكمية' : 'Quantity'}</label>
                 <Input type="number" min={1} step={1} value={Number.isFinite(quantity) ? quantity : 0} onChange={(e) => setQuantity(parseInt(e.target.value || '0', 10) || 0)} placeholder={locale==='ar' ? '0' : '0'} />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">{locale==='ar' ? 'أيام التنفيذ' : 'Days to complete'}</label>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={String(Number.isFinite(days) ? days : 1)}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/[^0-9]/g, '');
+                    const n = Math.max(1, parseInt(v || '1', 10) || 1);
+                    setDays(n);
+                  }}
+                  placeholder={locale==='ar' ? 'عدد الأيام' : 'Days'}
+                />
               </div>
               
               <div className="md:col-span-2 lg:col-span-2">
@@ -489,6 +527,19 @@ export default function ProjectsBuilder({ setCurrentPage, ...rest }: RouteContex
                       <div>
                         <label className="block text-sm mb-1">{locale==='ar' ? 'الكمية' : 'Quantity'}</label>
                         <Input type="number" min={1} step={1} value={Number.isFinite(b.quantity) ? b.quantity : 0} onChange={(e)=> setAdditionalBuilders((prev)=>{ const c=[...prev]; c[idx] = { ...c[idx], quantity: parseInt(e.target.value || '0', 10) || 0 }; return c; })} />
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">{locale==='ar' ? 'أيام التنفيذ' : 'Days to complete'}</label>
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={String(Number.isFinite(b.days) ? b.days : 1)}
+                          onChange={(e)=> {/* disabled */}}
+                          disabled
+                          readOnly
+                          placeholder={locale==='ar' ? 'عدد الأيام' : 'Days'}
+                        />
                       </div>
                       <div className="md:col-span-2 lg:col-span-2">
                         <label className="block text-sm mb-2">{locale==='ar' ? 'ملحقات إضافية' : 'Additional Accessories'}</label>

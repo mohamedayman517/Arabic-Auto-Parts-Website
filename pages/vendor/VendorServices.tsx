@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
@@ -26,6 +27,21 @@ export default function VendorServices({ setCurrentPage, ...context }: Props) {
   const [offerDays, setOfferDays] = useState<string>("");
   const [offerMessage, setOfferMessage] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const vendorId = (context as any)?.user?.id;
+
+  // Build a fast lookup for already-submitted service IDs by this vendor
+  const submittedServices = useMemo(() => {
+    try {
+      const raw = window.localStorage.getItem('vendor_proposals');
+      const list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) return new Set<string>();
+      return new Set<string>(
+        list
+          .filter((x:any)=> x.targetType==='service' && (!vendorId || x.vendorId === vendorId))
+          .map((x:any)=> String(x.targetId))
+      );
+    } catch { return new Set<string>(); }
+  }, [vendorId, userServices.length]);
 
   useEffect(() => {
     try {
@@ -77,7 +93,7 @@ export default function VendorServices({ setCurrentPage, ...context }: Props) {
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm">
                   <div className="text-muted-foreground">
-                    {locale === 'ar' ? 'اليومية' : 'Daily'}: {currency} {Number(s.dailyWage || 0).toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-US')}
+                    {locale === 'ar' ? 'اليومية' : 'Daily wage'}: {currency} {Number(s.dailyWage || 0).toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-US')}
                   </div>
                   <div className="text-muted-foreground">
                     {locale === 'ar' ? 'الأيام' : 'Days'}: {Number(s.days || 0)}
@@ -92,7 +108,12 @@ export default function VendorServices({ setCurrentPage, ...context }: Props) {
                     <Button
                       size="sm"
                       className="w-full"
+                      disabled={submittedServices.has(String(s.id))}
                       onClick={() => {
+                        if (submittedServices.has(String(s.id))) {
+                          Swal.fire({ icon: 'info', title: locale==='ar' ? 'تم الإرسال مسبقاً' : 'Already Submitted', text: locale==='ar' ? 'لا يمكنك إرسال عرض آخر لهذه الخدمة.' : 'You have already submitted a proposal for this service.' });
+                          return;
+                        }
                         setSelectedService(s);
                         setOfferPrice("");
                         setOfferDays("");
@@ -101,7 +122,7 @@ export default function VendorServices({ setCurrentPage, ...context }: Props) {
                       }}
                     >
                       <Send className="mr-2 h-4 w-4" />
-                      {locale === 'ar' ? 'تقديم عرض' : 'Submit Proposal'}
+                      {submittedServices.has(String(s.id)) ? (locale==='ar' ? 'تم الإرسال' : 'Submitted') : (locale === 'ar' ? 'تقديم عرض' : 'Submit Proposal')}
                     </Button>
                   </div>
                 </CardContent>
@@ -146,7 +167,7 @@ export default function VendorServices({ setCurrentPage, ...context }: Props) {
               <Textarea
                 id="message"
                 rows={4}
-                placeholder={locale === 'ar' ? 'عرّف بنفسك وقدّم تفاصيل العرض' : 'Introduce yourself and detail your offer'}
+                placeholder={locale === 'ar' ? 'عرّف بنفسك وقدّم تفاصيل العرض' : 'Introduce yourself and provide details of your offer'}
                 value={offerMessage}
                 onChange={(e) => setOfferMessage(e.target.value)}
               />
@@ -154,9 +175,16 @@ export default function VendorServices({ setCurrentPage, ...context }: Props) {
           </div>
           <DialogFooter>
             <Button
-              disabled={saving || !selectedService || !offerPrice || !offerDays}
+              disabled={
+                saving || !selectedService || !offerPrice || !offerDays ||
+                (selectedService && submittedServices.has(String(selectedService.id)))
+              }
               onClick={() => {
                 if (!selectedService) return;
+                if (submittedServices.has(String(selectedService.id))) {
+                  Swal.fire({ icon: 'info', title: locale==='ar' ? 'تم الإرسال مسبقاً' : 'Already Submitted', text: locale==='ar' ? 'لا يمكنك إرسال عرض آخر لهذه الخدمة.' : 'You have already submitted a proposal for this service.' });
+                  return;
+                }
                 try {
                   setSaving(true);
                   const proposal = {
@@ -173,8 +201,34 @@ export default function VendorServices({ setCurrentPage, ...context }: Props) {
                   };
                   const raw = window.localStorage.getItem('vendor_proposals');
                   const list = raw ? JSON.parse(raw) : [];
-                  list.push(proposal);
+                  // Prevent double insert as a final guard
+                  const exists = Array.isArray(list) && list.some((x:any)=> x.targetType==='service' && String(x.targetId)===String(selectedService.id) && (!vendorId || x.vendorId===vendorId));
+                  if (!exists) list.push(proposal);
                   window.localStorage.setItem('vendor_proposals', JSON.stringify(list));
+                  // Create user notification for the service owner
+                  try {
+                    const recipientId = selectedService.userId || selectedService.user?.id || null;
+                    const vendorName = (context as any)?.user?.name || (context as any)?.user?.username || (context as any)?.user?.email || (locale==='ar' ? 'بائع' : 'Vendor');
+                    const title = locale==='ar' ? 'تم تقديم عرض على خدمتك' : 'New proposal on your service';
+                    const numLocale = locale==='ar' ? 'ar-EG' : 'en-US';
+                    const desc = locale==='ar'
+                      ? `${vendorName} قدّم عرضًا بقيمة ${Number(offerPrice).toLocaleString(numLocale)} ${currency} لمدة ${Number(offerDays)} يوم`
+                      : `${vendorName} submitted an offer of ${currency} ${Number(offerPrice).toLocaleString(numLocale)} for ${Number(offerDays)} days`;
+                    const nraw = window.localStorage.getItem('app_notifications');
+                    const nlist = nraw ? JSON.parse(nraw) : [];
+                    const notif = {
+                      id: `ntf_${Date.now()}`,
+                      type: 'proposal',
+                      recipientId,
+                      recipientRole: 'user',
+                      title,
+                      desc,
+                      createdAt: new Date().toISOString(),
+                      meta: { targetType: 'service', targetId: selectedService.id }
+                    };
+                    const combined = Array.isArray(nlist) ? [notif, ...nlist] : [notif];
+                    window.localStorage.setItem('app_notifications', JSON.stringify(combined));
+                  } catch {}
                   setProposalOpen(false);
                 } finally {
                   setSaving(false);

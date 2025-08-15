@@ -701,7 +701,7 @@ export default function ProductListing({
 
   return (
     <div className="min-h-screen bg-background">
-      <Header currentPage="products" setCurrentPage={setCurrentPage} />
+      <Header currentPage="products" setCurrentPage={setCurrentPage} {...(rest as any)} />
 
       <div className="container mx-auto px-4 py-6">
         {/* Search and Controls */}

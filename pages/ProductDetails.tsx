@@ -107,8 +107,9 @@ export default function ProductDetails({
   addToCart,
   isInWishlist,
   addToWishlist,
-  removeFromWishlist
-}: ProductDetailsProps) {
+  removeFromWishlist,
+  ...rest
+}: ProductDetailsProps & Partial<RouteContext>) {
   const { t, locale } = useTranslation();
   const currency = locale === "ar" ? "ر.س" : "SAR";
   const getText = (val: any): string => {
@@ -204,8 +205,12 @@ export default function ProductDetails({
   const isDoorLike = /باب|door/.test(textName) || /باب|door/.test(textCat) || /باب|door/.test(textSub);
   const isWindowLike = /شباك|نافذة|window/.test(textName) || /شباك|نافذة|window/.test(textCat) || /شباك|نافذة|window/.test(textSub);
   const doorWindowIds = new Set(['wd-1','mw-1','aw-1']);
-  const showInstallOption = doorWindowIds.has(product?.id || '') || isDoorLike || isWindowLike;
-  const INSTALL_FEE_PER_UNIT = 50;
+  // Prefer vendor-provided installation availability and fee if present
+  const vendorInstallEnabled = !!(product as any)?.addonInstallation?.enabled;
+  const vendorInstallFee = Number((product as any)?.addonInstallation?.feePerUnit ?? 50);
+  const fallbackInstall = doorWindowIds.has(product?.id || '') || isDoorLike || isWindowLike;
+  const showInstallOption = vendorInstallEnabled ? true : fallbackInstall;
+  const INSTALL_FEE_PER_UNIT = vendorInstallEnabled ? vendorInstallFee : 50;
   const priceWithAddon = product.price + (showInstallOption && installSelected ? INSTALL_FEE_PER_UNIT : 0);
   const subtotal = priceWithAddon * quantity;
 
@@ -268,7 +273,7 @@ export default function ProductDetails({
       className="min-h-screen bg-background"
       dir={locale === "ar" ? "rtl" : "ltr"}
     >
-      <Header currentPage="product-details" setCurrentPage={setCurrentPage!} />
+      <Header currentPage="product-details" setCurrentPage={setCurrentPage!} {...(rest as any)} />
 
       <div className="container mx-auto px-4 py-6">
         {/* Breadcrumb */}

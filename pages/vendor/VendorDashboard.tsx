@@ -30,14 +30,9 @@ import {
   Star,
   AlertCircle,
   Clock,
-  CheckCircle,
   XCircle,
   Truck,
   MessageSquare,
-  Bell,
-  Target,
-  Award,
-  Zap,
 } from "lucide-react";
 import Header from "../../components/Header";
 import { useTranslation } from "../../hooks/useTranslation";
@@ -92,29 +87,7 @@ const lowStockProducts = [
   },
 ];
 
-const notifications = [
-  {
-    id: 1,
-    type: "order",
-    message: "طلب جديد من محمد العلي",
-    time: "5 دقائق",
-    urgent: true,
-  },
-  {
-    id: 2,
-    type: "review",
-    message: "تقييم جديد 5 نجوم لمنتج فلتر الزيت",
-    time: "1 ساعة",
-    urgent: false,
-  },
-  {
-    id: 3,
-    type: "stock",
-    message: "مخزون فلتر الهواء منخفض",
-    time: "3 ساعات",
-    urgent: true,
-  },
-];
+// Removed inline notifications in favor of dedicated Notifications page
 
 export default function VendorDashboard({ setCurrentPage, ...context }: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
@@ -195,6 +168,7 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
   // عرض المشاريع والخدمات من localStorage
   const [userProjects, setUserProjects] = useState<any[]>([]);
   const [userServices, setUserServices] = useState<any[]>([]);
+  const [vendorProposals, setVendorProposals] = useState<any[]>([]);
   useEffect(() => {
     try {
       if (typeof window === "undefined") return;
@@ -204,6 +178,12 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
       const s = sRaw ? JSON.parse(sRaw) : [];
       if (Array.isArray(p)) setUserProjects(p);
       if (Array.isArray(s)) setUserServices(s);
+      // Load vendor proposals and filter by current vendor
+      const vRaw = window.localStorage.getItem('vendor_proposals');
+      const allProps = vRaw ? JSON.parse(vRaw) : [];
+      const myId = (context as any)?.user?.id;
+      const mine = Array.isArray(allProps) ? allProps.filter((pr: any) => !myId || pr.vendorId === myId) : [];
+      setVendorProposals(mine);
     } catch {}
   }, []);
 
@@ -263,6 +243,79 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
     }
   };
 
+  // Proposal status helpers
+  const proposalStatusVariant = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'secondary' as const;
+      case 'in_progress':
+        return 'outline' as const;
+      case 'completed':
+        return 'default' as const;
+      case 'closed':
+        return 'destructive' as const;
+      default:
+        return 'secondary' as const;
+    }
+  };
+  const proposalStatusLabel = (status: string) => {
+    if (locale === 'ar') {
+      switch (status) {
+        case 'pending': return 'قيد الانتظار';
+        case 'in_progress': return 'قيد التنفيذ';
+        case 'completed': return 'مكتمل';
+        case 'closed': return 'مغلق';
+        default: return status;
+      }
+    }
+    switch (status) {
+      case 'pending': return 'Pending';
+      case 'in_progress': return 'In Progress';
+      case 'completed': return 'Completed';
+      case 'closed': return 'Closed';
+      default: return status;
+    }
+  };
+
+  // Generic item status helpers (projects/services)
+  const itemStatusVariant = (status?: string) => {
+    switch ((status || '').toLowerCase()) {
+      case 'pending': return 'secondary' as const;
+      case 'in_progress':
+      case 'in-progress': return 'outline' as const;
+      case 'completed': return 'default' as const;
+      case 'closed': return 'destructive' as const;
+      case 'active': return 'default' as const;
+      case 'draft': return 'secondary' as const;
+      default: return 'secondary' as const;
+    }
+  };
+  const itemStatusLabel = (status?: string) => {
+    const s = (status || '').toLowerCase();
+    if (locale === 'ar') {
+      switch (s) {
+        case 'pending': return 'قيد الانتظار';
+        case 'in_progress':
+        case 'in-progress': return 'قيد التنفيذ';
+        case 'completed': return 'مكتمل';
+        case 'closed': return 'مغلق';
+        case 'active': return 'نشط';
+        case 'draft': return 'مسودة';
+        default: return status || '';
+      }
+    }
+    switch (s) {
+      case 'pending': return 'Pending';
+      case 'in_progress':
+      case 'in-progress': return 'In Progress';
+      case 'completed': return 'Completed';
+      case 'closed': return 'Closed';
+      case 'active': return 'Active';
+      case 'draft': return 'Draft';
+      default: return status || '';
+    }
+  };
+
   const getStockStatusColor = (status: string) => {
     switch (status) {
       case "critical":
@@ -281,6 +334,24 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
       <Header {...context} />
 
       <div className="container mx-auto px-4 py-8">
+        {/* Vendor welcome section */}
+        <div className="mb-6">
+          <Card>
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <div className="text-sm text-muted-foreground">{locale==='ar' ? 'مرحباً' : 'Welcome'}</div>
+                <div className="text-lg font-semibold">{(context as any)?.user?.name || (locale==='ar'?'التاجر':'Vendor')}</div>
+                {(context as any)?.user?.email && (
+                  <div className="text-xs text-muted-foreground mt-1">{(context as any)?.user?.email}</div>
+                )}
+              </div>
+              <div className="text-right text-sm text-muted-foreground">
+                <div>{locale==='ar' ? 'المشاريع الظاهرة' : 'Visible Projects'}: {userProjects.length}</div>
+                <div>{locale==='ar' ? 'الخدمات الظاهرة' : 'Visible Services'}: {userServices.length}</div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4">{t("vendorFunctions")}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -300,10 +371,58 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
               );
             })}
           </div>
-          <h1 className="mb-2">{`${t("welcome")} ${context.user?.name ?? ""}`}</h1>
-          <p className="text-muted-foreground">
-            {t("vendorDashboardDescription")}
-          </p>
+          {/* Vendor Applications (Projects & Services) */}
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4">{locale === 'ar' ? 'عروضي المقدمة' : 'My Applications'}</h2>
+            {vendorProposals.length === 0 ? (
+              <Card>
+                <CardContent className="p-6 text-muted-foreground">
+                  {locale === 'ar' ? 'لا توجد عروض مقدمة بعد.' : 'No applications yet.'}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {vendorProposals.map((pr: any) => (
+                  <Card key={pr.id}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <span>
+                          {pr.targetType === 'project' ? (
+                            <>
+                              {labelForProductType(pr.targetSnapshot?.ptype || pr.targetSnapshot?.type)}
+                              {pr.targetSnapshot?.material ? ` • ${labelForMaterial(pr.targetSnapshot.material)}` : ''}
+                            </>
+                          ) : (
+                            <>
+                              {labelForServiceType(pr.targetSnapshot?.type)}
+                            </>
+                          )}
+                        </span>
+                        <Badge variant={proposalStatusVariant(pr.status)}>{proposalStatusLabel(pr.status)}</Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="text-muted-foreground">
+                          {locale === 'ar' ? 'السعر' : 'Price'}: {currency} {Number(pr.price || 0).toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-US')}
+                        </div>
+                        <div className="text-muted-foreground">
+                          {locale === 'ar' ? 'المدة' : 'Days'}: {Number(pr.days || 0)}
+                        </div>
+                      </div>
+                      {!!pr.message && (
+                        <div className="text-xs text-muted-foreground mt-2 line-clamp-2">{pr.message}</div>
+                      )}
+                      <div className="text-xs text-muted-foreground mt-2">
+                        {locale === 'ar' ? 'تاريخ الإرسال' : 'Submitted'}: {new Date(pr.createdAt).toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-US')}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Removed welcome and overview description under My Applications */}
         </div>
 
         {/* Quick Stats */}
@@ -336,34 +455,6 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Notifications */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Bell className="mr-2 h-5 w-5" />
-                {t("importantAlerts")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className="flex items-start space-x-3 space-x-reverse"
-                >
-                  <div
-                    className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                      notification.urgent ? "bg-red-500" : "bg-blue-500"
-                    }`}
-                  />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm">{notification.message}</p>
-                    <p className="text-xs text-muted-foreground">{notification.time}</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
           {/* Low Stock Alert */}
           <Card>
             <CardHeader>
@@ -455,108 +546,14 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
           </Card>
         </div>
 
-        {/* Projects & Services Overview */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4">
-            {locale === "ar" ? "المشاريع والخدمات" : "Projects & Services"}
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Projects Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{locale === "ar" ? "مشاريعي" : "My Projects"}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage && setCurrentPage("vendor-projects")}
-                  >
-                    <Eye className="mr-2 h-4 w-4" />
-                    {locale === "ar" ? "عرض الكل" : "View All"}
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {userProjects.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">
-                    {locale === "ar" ? "لا توجد مشاريع بعد" : "No projects yet"}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {userProjects.map((p: any) => (
-                      <div key={p.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <div className="font-medium text-sm">
-                            {labelForProductType(p.ptype || p.type)}
-                            {p.material ? ` • ${labelForMaterial(p.material)}` : ""}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {locale === "ar" ? "الأبعاد" : "Size"}: {Number(p.width || 0)}×{Number(p.height || 0)} | {locale === "ar" ? "الكمية" : "Qty"}: {Number(p.quantity || 0)}
-                          </div>
-                        </div>
-                        <div className="text-left">
-                          <div className="text-sm font-semibold">
-                            {currency} {Number(p.total || 0).toLocaleString(locale === "ar" ? "ar-EG" : "en-US")}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Services Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{locale === "ar" ? "خدماتي" : "My Services"}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage && setCurrentPage("vendor-services")}
-                  >
-                    <Eye className="mr-2 h-4 w-4" />
-                    {locale === "ar" ? "عرض الكل" : "View All"}
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {userServices.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">
-                    {locale === "ar" ? "لا توجد خدمات بعد" : "No services yet"}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {userServices.map((s: any) => (
-                      <div key={s.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <div className="font-medium text-sm">{labelForServiceType(s.type)}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {locale === "ar" ? "اليومية" : "Daily"}: {currency} {Number(s.dailyWage || 0).toLocaleString(locale === "ar" ? "ar-EG" : "en-US")} • {locale === "ar" ? "الأيام" : "Days"}: {Number(s.days || 0)}
-                          </div>
-                        </div>
-                        <div className="text-left">
-                          <div className="text-sm font-semibold">
-                            {currency} {Number(s.total || 0).toLocaleString(locale === "ar" ? "ar-EG" : "en-US")}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+      
 
         {/* Detailed Tabs */}
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3 gap-2">
             <TabsTrigger value="orders">{t("recentOrders")}</TabsTrigger>
             <TabsTrigger value="performance">{t("performance")}</TabsTrigger>
             <TabsTrigger value="customers">{t("customers")}</TabsTrigger>
-            <TabsTrigger value="goals">{t("goals")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders" className="space-y-6">
@@ -712,72 +709,7 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
             </div>
           </TabsContent>
 
-          <TabsContent value="goals" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Target className="mr-2 h-5 w-5" />
-                    {t("monthlyGoals")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>{t("salesGoal")}</span>
-                      <span>90%</span>
-                    </div>
-                    <Progress value={90} className="h-2" />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>{t("ordersGoal")}</span>
-                      <span>75%</span>
-                    </div>
-                    <Progress value={75} className="h-2" />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>{t("newCustomersGoal")}</span>
-                      <span>127%</span>
-                    </div>
-                    <Progress value={100} className="h-2" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Award className="mr-2 h-5 w-5" />
-                    {t("achievements")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                    <div className="flex items-center">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span className="text-sm">
-                        {t("bestSellerThisMonth")}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                    <div className="flex items-center">
-                      <Star className="h-5 w-5 text-blue-500 mr-2" />
-                      <span className="text-sm">{t("fiveStarRating")}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                    <div className="flex items-center">
-                      <Zap className="h-5 w-5 text-purple-500 mr-2" />
-                      <span className="text-sm">{t("salesGrowth20")}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+          {/* Removed Goals tab content */}
         </Tabs>
       </div>
     </div>

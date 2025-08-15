@@ -36,7 +36,10 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
     images: (product as any)?.images || (product?.image ? [product.image] : []),
     isNew: product?.isNew || false,
     isOnSale: product?.isOnSale || false,
-    isActive: product?.status === 'active' || false,
+    isActive: product?.isActive || product?.status === 'active' || false,
+    // Vendor-defined installation option
+    addonInstallEnabled: product?.addonInstallEnabled || (product as any)?.addonInstallation?.enabled || false,
+    addonInstallFee: (product?.addonInstallFee ?? (product as any)?.addonInstallation?.feePerUnit) ?? 50,
     ...product
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -65,6 +68,8 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
       images: uniqueImages,
       subCategory: { ar: formData.subCategoryAr || '', en: formData.subCategoryEn || '' },
       status: formData.isActive ? 'active' : 'draft',
+      // normalize addon object as well
+      addonInstallation: { enabled: !!formData.addonInstallEnabled, feePerUnit: Number(formData.addonInstallFee || 0) },
       id: product?.id || Date.now().toString()
     });
   };
@@ -254,6 +259,22 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
           <div className="flex items-center space-x-2 space-x-reverse">
             <Switch id="isOnSale" checked={formData.isOnSale} onCheckedChange={(checked) => setFormData({ ...formData, isOnSale: checked })} />
             <Label htmlFor="isOnSale">عليه عرض</Label>
+          </div>
+        </div>
+
+        {/* Installation option controlled by vendor */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <Switch id="addonInstallEnabled" checked={!!formData.addonInstallEnabled} onCheckedChange={(checked) => setFormData({ ...formData, addonInstallEnabled: checked })} />
+            <Label htmlFor="addonInstallEnabled">يقدم خدمة التركيب</Label>
+          </div>
+          <div className="md:col-span-2">
+            <Label htmlFor="addonInstallFee">رسوم خدمة التركيب لكل قطعة (ريال)</Label>
+            <Input id="addonInstallFee" type="text" inputMode="numeric" pattern="[0-9]*" value={String(formData.addonInstallFee ?? '')}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^0-9]/g, '');
+                setFormData({ ...formData, addonInstallFee: v });
+              }} disabled={!formData.addonInstallEnabled} />
           </div>
         </div>
 

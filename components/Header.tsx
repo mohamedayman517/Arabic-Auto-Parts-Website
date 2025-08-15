@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, ShoppingCart, User, Menu, Phone, MapPin, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, Phone, MapPin, ArrowLeft, ArrowRight, Bell } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -77,6 +77,8 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
               {!isHome && !hideBack && (
                 <button
                   onClick={() => {
+                    // Special case: from notifications page, vendors go back to vendor dashboard
+                    if (current === 'notifications' && isVendor) { go('vendor-dashboard'); return; }
                     if (goBack) return goBack();
                     // Try using stored previous page from Router if available
                     if (typeof window !== 'undefined') {
@@ -123,7 +125,9 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 <button onClick={() => go('home')} className="text-foreground hover:text-primary transition-colors">{t('home')}</button>
                 <button onClick={() => go('products')} className="text-foreground hover:text-primary transition-colors">{t('products')}</button>
                 <button onClick={() => go('offers')} className="text-foreground hover:text-primary transition-colors">{t('offers')}</button>
-                <button onClick={() => go('projects')} className="text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                {user && (
+                  <button onClick={() => go('projects')} className="text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                )}
                 <button onClick={() => go('about')} className="text-foreground hover:text-primary transition-colors">{t('about')}</button>
               </nav>
             )}
@@ -145,6 +149,18 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
               
               <div className="flex items-center gap-2">
                 <LanguageSwitcher />
+                {user && !isMarketer && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative"
+                    onClick={() => go('notifications')}
+                    aria-label={locale==='ar' ? 'التنبيهات' : 'Notifications'}
+                    title={locale==='ar' ? 'التنبيهات' : 'Notifications'}
+                  >
+                    <Bell className="w-5 h-5" />
+                  </Button>
+                )}
                 {/* Auth area */}
                 {user ? (
                   <>
@@ -231,7 +247,9 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 <button onClick={() => { go('home'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('home')}</button>
                 <button onClick={() => { go('products'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('products')}</button>
                 <button onClick={() => { go('offers'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('offers')}</button>
-                <button onClick={() => { go('projects'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                {user && (
+                  <button onClick={() => { go('projects'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                )}
                 <button onClick={() => { go('about'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('about')}</button>
                 <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
               </>

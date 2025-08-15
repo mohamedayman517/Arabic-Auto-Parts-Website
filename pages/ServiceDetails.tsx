@@ -171,7 +171,7 @@ export default function ServiceDetails({ setCurrentPage }: ServiceDetailsProps) 
                 {proposals.map((pp:any)=> (
                   <div key={pp.id} className="border rounded-md p-3">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm font-medium">{locale === 'ar' ? 'السعر' : 'Price'}: {currency} {Number(pp.price||0).toLocaleString(locale==='ar'?'ar-EG':'en-US')}</div>
+                      <div className="text-sm font-medium">{locale === 'ar' ? 'السعر' : 'Price'}: {currency} {(() => { const numLocale = locale==='ar' ? 'ar-EG' : 'en-US'; return Number(pp.price||0).toLocaleString(numLocale); })()}</div>
                       <Badge variant={pp.status==='accepted'? 'secondary' : pp.status==='rejected'? 'destructive' : 'outline'} className="text-xs capitalize">{locale==='ar' ? (pp.status==='pending'?'معلق': pp.status==='accepted'?'مقبول':'مرفوض') : pp.status}</Badge>
                     </div>
                     <div className="text-sm text-muted-foreground">{locale === 'ar' ? 'المدة' : 'Days'}: {Number(pp.days||0)}</div>
@@ -185,6 +185,28 @@ export default function ServiceDetails({ setCurrentPage }: ServiceDetailsProps) 
                             const next = list.map((x:any)=> x.id===pp.id ? { ...x, status: 'accepted' } : x);
                             window.localStorage.setItem('vendor_proposals', JSON.stringify(next));
                             setProposals((prev)=> prev.map((x:any)=> x.id===pp.id ? { ...x, status: 'accepted' } : x));
+                            // Notify vendor about acceptance
+                            try {
+                              const nraw = window.localStorage.getItem('app_notifications');
+                              const nlist = nraw ? JSON.parse(nraw) : [];
+                              const numLocale = locale==='ar' ? 'ar-EG' : 'en-US';
+                              const title = locale==='ar' ? 'تم قبول عرضك' : 'Your proposal was accepted';
+                              const desc = locale==='ar'
+                                ? `تم قبول عرضك بقيمة ${currency} ${Number(pp.price||0).toLocaleString(numLocale)} لمدة ${Number(pp.days||0)} يوم`
+                                : `Your offer of ${currency} ${Number(pp.price||0).toLocaleString(numLocale)} for ${Number(pp.days||0)} days was accepted`;
+                              const notif = {
+                                id: `ntf_${Date.now()}`,
+                                type: 'proposal-status',
+                                recipientId: pp.vendorId,
+                                recipientRole: 'vendor',
+                                title,
+                                desc,
+                                createdAt: new Date().toISOString(),
+                                meta: { targetType: 'service', targetId: (service as any)?.id, proposalId: pp.id, status: 'accepted' }
+                              };
+                              const combined = Array.isArray(nlist) ? [notif, ...nlist] : [notif];
+                              window.localStorage.setItem('app_notifications', JSON.stringify(combined));
+                            } catch {}
                           } catch {}
                         }}>
                           <Check className="w-4 h-4 ml-1" /> {locale === 'ar' ? 'قبول' : 'Accept'}
@@ -196,6 +218,28 @@ export default function ServiceDetails({ setCurrentPage }: ServiceDetailsProps) 
                             const next = list.map((x:any)=> x.id===pp.id ? { ...x, status: 'rejected' } : x);
                             window.localStorage.setItem('vendor_proposals', JSON.stringify(next));
                             setProposals((prev)=> prev.map((x:any)=> x.id===pp.id ? { ...x, status: 'rejected' } : x));
+                            // Notify vendor about rejection
+                            try {
+                              const nraw = window.localStorage.getItem('app_notifications');
+                              const nlist = nraw ? JSON.parse(nraw) : [];
+                              const numLocale = locale==='ar' ? 'ar-EG' : 'en-US';
+                              const title = locale==='ar' ? 'تم رفض عرضك' : 'Your proposal was rejected';
+                              const desc = locale==='ar'
+                                ? `تم رفض عرضك بقيمة ${currency} ${Number(pp.price||0).toLocaleString(numLocale)} لمدة ${Number(pp.days||0)} يوم`
+                                : `Your offer of ${currency} ${Number(pp.price||0).toLocaleString(numLocale)} for ${Number(pp.days||0)} days was rejected`;
+                              const notif = {
+                                id: `ntf_${Date.now()}`,
+                                type: 'proposal-status',
+                                recipientId: pp.vendorId,
+                                recipientRole: 'vendor',
+                                title,
+                                desc,
+                                createdAt: new Date().toISOString(),
+                                meta: { targetType: 'service', targetId: (service as any)?.id, proposalId: pp.id, status: 'rejected' }
+                              };
+                              const combined = Array.isArray(nlist) ? [notif, ...nlist] : [notif];
+                              window.localStorage.setItem('app_notifications', JSON.stringify(combined));
+                            } catch {}
                           } catch {}
                         }}>
                           <X className="w-4 h-4 ml-1" /> {locale === 'ar' ? 'رفض' : 'Reject'}

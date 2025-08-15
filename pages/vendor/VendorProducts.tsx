@@ -54,6 +54,10 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
         partNumber: it.partNumber || '',
         descriptionAr: it.description?.ar || '',
         descriptionEn: it.description?.en || '',
+        // map addon installation
+        addonInstallation: it.addonInstallation || { enabled: false, feePerUnit: 50 },
+        addonInstallEnabled: !!(it.addonInstallation?.enabled),
+        addonInstallFee: Number(it.addonInstallation?.feePerUnit || 50),
         createdAt: new Date().toISOString().split('T')[0],
         sales: 0,
         views: 0,
@@ -139,13 +143,23 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
         partNumber: productData?.partNumber || '',
         warranty: { ar: 'سنة', en: '1 year' },
         description: { ar: productData?.descriptionAr || '', en: productData?.descriptionEn || '' },
+        // persist vendor-defined addon installation
+        addonInstallation: { enabled: !!productData?.addonInstallEnabled, feePerUnit: Number(productData?.addonInstallFee || 0) },
       };
       const raw = localStorage.getItem('user_products');
       const list = raw ? (JSON.parse(raw) as any[]) : [];
       localStorage.setItem('user_products', JSON.stringify([listingItem, ...list]));
     } catch {}
 
-    setProducts([...products, newProduct]);
+    setProducts([
+      ...products,
+      {
+        ...newProduct,
+        addonInstallation: { enabled: !!productData?.addonInstallEnabled, feePerUnit: Number(productData?.addonInstallFee || 0) },
+        addonInstallEnabled: !!productData?.addonInstallEnabled,
+        addonInstallFee: Number(productData?.addonInstallFee || 0),
+      }
+    ]);
     setIsAddDialogOpen(false);
   };
 
@@ -181,11 +195,13 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
           isOnSale: Boolean(productData?.isOnSale || false),
           partNumber: productData?.partNumber || list[idx]?.partNumber || '',
           description: { ar: productData?.descriptionAr || list[idx]?.description?.ar || '', en: productData?.descriptionEn || list[idx]?.description?.en || '' },
+          addonInstallation: { enabled: !!productData?.addonInstallEnabled, feePerUnit: Number(productData?.addonInstallFee || 0) },
         };
         list[idx] = updated;
         localStorage.setItem('user_products', JSON.stringify(list));
       }
     } catch {}
+    // reflect in UI state too
     setEditingProduct(null);
   };
 

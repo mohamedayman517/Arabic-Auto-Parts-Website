@@ -60,10 +60,24 @@ export default function AddService({ setCurrentPage, ...rest }: AddServiceProps)
   const saveService = () => {
     try {
       if (typeof window === "undefined") return;
+      // Read current user for requester info
+      let currentUser: any = null;
+      try {
+        const uRaw = window.localStorage.getItem('mock_current_user');
+        currentUser = uRaw ? JSON.parse(uRaw) : null;
+      } catch {}
       const raw = window.localStorage.getItem("user_services");
       const list = raw ? (JSON.parse(raw) as any[]) : [];
       if (editingServiceId) {
-        const updated = list.map((it:any) => it.id === editingServiceId ? { ...it, type: stype, dailyWage, days, total, description, updatedAt: new Date().toISOString() } : it);
+        const updated = list.map((it:any) => {
+          if (it.id !== editingServiceId) return it;
+          const withUser = {
+            customerName: it.customerName ?? (currentUser?.name || currentUser?.username || currentUser?.email || null),
+            userId: it.userId ?? (currentUser?.id ?? null),
+            user: it.user ?? (currentUser ? { id: currentUser.id, name: currentUser.name || currentUser.username || currentUser.email } : undefined),
+          };
+          return { ...it, type: stype, dailyWage, days, total, description, updatedAt: new Date().toISOString(), ...withUser };
+        });
         window.localStorage.setItem("user_services", JSON.stringify(updated));
         window.localStorage.removeItem('edit_service_id');
       } else {
@@ -75,6 +89,10 @@ export default function AddService({ setCurrentPage, ...rest }: AddServiceProps)
           total,
           description,
           createdAt: new Date().toISOString(),
+          // requester info for vendor views
+          customerName: currentUser?.name || currentUser?.username || currentUser?.email || null,
+          userId: currentUser?.id ?? null,
+          user: currentUser ? { id: currentUser.id, name: currentUser.name || currentUser.username || currentUser.email } : undefined,
         };
         window.localStorage.setItem("user_services", JSON.stringify([item, ...list]));
       }

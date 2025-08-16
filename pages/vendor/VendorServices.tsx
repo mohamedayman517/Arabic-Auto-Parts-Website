@@ -108,6 +108,18 @@ export default function VendorServices({ setCurrentPage, ...context }: Props) {
                   {!!s.description && (
                     <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{s.description}</div>
                   )}
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        // Vendor should navigate to the public ServiceDetails page
+                        try { window.localStorage.setItem('selected_service_id', String(s.id)); } catch {}
+                        safeSetCurrentPage('service-details');
+                      }}
+                    >
+                      {locale === 'ar' ? 'تفاصيل' : 'Details'}
+                    </Button>
+                  </div>
                   {/* Technician applicants */}
                   {(() => {
                     const applicants = techRequests.filter((x:any)=> String(x.serviceId) === String(s.id));

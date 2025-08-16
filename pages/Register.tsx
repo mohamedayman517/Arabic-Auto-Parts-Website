@@ -61,6 +61,23 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
     setError(null);
     const u = res.user;
     setUser({ id: u.id, name: u.name, email: u.email, role: u.role });
+    // Persist to localStorage so profile can immediately read birthdate and technician type
+    try {
+      const payload: any = {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+      };
+      if (u.role === 'technician') {
+        payload.phone = (u as any).phone || phone;
+        payload.dob = (u as any).dob || dob; // profile reads dob as birthdate fallback
+        payload.birthdate = (u as any).dob || dob; // convenience duplicate
+        payload.profession = (u as any).profession || profession; // profile maps to technicianType
+        payload.technicianType = (u as any).profession || profession;
+      }
+      localStorage.setItem('mock_current_user', JSON.stringify(payload));
+    } catch {}
     const dest = returnTo || (role === 'admin' ? 'admin-dashboard' : role === 'vendor' ? 'vendor-dashboard' : 'home');
     setReturnTo(null);
     setCurrentPage(dest);

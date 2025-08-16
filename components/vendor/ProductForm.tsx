@@ -5,6 +5,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Checkbox } from '../ui/checkbox';
 import { Switch } from '../ui/switch';
 import { DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 // removed brand list; brand field not used for vendor form
@@ -366,33 +367,45 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="flex items-center space-x-2 space-x-reverse">
-          <Switch id="isActive" checked={formData.isActive} onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })} />
+          <Switch id="isActive" checked={formData.isActive} onCheckedChange={(checked: boolean) => setFormData({ ...formData, isActive: checked })} />
           <Label htmlFor="isActive">نشر المنتج فوراً</Label>
         </div>
         <div className="flex items-center space-x-2 space-x-reverse">
-          <Switch id="isNew" checked={formData.isNew} onCheckedChange={(checked) => setFormData({ ...formData, isNew: checked })} />
+          <Switch id="isNew" checked={formData.isNew} onCheckedChange={(checked: boolean) => setFormData({ ...formData, isNew: checked })} />
           <Label htmlFor="isNew">منتج جديد</Label>
         </div>
         <div className="flex items-center space-x-2 space-x-reverse">
-          <Switch id="isOnSale" checked={formData.isOnSale} onCheckedChange={(checked) => setFormData({ ...formData, isOnSale: checked })} />
+          <Switch id="isOnSale" checked={formData.isOnSale} onCheckedChange={(checked: boolean) => setFormData({ ...formData, isOnSale: checked })} />
           <Label htmlFor="isOnSale">عليه عرض</Label>
         </div>
       </div>
 
         {/* Installation option controlled by vendor */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <Switch id="addonInstallEnabled" checked={!!formData.addonInstallEnabled} onCheckedChange={(checked) => setFormData({ ...formData, addonInstallEnabled: checked })} />
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="addonInstallEnabled"
+              checked={!!formData.addonInstallEnabled}
+              onCheckedChange={(checked) => setFormData({ ...formData, addonInstallEnabled: !!checked })}
+            />
             <Label htmlFor="addonInstallEnabled">يقدم خدمة التركيب</Label>
           </div>
-          <div className="md:col-span-2">
-            <Label htmlFor="addonInstallFee">رسوم خدمة التركيب لكل قطعة (ريال)</Label>
-            <Input id="addonInstallFee" type="text" inputMode="numeric" pattern="[0-9]*" value={String(formData.addonInstallFee ?? '')}
-              onChange={(e) => {
-                const v = e.target.value.replace(/[^0-9]/g, '');
-                setFormData({ ...formData, addonInstallFee: v });
-              }} disabled={!formData.addonInstallEnabled} />
-          </div>
+          {formData.addonInstallEnabled && (
+            <div>
+              <Label htmlFor="addonInstallFee">رسوم خدمة التركيب لكل قطعة (ريال)</Label>
+              <Input
+                id="addonInstallFee"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={String(formData.addonInstallFee ?? '')}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/[^0-9]/g, '');
+                  setFormData({ ...formData, addonInstallFee: v });
+                }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex gap-4 pt-4">

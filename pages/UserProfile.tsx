@@ -44,6 +44,7 @@ interface ProfileUser {
   birthdate?: string;
   avatar?: string;
   role?: 'admin' | 'vendor' | 'technician' | 'customer' | string;
+  technicianType?: string;
 }
 
 interface UserProfileProps extends RouteContext {
@@ -123,7 +124,8 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
         // accept either birthdate (from our UI) or dob (from auth store)
         birthdate: typeof u.birthdate === 'string' ? u.birthdate : (typeof u.dob === 'string' ? u.dob : ''),
         avatar: typeof u.avatar === 'string' ? u.avatar : '',
-        role: (u.role as any) ?? 'customer'
+        role: (u.role as any) ?? 'customer',
+        technicianType: typeof u.technicianType === 'string' ? u.technicianType : (typeof u.profession === 'string' ? u.profession : '')
       } as ProfileUser;
     }
     return {
@@ -133,7 +135,8 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
       phone: '+966 50 123 4567',
       birthdate: '',
       avatar: '',
-      role: 'customer'
+      role: 'customer',
+      technicianType: ''
     } as ProfileUser;
   })());
 
@@ -279,7 +282,7 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
     };
     setUser?.(newUser);
     // Persist with extra optional fields like birthdate for this page's UI
-    try { localStorage.setItem('mock_current_user', JSON.stringify({ ...newUser, birthdate: editedUser.birthdate, dob: editedUser.birthdate })); } catch {}
+    try { localStorage.setItem('mock_current_user', JSON.stringify({ ...newUser, birthdate: editedUser.birthdate, dob: editedUser.birthdate, technicianType: editedUser.technicianType })); } catch {}
     setIsEditing(false);
   };
 
@@ -459,6 +462,22 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
     return locale === 'en' ? entry.en : entry.ar;
   };
 
+  // Localize technician type/profession
+  const techTypeLabel = (v?: string) => {
+    if (!v) return '';
+    const key = String(v).toLowerCase();
+    const map: Record<string, { ar: string; en: string }> = {
+      plumber: { ar: 'سباك', en: 'Plumber' },
+      electrician: { ar: 'كهربائي', en: 'Electrician' },
+      carpenter: { ar: 'نجار', en: 'Carpenter' },
+      painter: { ar: 'دهان', en: 'Painter' },
+      gypsum: { ar: 'فني جبس', en: 'Gypsum Installer' },
+      marble: { ar: 'فني رخام', en: 'Marble Installer' },
+    };
+    const entry = map[key];
+    return locale === 'en' ? (entry?.en || v) : (entry?.ar || v);
+  };
+
   const handleCancel = () => {
     setEditedUser(user || editedUser);
     setIsEditing(false);
@@ -517,6 +536,11 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
                     <Package className="h-3 w-3 ml-1" />
                     {orders.length} {locale === 'en' ? 'orders' : 'طلب'}
                   </Badge>
+                  {isTechnician && (editedUser.technicianType || '').trim() !== '' && (
+                    <Badge variant="outline" className="w-full justify-center gap-2">
+                      {locale==='en' ? 'Technician Type' : 'نوع الفني'}: {techTypeLabel(editedUser.technicianType)}
+                    </Badge>
+                  )}
                 </div>
                 
               </CardContent>
@@ -597,11 +621,23 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
                           className={!isEditing ? 'bg-muted' : ''}
                         />
                       </div>
+                      {isTechnician && (
+                        <div className="md:col-span-2">
+                          <Label htmlFor="technicianType">{locale === 'en' ? 'Technician Type / Specialty' : 'نوع الفني / التخصص'}</Label>
+                          <Input
+                            id="technicianType"
+                            value={editedUser.technicianType || ''}
+                            onChange={(e) => setEditedUser({ ...editedUser, technicianType: e.target.value })}
+                            disabled={!isEditing}
+                            placeholder={locale==='en' ? 'e.g., Mechanic, Electrician' : 'مثال: ميكانيكي، كهربائي'}
+                            className={!isEditing ? 'bg-muted' : ''}
+                          />
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
-
               {/* Offers Tab (technician) */}
               <TabsContent value="offers">
                 <Card>

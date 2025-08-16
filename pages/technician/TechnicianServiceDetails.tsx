@@ -29,6 +29,7 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
   const [saving, setSaving] = useState(false);
   const [editingOfferId, setEditingOfferId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [myOffer, setMyOffer] = useState<any | null>(null);
 
   // Load selected service by id from localStorage (set by TechnicianServices)
   useEffect(() => {
@@ -74,15 +75,31 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
         setOfferPrice(String(offer.price ?? ''));
         setOfferDays(String(offer.days ?? ''));
         setOfferMessage(String(offer.message ?? ''));
+        setMyOffer(offer);
       } else {
         setEditingOfferId(null);
         setIsEditing(false);
+        setMyOffer(null);
       }
     } catch {
       setEditingOfferId(null);
       setIsEditing(false);
+      setMyOffer(null);
     }
   }, [service, technicianId]);
+
+  // Track my existing offer for this service to show summary and allow in-page edit
+  useEffect(() => {
+    try {
+      if (!service || !technicianId) { setMyOffer(null); return; }
+      const raw = window.localStorage.getItem('technician_requests');
+      const list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) { setMyOffer(null); return; }
+      const offer = list.find((x:any)=> x.targetType==='service' && String(x.serviceId)===String(service.id) && x.technicianId===technicianId);
+      setMyOffer(offer || null);
+      if (!editingOfferId && !isEditing && offer) setEditingOfferId(String(offer.id));
+    } catch { setMyOffer(null); }
+  }, [service, technicianId, hasSubmitted]);
 
   const labelForServiceType = (t?: string) => {
     switch ((t || '').toLowerCase()) {
@@ -139,11 +156,19 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="text-muted-foreground">{isAr ? 'الأجر اليومي' : 'Daily wage'}: {currency} {Number(service.dailyWage || 0).toLocaleString(isAr ? 'ar-EG' : 'en-US')}</div>
-                <div className="text-muted-foreground">{isAr ? 'الأيام' : 'Days'}: {Number(service.days || 0)}</div>
-                {!!service.total && (
-                  <div className="font-semibold">{currency} {Number(service.total).toLocaleString(isAr ? 'ar-EG' : 'en-US')}</div>
-                )}
+                <div className="text-muted-foreground">{isAr ? 'المدة (أيام)' : 'Duration (days)'}: {Number(service.days || 0)}</div>
+                <div className="font-semibold">{currency} {Number(service.total || (Number(service.dailyWage||0)*Number(service.days||0))).toLocaleString(isAr ? 'ar-EG' : 'en-US')}</div>
                 {!!service.description && <div className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{service.description}</div>}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">{isAr ? 'تفاصيل إضافية' : 'Additional Details'}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-2">
+                {service.location && <div>{(isAr ? 'الموقع: ' : 'Location: ') + service.location}</div>}
+                {service.phone && <div>{(isAr ? 'الهاتف: ' : 'Phone: ') + service.phone}</div>}
               </CardContent>
             </Card>
           </div>
@@ -155,39 +180,62 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
                 <CardTitle>{isAr ? 'ملخص' : 'Summary'}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                {service.total ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{isAr ? 'الإجمالي المتوقع' : 'Expected total'}</span>
-                    <span className="font-semibold">{currency} {Number(service.total).toLocaleString(isAr ? 'ar-EG' : 'en-US')}</span>
-                  </div>
-                ) : null}
-                <Separator />
-                <div className="text-xs text-muted-foreground">
-                  {isAr ? 'يمكنك تقديم طلب على هذه الخدمة من خلال تعبئة الحقول أدناه.' : 'You can submit a request by filling the fields below.'}
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{isAr ? 'القيمة التقديرية' : 'Estimated Value'}</span>
+                  <span className="font-semibold">{currency} {Number(service.total || (Number(service.dailyWage||0)*Number(service.days||0))).toLocaleString(isAr ? 'ar-EG' : 'en-US')}</span>
                 </div>
+                <Separator />
+                <div className="text-xs text-muted-foreground">{isAr ? 'يمكنك تقديم عرض لهذه الخدمة من خلال تعبئة الحقول أدناه.' : 'You can submit a proposal by filling the fields below.'}</div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>{isAr ? 'تقديم طلب' : 'Submit Request'}</CardTitle>
+                <CardTitle>{isEditing ? (isAr ? 'تعديل عرضي' : 'Edit My Offer') : (hasSubmitted ? (isAr ? 'تم الإرسال' : 'Submitted') : (isAr ? 'تقديم عرض' : 'Submit Proposal'))}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {(() => {
-                  return null;
-                })()}
-                {(() => {
-                  return null;
-                })()}
-                {(() => {
-                  return null;
-                })()}
-                {(() => {
-                  return null;
-                })()}
-                {(() => {
-                  return null;
-                })()}
+                {/* If already submitted and not editing: hide form and show summary with edit button */}
+                {hasSubmitted && !isEditing ? (
+                  <div className="space-y-3 text-sm">
+                    {myOffer ? (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">{isAr ? 'السعر المقدم' : 'Submitted Price'}</span>
+                          <span className="font-semibold">{currency} {Number(myOffer.price || 0).toLocaleString(isAr ? 'ar-EG' : 'en-US')}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">{isAr ? 'الأيام' : 'Days'}</span>
+                          <span className="font-semibold">{Number(myOffer.days || 0)}</span>
+                        </div>
+                        {!!myOffer.message && (
+                          <div className="text-muted-foreground whitespace-pre-wrap">
+                            {myOffer.message}
+                          </div>
+                        )}
+                      </>
+                    ) : null}
+                    <div className="pt-2">
+                      <Button className="w-full" variant="outline" onClick={() => {
+                        const offer = myOffer;
+                        if (offer) {
+                          setOfferPrice(String(offer.price ?? ''));
+                          setOfferDays(String(offer.days ?? ''));
+                          setOfferMessage(String(offer.message ?? ''));
+                          setEditingOfferId(String(offer.id));
+                        }
+                        setIsEditing(true);
+                      }}>
+                        {isAr ? 'تعديل عرضي' : 'Edit my offer'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {(() => { return null; })()}
+                    {(() => { return null; })()}
+                    {(() => { return null; })()}
+                    {(() => { return null; })()}
+                    {(() => { return null; })()}
                 <div className="grid gap-2">
                   <Label>{isAr ? 'السعر المقترح' : 'Proposed Price'}</Label>
                   <Input
@@ -274,11 +322,11 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
                   })()}
                   onClick={() => {
                     if (!isEditing && hasSubmitted) {
-                      Swal.fire({ icon: 'info', title: isAr ? 'تم الإرسال مسبقاً' : 'Already Submitted', text: isAr ? 'لا يمكنك إرسال طلب آخر لهذه الخدمة.' : 'You have already submitted a request for this service.' });
+                      Swal.fire({ icon: 'info', title: isAr ? 'تم الإرسال مسبقاً' : 'Already Submitted', text: isAr ? 'لا يمكنك إرسال عرض آخر لهذه الخدمة.' : 'You have already submitted a proposal for this service.' });
                       return;
                     }
                     if (!technicianId) {
-                      Swal.fire({ icon: 'warning', title: isAr ? 'تسجيل الدخول مطلوب' : 'Login required', text: isAr ? 'الرجاء تسجيل الدخول كفني لتقديم الطلب.' : 'Please log in as a technician to submit requests.' });
+                      Swal.fire({ icon: 'warning', title: isAr ? 'تسجيل الدخول مطلوب' : 'Login required', text: isAr ? 'الرجاء تسجيل الدخول كفني لتقديم العروض.' : 'Please log in as a technician to submit proposals.' });
                       return;
                     }
                     // Validate ranges
@@ -339,16 +387,16 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
                         try {
                           const recipientId = service.userId || service.user?.id || null;
                           const techName = (context as any)?.user?.name || (context as any)?.user?.username || (context as any)?.user?.email || (isAr ? 'فني' : 'Technician');
-                          const title = isAr ? 'طلب جديد على خدمتك' : 'New request on your service';
+                          const title = isAr ? 'عرض جديد على خدمتك' : 'New proposal on your service';
                           const numLocale2 = isAr ? 'ar-EG' : 'en-US';
                           const desc = isAr
-                            ? `${techName} قدّم طلبًا بقيمة ${currency} ${Number(offerPrice || 0).toLocaleString(numLocale2)} لمدة ${Number(offerDays || 0)} يوم`
-                            : `${techName} submitted a request: ${currency} ${Number(offerPrice || 0).toLocaleString(numLocale2)} for ${Number(offerDays || 0)} days`;
+                            ? `${techName} قدّم عرضًا بقيمة ${currency} ${Number(offerPrice || 0).toLocaleString(numLocale2)} لمدة ${Number(offerDays || 0)} يوم`
+                            : `${techName} submitted a proposal of ${currency} ${Number(offerPrice || 0).toLocaleString(numLocale2)} for ${Number(offerDays || 0)} days`;
                           const nraw = window.localStorage.getItem('app_notifications');
                           const nlist = nraw ? JSON.parse(nraw) : [];
                           const notif = {
                             id: `ntf_${Date.now()}`,
-                            type: 'service_request',
+                            type: 'proposal',
                             recipientId,
                             recipientRole: 'vendor',
                             title,
@@ -361,7 +409,7 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
                         } catch {}
 
                         setHasSubmitted(true);
-                        Swal.fire({ icon: 'success', title: isAr ? 'تم إرسال الطلب' : 'Request submitted', timer: 1800, showConfirmButton: false });
+                        Swal.fire({ icon: 'success', title: isAr ? 'تم إرسال العرض' : 'Proposal submitted', timer: 1800, showConfirmButton: false });
                       }
                     } finally {
                       setSaving(false);
@@ -372,8 +420,10 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
                     ? (isAr ? 'جارٍ الحفظ...' : 'Saving...')
                     : isEditing
                       ? (isAr ? 'حفظ التعديلات' : 'Save Changes')
-                      : (hasSubmitted ? (isAr ? 'تم الإرسال' : 'Submitted') : (isAr ? 'إرسال الطلب' : 'Send Request'))}
+                      : (hasSubmitted ? (isAr ? 'تم الإرسال' : 'Submitted') : (isAr ? 'إرسال العرض' : 'Send Proposal'))}
                 </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>

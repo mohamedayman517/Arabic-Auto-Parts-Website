@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, Search, Filter, Package, AlertCircle } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -25,6 +25,7 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
   const [selectedBrand, setSelectedBrand] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   // Safe navigation fallback to avoid TS issues and preserve SPA context
   const safeSetCurrentPage = setCurrentPage ?? (() => {});
@@ -102,6 +103,91 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
   useEffect(() => {
     filterProducts();
   }, [searchTerm, selectedCategory, selectedStatus, selectedBrand, products]);
+
+  // Export current filtered products to CSV
+  const handleExportCSV = () => {
+    const headers = [
+      'id','nameAr','nameEn','brand','category','subCategoryAr','subCategoryEn','price','originalPrice','stock','status','partNumber','descriptionAr','descriptionEn','addonInstallEnabled','addonInstallFee','image','images'
+    ];
+    const rows = filteredProducts.map((p: any) => [
+      p.id,
+      p.nameAr || p.name || '',
+      p.nameEn || '',
+      p.brand || '',
+      p.category || '',
+      p.subCategoryAr || (p.subCategory?.ar) || '',
+      p.subCategoryEn || (p.subCategory?.en) || '',
+      String(p.price ?? ''),
+      String(p.originalPrice ?? ''),
+      String(p.stock ?? ''),
+      p.status || '',
+      p.partNumber || '',
+      p.descriptionAr || (p.description?.ar) || '',
+      p.descriptionEn || (p.description?.en) || '',
+      String(!!p.addonInstallEnabled),
+      String(p.addonInstallFee ?? p.addonInstallation?.feePerUnit ?? ''),
+      p.image || '',
+      Array.isArray(p.images) ? p.images.join(';') : ''
+    ]);
+    const escape = (s: any) => {
+      const v = String(s ?? '');
+      return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}` + '"' : v;
+    };
+    const csv = [headers.join(','), ...rows.map(r => r.map(escape).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vendor-products-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Import products from CSV (simple comma-separated values)
+  const handleImportCSV = async (file: File) => {
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+      if (lines.length <= 1) return;
+      const headers = lines[0].split(',').map(h => h.trim());
+      const idx = (key: string) => headers.findIndex(h => h.toLowerCase() === key.toLowerCase());
+      for (let i = 1; i < lines.length; i++) {
+        const raw = lines[i];
+        // simple CSV split (does not support complex quoted commas fully)
+        const cols = raw.split(',');
+        const get = (key: string) => {
+          const j = idx(key);
+          return j >= 0 ? (cols[j] ?? '').replace(/^\"|\"$/g, '').replace(/\"\"/g, '"') : '';
+        };
+        const imagesStr = get('images');
+        const productData: any = {
+          nameAr: get('nameAr') || get('name') || '',
+          nameEn: get('nameEn') || '',
+          brand: get('brand') || 'عام',
+          category: get('category') || '',
+          subCategoryAr: get('subCategoryAr') || '',
+          subCategoryEn: get('subCategoryEn') || '',
+          price: Number(get('price') || 0),
+          originalPrice: Number(get('originalPrice') || 0),
+          stock: Number(get('stock') || 0),
+          status: get('status') || 'active',
+          partNumber: get('partNumber') || '',
+          descriptionAr: get('descriptionAr') || '',
+          descriptionEn: get('descriptionEn') || '',
+          addonInstallEnabled: get('addonInstallEnabled') === 'true',
+          addonInstallFee: Number(get('addonInstallFee') || 0),
+          image: get('image') || '',
+          images: imagesStr ? imagesStr.split(';').filter(Boolean) : [],
+          isActive: (get('status') || 'active') === 'active',
+          isNew: false,
+          isOnSale: false,
+        };
+        handleAddProduct(productData);
+      }
+    } catch {}
+  };
 
   const handleAddProduct = (productData: any) => {
     const genId = Date.now().toString();
@@ -261,6 +347,24 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
               onCancel={() => setIsAddDialogOpen(false)}
             />
           </Dialog>
+          <div className="flex items-center gap-2">
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleImportCSV(f).then(() => { if (importInputRef.current) importInputRef.current.value = ''; });
+              }}
+            />
+            <Button variant="outline" onClick={() => importInputRef.current?.click()}>
+              {locale === 'en' ? 'Import CSV' : 'استيراد CSV'}
+            </Button>
+            <Button variant="secondary" onClick={handleExportCSV}>
+              {locale === 'en' ? 'Export CSV' : 'تصدير CSV'}
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}

@@ -27,6 +27,8 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
   const [offerDays, setOfferDays] = useState<string>("");
   const [offerMessage, setOfferMessage] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [editingOfferId, setEditingOfferId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Load selected service by id from localStorage (set by TechnicianServices)
   useEffect(() => {
@@ -54,6 +56,32 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
         : false;
       setHasSubmitted(!!exists);
     } catch { setHasSubmitted(false); }
+  }, [service, technicianId]);
+
+  // If navigated from profile to edit an existing offer, preload values
+  useEffect(() => {
+    try {
+      if (!service) return;
+      const editId = window.localStorage.getItem('editing_technician_offer_id');
+      if (!editId) { setEditingOfferId(null); setIsEditing(false); return; }
+      const raw = window.localStorage.getItem('technician_requests');
+      const list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) return;
+      const offer = list.find((x:any)=> x.id===editId && x.targetType==='service' && String(x.serviceId)===String(service.id) && (!!technicianId ? x.technicianId===technicianId : true));
+      if (offer) {
+        setEditingOfferId(editId);
+        setIsEditing(true);
+        setOfferPrice(String(offer.price ?? ''));
+        setOfferDays(String(offer.days ?? ''));
+        setOfferMessage(String(offer.message ?? ''));
+      } else {
+        setEditingOfferId(null);
+        setIsEditing(false);
+      }
+    } catch {
+      setEditingOfferId(null);
+      setIsEditing(false);
+    }
   }, [service, technicianId]);
 
   const labelForServiceType = (t?: string) => {
@@ -233,7 +261,8 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
                 <Button
                   className="w-full"
                   disabled={(() => {
-                    if (hasSubmitted || saving) return true;
+                    if (saving) return true;
+                    if (!isEditing && hasSubmitted) return true;
                     const base = Number((service?.total ?? service?.dailyWage) || 0);
                     const minP = base, maxP = base * 2;
                     const vP = Number(offerPrice);
@@ -244,7 +273,7 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
                     return !(validP && validD);
                   })()}
                   onClick={() => {
-                    if (hasSubmitted) {
+                    if (!isEditing && hasSubmitted) {
                       Swal.fire({ icon: 'info', title: isAr ? 'تم الإرسال مسبقاً' : 'Already Submitted', text: isAr ? 'لا يمكنك إرسال طلب آخر لهذه الخدمة.' : 'You have already submitted a request for this service.' });
                       return;
                     }
@@ -282,56 +311,68 @@ export default function TechnicianServiceDetails({ setCurrentPage, ...context }:
                     }
                     try {
                       setSaving(true);
-                      const request = {
-                        id: `treq_${Date.now()}`,
-                        targetType: 'service' as const,
-                        serviceId: service.id,
-                        price: priceNum,
-                        days: daysNum,
-                        message: offerMessage || '',
-                        technicianId,
-                        status: 'pending',
-                        createdAt: new Date().toISOString(),
-                      };
                       const raw = window.localStorage.getItem('technician_requests');
                       const list = raw ? JSON.parse(raw) : [];
-                      const exists = Array.isArray(list) && list.some((x:any)=> x.targetType==='service' && String(x.serviceId)===String(service.id) && (!!technicianId ? x.technicianId===technicianId : true));
-                      if (!exists) list.push(request);
-                      window.localStorage.setItem('technician_requests', JSON.stringify(list));
-
-                      // Notify service owner (vendor)
-                      try {
-                        const recipientId = service.userId || service.user?.id || null;
-                        const techName = (context as any)?.user?.name || (context as any)?.user?.username || (context as any)?.user?.email || (isAr ? 'فني' : 'Technician');
-                        const title = isAr ? 'طلب جديد على خدمتك' : 'New request on your service';
-                        const numLocale = isAr ? 'ar-EG' : 'en-US';
-                        const desc = isAr
-                          ? `${techName} قدّم طلبًا بقيمة ${currency} ${Number(offerPrice || 0).toLocaleString(numLocale)} لمدة ${Number(offerDays || 0)} يوم`
-                          : `${techName} submitted a request: ${currency} ${Number(offerPrice || 0).toLocaleString(numLocale)} for ${Number(offerDays || 0)} days`;
-                        const nraw = window.localStorage.getItem('app_notifications');
-                        const nlist = nraw ? JSON.parse(nraw) : [];
-                        const notif = {
-                          id: `ntf_${Date.now()}`,
-                          type: 'service_request',
-                          recipientId,
-                          recipientRole: 'vendor',
-                          title,
-                          description: desc,
+                      if (isEditing && editingOfferId && Array.isArray(list)) {
+                        const next = list.map((x:any)=> x.id===editingOfferId ? { ...x, price: priceNum, days: daysNum, message: offerMessage || '' } : x);
+                        window.localStorage.setItem('technician_requests', JSON.stringify(next));
+                        try { window.localStorage.removeItem('editing_technician_offer_id'); } catch {}
+                        setIsEditing(false);
+                        Swal.fire({ icon: 'success', title: isAr ? 'تم تحديث العرض' : 'Offer updated', timer: 1600, showConfirmButton: false });
+                      } else {
+                        const request = {
+                          id: `treq_${Date.now()}`,
+                          targetType: 'service' as const,
+                          serviceId: service.id,
+                          price: priceNum,
+                          days: daysNum,
+                          message: offerMessage || '',
+                          technicianId,
+                          status: 'pending',
                           createdAt: new Date().toISOString(),
-                          read: false,
                         };
-                        const combined = Array.isArray(nlist) ? [notif, ...nlist] : [notif];
-                        window.localStorage.setItem('app_notifications', JSON.stringify(combined));
-                      } catch {}
+                        const exists = Array.isArray(list) && list.some((x:any)=> x.targetType==='service' && String(x.serviceId)===String(service.id) && (!!technicianId ? x.technicianId===technicianId : true));
+                        if (!exists) list.push(request);
+                        window.localStorage.setItem('technician_requests', JSON.stringify(list));
 
-                      setHasSubmitted(true);
-                      Swal.fire({ icon: 'success', title: isAr ? 'تم إرسال الطلب' : 'Request submitted', timer: 1800, showConfirmButton: false });
+                        // Notify service owner (vendor)
+                        try {
+                          const recipientId = service.userId || service.user?.id || null;
+                          const techName = (context as any)?.user?.name || (context as any)?.user?.username || (context as any)?.user?.email || (isAr ? 'فني' : 'Technician');
+                          const title = isAr ? 'طلب جديد على خدمتك' : 'New request on your service';
+                          const numLocale2 = isAr ? 'ar-EG' : 'en-US';
+                          const desc = isAr
+                            ? `${techName} قدّم طلبًا بقيمة ${currency} ${Number(offerPrice || 0).toLocaleString(numLocale2)} لمدة ${Number(offerDays || 0)} يوم`
+                            : `${techName} submitted a request: ${currency} ${Number(offerPrice || 0).toLocaleString(numLocale2)} for ${Number(offerDays || 0)} days`;
+                          const nraw = window.localStorage.getItem('app_notifications');
+                          const nlist = nraw ? JSON.parse(nraw) : [];
+                          const notif = {
+                            id: `ntf_${Date.now()}`,
+                            type: 'service_request',
+                            recipientId,
+                            recipientRole: 'vendor',
+                            title,
+                            description: desc,
+                            createdAt: new Date().toISOString(),
+                            read: false,
+                          };
+                          const combined = Array.isArray(nlist) ? [notif, ...nlist] : [notif];
+                          window.localStorage.setItem('app_notifications', JSON.stringify(combined));
+                        } catch {}
+
+                        setHasSubmitted(true);
+                        Swal.fire({ icon: 'success', title: isAr ? 'تم إرسال الطلب' : 'Request submitted', timer: 1800, showConfirmButton: false });
+                      }
                     } finally {
                       setSaving(false);
                     }
                   }}
                 >
-                  {saving ? (isAr ? 'جارٍ الحفظ...' : 'Saving...') : (hasSubmitted ? (isAr ? 'تم الإرسال' : 'Submitted') : (isAr ? 'إرسال الطلب' : 'Send Request'))}
+                  {saving
+                    ? (isAr ? 'جارٍ الحفظ...' : 'Saving...')
+                    : isEditing
+                      ? (isAr ? 'حفظ التعديلات' : 'Save Changes')
+                      : (hasSubmitted ? (isAr ? 'تم الإرسال' : 'Submitted') : (isAr ? 'إرسال الطلب' : 'Send Request'))}
                 </Button>
               </CardContent>
             </Card>

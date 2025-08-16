@@ -635,7 +635,17 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
                                   </p>
                                 </div>
                                 <div className="flex gap-2">
-                                  <Button variant="outline" size="sm" onClick={() => editOffer(o.id)}>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      try {
+                                        localStorage.setItem('selected_technician_service_id', String(o.serviceId));
+                                        localStorage.setItem('editing_technician_offer_id', String(o.id));
+                                      } catch {}
+                                      setCurrentPage?.('technician-service-details');
+                                    }}
+                                  >
                                     {locale==='en' ? 'Edit' : 'تعديل'}
                                   </Button>
                                   <Button variant="ghost" size="sm" className="text-red-600" onClick={() => deleteOffer(o.id)}>

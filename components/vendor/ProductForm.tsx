@@ -37,6 +37,14 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
     isNew: product?.isNew || false,
     isOnSale: product?.isOnSale || false,
     isActive: product?.isActive || product?.status === 'active' || false,
+    // Product details tabs data
+    specificationsEntries: Object.entries(((product as any)?.specifications) || {}).map(([key, value]: [string, any]) => ({
+      key,
+      value: typeof value === 'object' && value !== null ? (value.ar ?? value.en ?? String(value)) : String(value)
+    })),
+    compatibilityList: Array.isArray((product as any)?.compatibility)
+      ? ((product as any)?.compatibility as any[]).map((c: any) => (typeof c === 'object' && c !== null ? (c.ar ?? c.en ?? '') : String(c)))
+      : [],
     // Vendor-defined installation option
     addonInstallEnabled: product?.addonInstallEnabled || (product as any)?.addonInstallation?.enabled || false,
     addonInstallFee: (product?.addonInstallFee ?? (product as any)?.addonInstallation?.feePerUnit) ?? 50,
@@ -58,6 +66,17 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
     const imgs: string[] = Array.isArray((formData as any).images) ? (formData as any).images : [];
     const main = formData.image || imgs[0] || '';
     const uniqueImages = Array.from(new Set([main, ...imgs.filter(Boolean)]));
+    // normalize specs and compatibility
+    const specsObj = Array.isArray((formData as any).specificationsEntries)
+      ? (formData as any).specificationsEntries.reduce((acc: Record<string, string>, item: any) => {
+          const k = String(item?.key || '').trim();
+          if (k) acc[k] = String(item?.value ?? '');
+          return acc;
+        }, {})
+      : {};
+    const compatibilityArr = Array.isArray((formData as any).compatibilityList)
+      ? (formData as any).compatibilityList.map((s: any) => String(s || '').trim()).filter(Boolean)
+      : [];
     onSave({
       ...formData,
       price: priceNum,
@@ -68,6 +87,8 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
       images: uniqueImages,
       subCategory: { ar: formData.subCategoryAr || '', en: formData.subCategoryEn || '' },
       status: formData.isActive ? 'active' : 'draft',
+      specifications: specsObj,
+      compatibility: compatibilityArr,
       // normalize addon object as well
       addonInstallation: { enabled: !!formData.addonInstallEnabled, feePerUnit: Number(formData.addonInstallFee || 0) },
       id: product?.id || Date.now().toString()
@@ -197,6 +218,8 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
                 </div>
               </div>
             </div>
+            {/* Close the two-column grid inside the images section before thumbnails */}
+            </div>
             {/* Thumbnails */}
             <div className="mt-3">
               <Label className="text-sm text-muted-foreground">صور إضافية</Label>
@@ -234,33 +257,127 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
               </div>
             </div>
           </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="descriptionAr">الوصف (عربي)</Label>
+          <Textarea id="descriptionAr" value={formData.descriptionAr} onChange={(e) => setFormData({ ...formData, descriptionAr: e.target.value })} rows={4} />
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="descriptionAr">الوصف (عربي)</Label>
-            <Textarea id="descriptionAr" value={formData.descriptionAr} onChange={(e) => setFormData({ ...formData, descriptionAr: e.target.value })} rows={4} />
-          </div>
-          <div>
-            <Label htmlFor="descriptionEn">الوصف (إنجليزي)</Label>
-            <Textarea id="descriptionEn" value={formData.descriptionEn} onChange={(e) => setFormData({ ...formData, descriptionEn: e.target.value })} rows={4} />
-          </div>
+        <div>
+          <Label htmlFor="descriptionEn">الوصف (إنجليزي)</Label>
+          <Textarea id="descriptionEn" value={formData.descriptionEn} onChange={(e) => setFormData({ ...formData, descriptionEn: e.target.value })} rows={4} />
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <Switch id="isActive" checked={formData.isActive} onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })} />
-            <Label htmlFor="isActive">نشر المنتج فوراً</Label>
-          </div>
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <Switch id="isNew" checked={formData.isNew} onCheckedChange={(checked) => setFormData({ ...formData, isNew: checked })} />
-            <Label htmlFor="isNew">منتج جديد</Label>
-          </div>
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <Switch id="isOnSale" checked={formData.isOnSale} onCheckedChange={(checked) => setFormData({ ...formData, isOnSale: checked })} />
-            <Label htmlFor="isOnSale">عليه عرض</Label>
-          </div>
+      {/* Specifications (key-value) */}
+      <div className="space-y-3">
+        <Label>المواصفات</Label>
+        <div className="space-y-2">
+          {((formData as any).specificationsEntries as Array<{ key: string; value: string }>)?.map((row, idx) => (
+            <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-2">
+              <div className="md:col-span-2">
+                <Input
+                  placeholder="العنوان (مثال: رقم القطعة)"
+                  value={row.key}
+                  onChange={(e) => {
+                    const arr = [ ...((formData as any).specificationsEntries || []) ];
+                    arr[idx] = { ...arr[idx], key: e.target.value };
+                    setFormData({ ...formData, specificationsEntries: arr });
+                  }}
+                />
+              </div>
+              <div className="md:col-span-3">
+                <Input
+                  placeholder="القيمة (مثال: TOY-OF-2015)"
+                  value={row.value}
+                  onChange={(e) => {
+                    const arr = [ ...((formData as any).specificationsEntries || []) ];
+                    arr[idx] = { ...arr[idx], value: e.target.value };
+                    setFormData({ ...formData, specificationsEntries: arr });
+                  }}
+                />
+              </div>
+              <div className="md:col-span-5 flex justify-end">
+                <Button type="button" variant="destructive" size="sm" onClick={() => {
+                  const arr = [ ...((formData as any).specificationsEntries || []) ];
+                  arr.splice(idx, 1);
+                  setFormData({ ...formData, specificationsEntries: arr });
+                }}>
+                  حذف السطر
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setFormData({
+            ...formData,
+            specificationsEntries: [ ...((formData as any).specificationsEntries || []), { key: '', value: '' } ]
+          })}
+        >
+          إضافة مواصفة
+        </Button>
+      </div>
+
+      {/* Compatibility list */}
+      <div className="space-y-3">
+        <Label>التوافق</Label>
+        <div className="space-y-2">
+          {((formData as any).compatibilityList as string[])?.map((val, idx) => (
+            <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-2">
+              <div className="md:col-span-4">
+                <Input
+                  placeholder="مثال: تويوتا كامري 2015-2022"
+                  value={val}
+                  onChange={(e) => {
+                    const arr = [ ...((formData as any).compatibilityList || []) ];
+                    arr[idx] = e.target.value;
+                    setFormData({ ...formData, compatibilityList: arr });
+                  }}
+                />
+              </div>
+              <div className="md:col-span-1 flex">
+                <Button type="button" variant="destructive" size="sm" className="w-full" onClick={() => {
+                  const arr = [ ...((formData as any).compatibilityList || []) ];
+                  arr.splice(idx, 1);
+                  setFormData({ ...formData, compatibilityList: arr });
+                }}>
+                  حذف
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setFormData({
+            ...formData,
+            compatibilityList: [ ...((formData as any).compatibilityList || []), '' ]
+          })}
+        >
+          إضافة سطر توافق
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="flex items-center space-x-2 space-x-reverse">
+          <Switch id="isActive" checked={formData.isActive} onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })} />
+          <Label htmlFor="isActive">نشر المنتج فوراً</Label>
+        </div>
+        <div className="flex items-center space-x-2 space-x-reverse">
+          <Switch id="isNew" checked={formData.isNew} onCheckedChange={(checked) => setFormData({ ...formData, isNew: checked })} />
+          <Label htmlFor="isNew">منتج جديد</Label>
+        </div>
+        <div className="flex items-center space-x-2 space-x-reverse">
+          <Switch id="isOnSale" checked={formData.isOnSale} onCheckedChange={(checked) => setFormData({ ...formData, isOnSale: checked })} />
+          <Label htmlFor="isOnSale">عليه عرض</Label>
+        </div>
+      </div>
 
         {/* Installation option controlled by vendor */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

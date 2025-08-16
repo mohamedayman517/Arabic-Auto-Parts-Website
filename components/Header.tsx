@@ -139,8 +139,10 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 <button onClick={() => go('home')} className="text-foreground hover:text-primary transition-colors">{t('home')}</button>
                 <button onClick={() => go('products')} className="text-foreground hover:text-primary transition-colors">{t('products')}</button>
                 <button onClick={() => go('offers')} className="text-foreground hover:text-primary transition-colors">{t('offers')}</button>
-                {/* Always show Projects for guests and customers */}
-                <button onClick={() => go('projects')} className="text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                {/* Projects: hide for technicians */}
+                {!isTechnician && (
+                  <button onClick={() => go('projects')} className="text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                )}
                 {/* Technicians quick link to their services */}
                 {user && isTechnician && (
                   <button onClick={() => go('technician-services')} className="text-foreground hover:text-primary transition-colors">{locale==='ar' ? 'الخدمات' : 'Services'}</button>
@@ -302,7 +304,10 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 <button onClick={() => { go('home'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('home')}</button>
                 <button onClick={() => { go('products'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('products')}</button>
                 <button onClick={() => { go('offers'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('offers')}</button>
-                <button onClick={() => { go('projects'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                {/* Projects: hide for technicians */}
+                {!isTechnician && (
+                  <button onClick={() => { go('projects'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                )}
                 {user && isTechnician && (
                   <button onClick={() => { go('technician-services'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{locale==='ar' ? 'الخدمات' : 'Services'}</button>
                 )}

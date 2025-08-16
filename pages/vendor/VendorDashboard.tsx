@@ -149,6 +149,11 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
       route: "vendor-services",
     },
     {
+      icon: "Users",
+      label: { ar: "عرض المتقدمين", en: "View Applicants" },
+      route: "vendor-service-applicants",
+    },
+    {
       icon: "Plus",
       label: { ar: "إضافة خدمة", en: "Add Service" },
       route: "add-service",
@@ -522,6 +527,15 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
               >
                 <Eye className="mr-2 h-4 w-4" />
                 {locale === 'ar' ? 'عرض الخدمات' : 'View Services'}
+              </Button>
+              {/* View Service Applicants */}
+              <Button
+                className="w-full justify-start"
+                variant="secondary"
+                onClick={() => setCurrentPage && setCurrentPage("vendor-service-applicants")}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                {locale === 'ar' ? 'عرض المتقدمين' : 'View Applicants'}
               </Button>
               {/* Add Service */}
               <Button

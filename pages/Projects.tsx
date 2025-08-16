@@ -83,6 +83,7 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
   const { t, locale } = useTranslation();
   const currency = locale === "ar" ? "ر.س" : "SAR";
   const isLoggedIn = Boolean((rest as any)?.user);
+  const currentUserId = (rest as any)?.user?.id ? String((rest as any).user.id) : '';
 
   const [projects, setProjects] = useState(mockProjects);
   const [filtered, setFiltered] = useState(mockProjects);
@@ -142,7 +143,7 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
   const [fAcc, setFAcc] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
 
-  // Load saved user projects from localStorage on mount
+  // Load saved user projects from localStorage on mount (owner-only)
   useEffect(() => {
     try {
       if (typeof window === 'undefined') return;
@@ -177,10 +178,22 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          const migrated = parsed.map(migrateProject).filter(Boolean);
-          setUserProjects(migrated as any[]);
-          // persist migration immediately
-          window.localStorage.setItem('user_projects', JSON.stringify(migrated));
+          let migrated = parsed.map(migrateProject).filter(Boolean) as any[];
+          // If logged-in and some legacy projects have no ownerId, assign them to current user (local migration)
+          if (currentUserId) {
+            let changed = false;
+            migrated = migrated.map((p:any) => {
+              if (!p.ownerId) { changed = true; return { ...p, ownerId: currentUserId }; }
+              return p;
+            });
+            if (changed) {
+              // Persist migration while preserving structure
+              window.localStorage.setItem('user_projects', JSON.stringify(migrated));
+            }
+          }
+          // Show only projects owned by current user
+          const owned = currentUserId ? migrated.filter((p:any)=> String(p.ownerId||'') === currentUserId) : [];
+          setUserProjects(owned);
         }
       }
 
@@ -213,14 +226,21 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
     } catch {}
   }, []);
 
-  // Persist user projects to localStorage whenever they change (after hydration)
+  // Persist user projects to localStorage whenever they change (after hydration), merging with other owners' projects
   useEffect(() => {
     try {
       if (typeof window === 'undefined') return;
       if (!hydrated) return;
-      window.localStorage.setItem('user_projects', JSON.stringify(userProjects));
+      const raw = window.localStorage.getItem('user_projects');
+      const existing = raw ? JSON.parse(raw) : [];
+      let others: any[] = [];
+      if (Array.isArray(existing)) {
+        others = existing.filter((p:any)=> String(p.ownerId||'') !== currentUserId);
+      }
+      const merged = [...others, ...userProjects];
+      window.localStorage.setItem('user_projects', JSON.stringify(merged));
     } catch {}
-  }, [userProjects, hydrated]);
+  }, [userProjects, hydrated, currentUserId]);
 
   // Persist additional builders
   useEffect(() => {
@@ -505,6 +525,7 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
     }
     const proj = {
       id: `u-${Date.now()}`,
+      ownerId: currentUserId || 'guest',
       type: ptype,
       material,
       width,
@@ -561,6 +582,13 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
       <Header currentPage="projects" setCurrentPage={setCurrentPage as any} {...(rest as any)} />
 
       <div className="container mx-auto px-4 py-8">
+        {!isLoggedIn && (
+          <Card className="mb-6">
+            <CardContent className="p-4 text-sm text-muted-foreground">
+              {locale==='ar' ? 'يرجى تسجيل الدخول لإنشاء وعرض مشاريعك الخاصة. لن يستطيع الزوار مشاهدة مشاريع المستخدمين.' : 'Please sign in to create and view your own projects. Guests cannot view users’ projects.'}
+            </CardContent>
+          </Card>
+        )}
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>

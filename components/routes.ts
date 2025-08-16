@@ -42,6 +42,7 @@ import VendorSettings from '../pages/vendor/VendorSettings';
 import VendorProjects from '../pages/vendor/VendorProjects';
 import VendorServices from '../pages/vendor/VendorServices';
 import VendorProjectDetails from '../pages/vendor/VendorProjectDetails';
+import VendorServiceApplicants from '../pages/vendor/VendorServiceApplicants';
 
 // Import marketer dashboard components
 // Marketer role removed
@@ -95,6 +96,7 @@ export const routes: Record<string, RouteConfig> = {
   'vendor-projects': { component: VendorProjects, title: 'مشاريعي', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-project-details': { component: VendorProjectDetails, title: 'تفاصيل مشروع', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-services': { component: VendorServices, title: 'خدماتي', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
+  'vendor-service-applicants': { component: VendorServiceApplicants, title: 'المتقدمون على الخدمات', icon: Users, requiresAuth: true, allowedRoles: ['vendor'] },
 
   // Marketer routes removed
 

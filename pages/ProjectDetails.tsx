@@ -31,12 +31,14 @@ const accessoriesCatalog = [
 
 interface ProjectDetailsProps extends Partial<RouteContext> {}
 
-export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetailsProps) {
+export default function ProjectDetails({ setCurrentPage, goBack, ...rest }: ProjectDetailsProps) {
   const { t, locale } = useTranslation();
   const currency = locale === 'ar' ? 'ر.س' : 'SAR';
   const [project, setProject] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [proposals, setProposals] = useState<any[]>([]);
+  const currentUserId = (rest as any)?.user?.id ? String((rest as any).user.id) : '';
+  const isLoggedIn = Boolean((rest as any)?.user);
 
   // Load selected project by id from localStorage
   useEffect(() => {
@@ -48,7 +50,14 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
       const list = JSON.parse(raw);
       if (Array.isArray(list)) {
         const found = list.find((p: any) => p.id === id);
-        setProject(found || null);
+        // Enforce owner-only access
+        if (!isLoggedIn) {
+          setProject(null);
+        } else if (found && String(found.ownerId || '') === currentUserId) {
+          setProject(found);
+        } else {
+          setProject(null);
+        }
       }
       // Load proposals addressed to this project
       try {
@@ -153,7 +162,7 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
 
   return (
     <div className="min-h-screen bg-background" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-      <Header currentPage="project-details" setCurrentPage={setCurrentPage as any} />
+      <Header currentPage="project-details" setCurrentPage={setCurrentPage as any} {...(rest as any)} />
 
       <div className="container mx-auto px-4 py-8">
         {/* Loading/empty state */}
@@ -176,8 +185,8 @@ export default function ProjectDetails({ setCurrentPage, goBack }: ProjectDetail
               <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                 <Info className="w-6 h-6 text-muted-foreground" />
               </div>
-              <p className="text-lg font-medium">{locale==='ar' ? 'لا توجد تفاصيل متاحة لهذا المشروع.' : 'No details available for this project.'}</p>
-              <p className="text-sm text-muted-foreground">{locale==='ar' ? 'ربما تم حذف المشروع أو لم يتم اختياره.' : 'The project might have been removed or not selected.'}</p>
+              <p className="text-lg font-medium">{locale==='ar' ? (isLoggedIn ? 'غير مصرح لك بعرض هذا المشروع.' : 'الرجاء تسجيل الدخول لعرض مشاريعك.') : (isLoggedIn ? 'You are not authorized to view this project.' : 'Please sign in to view your projects.')}</p>
+              <p className="text-sm text-muted-foreground">{locale==='ar' ? 'هذه الصفحة تعرض فقط مشاريع المالك.' : 'This page only shows projects owned by the current user.'}</p>
               <div className="pt-1">
                 <Button onClick={back} className="inline-flex items-center gap-1">
                   {locale==='ar' ? 'رجوع للمشاريع' : 'Back to Projects'} <ArrowRight className="w-4 h-4" />

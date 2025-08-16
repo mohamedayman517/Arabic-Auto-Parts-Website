@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Save, Upload, Eye, EyeOff, Shield, Bell, Store, CreditCard, MapPin, Phone, Mail, Globe } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -19,21 +19,38 @@ import { useTranslation } from '../../hooks/useTranslation';
 
 interface VendorSettingsProps extends RouteContext {}
 
-export default function VendorSettings({ user, setCurrentPage }: VendorSettingsProps) {
+export default function VendorSettings(props: VendorSettingsProps) {
+  const { user, setCurrentPage } = props;
   const [mounted, setMounted] = useState(false);
   const { t, locale } = useTranslation();
-  const [storeInfo, setStoreInfo] = useState({
-    storeName: 'متجر قطع غيار العارف',
-    storeDescription: 'متخصصون في قطع غيار السيارات الأصلية والبديلة عالية الجودة',
-    logo: '',
-    banner: '',
-    address: 'شارع الملك فهد، حي العليا، الرياض',
-    phone: '+966 11 123 4567',
-    email: 'info@alaareef-parts.com',
-    website: 'www.alaareef-parts.com',
-    businessLicense: 'CR-123456789',
-    taxNumber: '123456789012345'
-  });
+  const defaultStoreInfo = (loc: string) => (
+    loc === 'ar'
+      ? {
+          storeName: 'متجر قطع غيار العارف',
+          storeDescription: 'متخصصون في قطع غيار السيارات الأصلية والبديلة عالية الجودة',
+          logo: '',
+          banner: '',
+          address: 'شارع الملك فهد، حي العليا، الرياض',
+          phone: '+966 11 123 4567',
+          email: 'info@alaareef-parts.com',
+          website: 'www.alaareef-parts.com',
+          businessLicense: 'CR-123456789',
+          taxNumber: '123456789012345'
+        }
+      : {
+          storeName: 'Al Aareef Auto Parts',
+          storeDescription: 'Specialists in genuine and high-quality alternative car parts',
+          logo: '',
+          banner: '',
+          address: 'King Fahd Rd, Al Olaya, Riyadh',
+          phone: '+966 11 123 4567',
+          email: 'info@alaareef-parts.com',
+          website: 'www.alaareef-parts.com',
+          businessLicense: 'CR-123456789',
+          taxNumber: '123456789012345'
+        }
+  );
+  const [storeInfo, setStoreInfo] = useState(() => defaultStoreInfo(locale));
 
   const [notifications, setNotifications] = useState({
     orderNotifications: true,
@@ -52,13 +69,25 @@ export default function VendorSettings({ user, setCurrentPage }: VendorSettingsP
     shippingDays: 3
   });
 
-  const [paymentSettings, setPaymentSettings] = useState({
-    bankName: 'البنك الأهلي السعودي',
-    accountNumber: '1234567890',
-    iban: 'SA0312345678901234567890',
-    paypalEmail: '',
-    stripeConnected: false
-  });
+  const defaultPayment = (loc: string) => (
+    loc === 'ar'
+      ? {
+          bankName: 'البنك الأهلي السعودي',
+          accountNumber: '1234567890',
+          iban: 'SA0312345678901234567890',
+          paypalEmail: '',
+          stripeConnected: false
+        }
+      : {
+          bankName: 'Saudi National Bank',
+          accountNumber: '1234567890',
+          iban: 'SA0312345678901234567890',
+          paypalEmail: '',
+          stripeConnected: false
+        }
+  );
+  const [paymentSettings, setPaymentSettings] = useState(() => defaultPayment(locale));
+  const prevLocaleRef = useRef(locale);
 
   const [showPassword, setShowPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -99,11 +128,28 @@ export default function VendorSettings({ user, setCurrentPage }: VendorSettingsP
     setMounted(true);
   }, []);
 
+  // When locale changes at runtime, update defaults ONLY if values match previous defaults (to avoid clobbering user edits)
+  useEffect(() => {
+    const prev = prevLocaleRef.current;
+    if (prev === locale) return;
+    const prevStoreDefaults = defaultStoreInfo(prev);
+    const nextStoreDefaults = defaultStoreInfo(locale);
+    const prevPaymentDefaults = defaultPayment(prev);
+    const nextPaymentDefaults = defaultPayment(locale);
+
+    const isEqual = (a: any, b: any) => Object.keys(b).every(k => a?.[k] === (b as any)[k]);
+
+    setStoreInfo(curr => (isEqual(curr, prevStoreDefaults) ? nextStoreDefaults : curr));
+    setPaymentSettings(curr => (isEqual(curr, prevPaymentDefaults) ? nextPaymentDefaults : curr));
+
+    prevLocaleRef.current = locale;
+  }, [locale]);
+
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header currentPage="vendor-settings" setCurrentPage={setCurrentPage} />
+    <div className="min-h-screen bg-background" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+      <Header {...props} currentPage="vendor-settings" setCurrentPage={setCurrentPage} />
       
       <div className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-6">
@@ -604,7 +650,7 @@ export default function VendorSettings({ user, setCurrentPage }: VendorSettingsP
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <p className="font-medium">Chrome على Windows</p>
+                        <p className="font-medium">{locale === 'en' ? 'Chrome on Windows' : 'Chrome على Windows'}</p>
                         <p className="text-sm text-muted-foreground">{locale === 'en' ? 'Active now • Riyadh, Saudi Arabia' : 'نشط الآن • الرياض، السعودية'}</p>
                       </div>
                       <Badge variant="default">{t('vsCurrentSession')}</Badge>
@@ -612,7 +658,7 @@ export default function VendorSettings({ user, setCurrentPage }: VendorSettingsP
                     
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <p className="font-medium">Safari على iPhone</p>
+                        <p className="font-medium">{locale === 'en' ? 'Safari on iPhone' : 'Safari على iPhone'}</p>
                         <p className="text-sm text-muted-foreground">{locale === 'en' ? 'Last activity yesterday • Riyadh, Saudi Arabia' : 'آخر نشاط أمس • الرياض، السعودية'}</p>
                       </div>
                       <Button variant="outline" size="sm">{t('vsEndSession')}</Button>

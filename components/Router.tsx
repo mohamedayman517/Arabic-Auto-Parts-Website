@@ -110,6 +110,8 @@ export default function Router() {
   // Keep an internal navigation history stack of visited pages
   const [history, setHistory] = useState<string[]>([]);
   const [returnTo, setReturnTo] = useState<string | null>(null);
+  // Track when we've checked localStorage for a persisted session
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -285,6 +287,9 @@ export default function Router() {
       }
     } catch {
       // ignore
+    } finally {
+      // Mark that we have attempted to restore the session
+      setSessionChecked(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -329,6 +334,8 @@ export default function Router() {
 
   // Auth/role guard: enforce access to protected routes
   useEffect(() => {
+    // Avoid running guard until we've checked for a persisted session
+    if (!sessionChecked) return;
     const route = routes[currentPage as keyof typeof routes];
     if (!route) return;
     const needsAuth = !!route.requiresAuth;
@@ -346,7 +353,7 @@ export default function Router() {
         setCurrentPage("home");
       }
     }
-  }, [currentPage, user]);
+  }, [currentPage, user, sessionChecked]);
 
   if (!mounted) return null;
 

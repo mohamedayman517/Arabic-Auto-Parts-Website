@@ -103,6 +103,8 @@ const seedAddresses: Address[] = [
 
 export default function UserProfile({ user, setUser, setCurrentPage, wishlistItems, removeFromWishlist, addToCart }: UserProfileProps) {
   const { t, locale } = useTranslation();
+  const isTechnician = (user as any)?.role === 'technician';
+  const technicianId = (user as any)?.id || null;
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState<ProfileUser>((() => {
     if (user) {
@@ -141,6 +143,88 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
 
   const readLS = (key: string) => {
     try { const raw = key && localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch { return null; }
+  };
+
+  // Technician offers (service requests) management
+  const offersKey = 'technician_requests';
+  type TechOffer = {
+    id: string;
+    targetType: 'service' | 'project';
+    serviceId?: any;
+    targetId?: any;
+    price: number;
+    days: number;
+    message?: string;
+    technicianId: any;
+    status?: string;
+    createdAt?: string;
+  };
+  const readOffersAll = (): TechOffer[] => {
+    try { const raw = localStorage.getItem(offersKey); return raw ? JSON.parse(raw) : []; } catch { return []; }
+  };
+  const writeOffersAll = (list: TechOffer[]) => {
+    try { localStorage.setItem(offersKey, JSON.stringify(list)); } catch {}
+  };
+  const [techOffers, setTechOffers] = useState<TechOffer[]>(() => {
+    const list = readOffersAll();
+    return Array.isArray(list) && technicianId ? list.filter(x => x.technicianId === technicianId && x.targetType === 'service') : [];
+  });
+  const refreshOffers = () => {
+    const list = readOffersAll();
+    setTechOffers(Array.isArray(list) && technicianId ? list.filter(x => x.technicianId === technicianId && x.targetType === 'service') : []);
+  };
+  // Service lookup for labels
+  const [servicesLookup] = useState<Record<string, any>>(() => {
+    try {
+      const raw = localStorage.getItem('user_services');
+      const list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) return {};
+      return list.reduce((acc: any, s: any) => { acc[String(s.id)] = s; return acc; }, {} as Record<string, any>);
+    } catch { return {}; }
+  });
+
+  const editOffer = async (id: string) => {
+    const o = techOffers.find(x=>x.id===id); if (!o) return;
+    const html = `
+      <div class="space-y-2 text-right">
+        <input id="offer_price" type="number" class="swal2-input" value="${o.price}" placeholder="${locale==='en'?'Price':'السعر'}" />
+        <input id="offer_days" type="number" class="swal2-input" value="${o.days}" placeholder="${locale==='en'?'Days':'الأيام'}" />
+        <input id="offer_msg" class="swal2-input" value="${o.message||''}" placeholder="${locale==='en'?'Message':'رسالة'}" />
+      </div>`;
+    const res = await Swal.fire({
+      title: locale==='en'? 'Edit Offer' : 'تعديل العرض',
+      html,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: locale==='en'? 'Save' : 'حفظ',
+      cancelButtonText: locale==='en'? 'Cancel' : 'إلغاء',
+      preConfirm: () => {
+        const price = Number((document.getElementById('offer_price') as HTMLInputElement)?.value || '');
+        const days = Number((document.getElementById('offer_days') as HTMLInputElement)?.value || '');
+        const message = (document.getElementById('offer_msg') as HTMLInputElement)?.value || '';
+        if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(days) || days < 1) {
+          Swal.showValidationMessage(locale==='en'? 'Enter valid price and days' : 'أدخل سعراً وأياماً صالحين');
+          return null as any;
+        }
+        return { price, days, message } as any;
+      }
+    }) as any;
+    if (!res.value) return;
+    const all = readOffersAll();
+    const next = all.map(x => x.id===id ? { ...x, ...res.value } : x);
+    writeOffersAll(next);
+    refreshOffers();
+    Swal.fire({ icon: 'success', title: locale==='en'? 'Offer updated' : 'تم تحديث العرض', timer: 1200, showConfirmButton: false });
+  };
+
+  const deleteOffer = async (id: string) => {
+    const go = await Swal.fire({ title: locale==='en'? 'Delete offer?' : 'حذف العرض؟', icon: 'warning', showCancelButton: true, confirmButtonText: locale==='en'? 'Delete' : 'حذف', cancelButtonText: locale==='en'? 'Cancel' : 'إلغاء' });
+    if (!go.isConfirmed) return;
+    const all = readOffersAll();
+    const next = all.filter(x => x.id !== id);
+    writeOffersAll(next);
+    refreshOffers();
+    Swal.fire({ icon: 'success', title: locale==='en'? 'Deleted' : 'تم الحذف', timer: 1000, showConfirmButton: false });
   };
   const writeLS = (key: string, val: unknown) => {
     try { if (key) localStorage.setItem(key, JSON.stringify(val)); } catch {}
@@ -444,7 +528,11 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
             <Tabs defaultValue="profile" className="space-y-6">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="profile">{locale === 'en' ? 'Profile' : 'الملف الشخصي'}</TabsTrigger>
-                <TabsTrigger value="orders">{locale === 'en' ? 'My Orders' : 'طلباتي'}</TabsTrigger>
+                {isTechnician ? (
+                  <TabsTrigger value="offers">{locale === 'en' ? 'My Offers' : 'عروضي'}</TabsTrigger>
+                ) : (
+                  <TabsTrigger value="orders">{locale === 'en' ? 'My Orders' : 'طلباتي'}</TabsTrigger>
+                )}
                 <TabsTrigger value="addresses">{locale === 'en' ? 'Addresses' : 'العناوين'}</TabsTrigger>
                 <TabsTrigger value="wishlist">{locale === 'en' ? 'Wishlist' : 'المفضلة'}</TabsTrigger>
                 <TabsTrigger value="settings">{locale === 'en' ? 'Settings' : 'الإعدادات'}</TabsTrigger>
@@ -513,7 +601,57 @@ export default function UserProfile({ user, setUser, setCurrentPage, wishlistIte
                   </CardContent>
                 </Card>
               </TabsContent>
-              {/* Orders Tab */}
+
+              {/* Offers Tab (technician) */}
+              <TabsContent value="offers">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{locale==='en' ? 'My Offers' : 'عروضي'}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isTechnician && techOffers.length === 0 ? (
+                      <div className="text-center text-muted-foreground py-8">
+                        {locale==='en' ? 'No offers yet.' : 'لا توجد عروض بعد.'}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {techOffers.map(o => {
+                          const svc = o.serviceId ? servicesLookup[String(o.serviceId)] : null;
+                          return (
+                            <div key={o.id} className="p-4 border rounded-lg">
+                              <div className="flex justify-between items-start gap-4">
+                                <div>
+                                  <h3 className="font-medium">
+                                    {svc ? (svc.type || (locale==='en'?'Service':'خدمة')) : (locale==='en'?'Service':'خدمة')} #{o.serviceId}
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    {locale==='en' ? 'Price' : 'السعر'}: {o.price} {locale==='en'?'SAR':'ر.س'} • {locale==='en' ? 'Days' : 'أيام'}: {o.days}
+                                  </p>
+                                  {!!o.message && (
+                                    <p className="text-sm text-muted-foreground mt-1">{o.message}</p>
+                                  )}
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {(o.createdAt || '').slice(0,10)} • {(o.status || (locale==='en'?'Pending':'قيد الانتظار'))}
+                                  </p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button variant="outline" size="sm" onClick={() => editOffer(o.id)}>
+                                    {locale==='en' ? 'Edit' : 'تعديل'}
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="text-red-600" onClick={() => deleteOffer(o.id)}>
+                                    {locale==='en' ? 'Delete' : 'حذف'}
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              {/* Orders Tab (non-technician) */}
               <TabsContent value="orders">
                 <Card>
                   <CardHeader>

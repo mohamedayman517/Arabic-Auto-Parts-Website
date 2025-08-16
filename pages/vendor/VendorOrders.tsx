@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { RouteContext } from '../../components/Router';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import { getStatusColor, getStatusText, formatCurrency, formatDate } from '../../utils/vendorHelpers';
+import { getStatusColor, formatCurrency, formatDate } from '../../utils/vendorHelpers';
 import { useTranslation } from '../../hooks/useTranslation';
 
 type VendorOrdersProps = Partial<RouteContext>;
@@ -61,6 +61,7 @@ export default function VendorOrders({ setCurrentPage, ...context }: VendorOrder
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const { t, locale } = useTranslation();
+  const isAr = locale === 'ar';
 
   // Safe navigation fallback to avoid undefined setter and preserve SPA context
   const safeSetCurrentPage = setCurrentPage ?? (() => {});
@@ -122,7 +123,7 @@ export default function VendorOrders({ setCurrentPage, ...context }: VendorOrder
             <p className="text-muted-foreground">{t('vendorOrdersSubtitle')}</p>
           </div>
           <Button variant="outline">
-            <Download className="h-4 w-4 ml-2" />
+            <Download className={`h-4 w-4 ${isAr ? 'mr-2' : 'ml-2'}`} />
             {t('exportOrders')}
           </Button>
         </div>
@@ -222,13 +223,17 @@ export default function VendorOrders({ setCurrentPage, ...context }: VendorOrder
                 <div key={order.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="font-medium">طلب رقم {order.id}</h3>
+                      <h3 className="font-medium">{t('orderNumber')} {order.id}</h3>
                       <p className="text-sm text-muted-foreground">{order.customer}</p>
-                      <p className="text-sm text-muted-foreground">{formatDate(order.date)}</p>
+                      <p className="text-sm text-muted-foreground">{formatDate(order.date, isAr ? 'ar' : 'en')}</p>
                     </div>
                     <div className="text-left">
                       <Badge className={getStatusColor(order.status)}>
-                        {getStatusText(order.status)}
+                        {order.status === 'pending' && t('pendingLabel')}
+                        {order.status === 'processing' && t('processingLabel')}
+                        {order.status === 'shipped' && t('shippedLabel')}
+                        {order.status === 'delivered' && t('deliveredLabel')}
+                        {order.status === 'cancelled' && t('cancelledLabel')}
                       </Badge>
                       <p className="font-medium mt-1">{formatCurrency(order.total, locale === 'en' ? 'en' : 'ar')}</p>
                     </div>

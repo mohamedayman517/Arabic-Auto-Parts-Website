@@ -142,26 +142,15 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
             <Input id="subCategoryEn" value={formData.subCategoryEn} onChange={(e) => setFormData({ ...formData, subCategoryEn: e.target.value })} placeholder="e.g., Wooden Door / Aluminum Window" />
           </div>
 
-          {/* Part location (A/B/C) - mutually exclusive checkboxes */}
+          {/* Part location - free text input */}
           <div className="md:col-span-2">
-            <Label className="block mb-2">مكان القطعة</Label>
-            <div className="flex flex-wrap gap-4 items-center">
-              {(['A','B','C'] as const).map((opt) => (
-                <div key={opt} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`partLocation-${opt}`}
-                    checked={(formData as any)?.partLocation === opt}
-                    onCheckedChange={(checked) => {
-                      setFormData({
-                        ...formData,
-                        partLocation: checked ? opt : ((formData as any)?.partLocation === opt ? '' : (formData as any)?.partLocation)
-                      });
-                    }}
-                  />
-                  <Label htmlFor={`partLocation-${opt}`}>{opt}</Label>
-                </div>
-              ))}
-            </div>
+            <Label htmlFor="partLocation" className="block mb-2">مكان القطعة</Label>
+            <Input
+              id="partLocation"
+              placeholder="مثال: يمين أمامي / يسار خلفي / أمام السيارة ..."
+              value={(formData as any)?.partLocation || ''}
+              onChange={(e) => setFormData({ ...formData, partLocation: e.target.value })}
+            />
           </div>
 
           <div>

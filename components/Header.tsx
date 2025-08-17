@@ -143,6 +143,10 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 {!isTechnician && (
                   <button onClick={() => go('projects')} className="text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
                 )}
+                {/* Rentals: hide for technicians; placed next to projects */}
+                {!isTechnician && (
+                  <button onClick={() => go('rentals')} className="text-foreground hover:text-primary transition-colors">{locale==='ar' ? 'التأجير' : 'Rentals'}</button>
+                )}
                 {/* Technicians quick link to their services */}
                 {user && isTechnician && (
                   <button onClick={() => go('technician-services')} className="text-foreground hover:text-primary transition-colors">{locale==='ar' ? 'الخدمات' : 'Services'}</button>
@@ -307,6 +311,10 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 {/* Projects: hide for technicians */}
                 {!isTechnician && (
                   <button onClick={() => { go('projects'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('projects') || (locale==='ar'?'المشاريع':'Projects')}</button>
+                )}
+                {/* Rentals: hide for technicians; placed next to projects */}
+                {!isTechnician && (
+                  <button onClick={() => { go('rentals'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{locale==='ar' ? 'التأجير' : 'Rentals'}</button>
                 )}
                 {user && isTechnician && (
                   <button onClick={() => { go('technician-services'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{locale==='ar' ? 'الخدمات' : 'Services'}</button>

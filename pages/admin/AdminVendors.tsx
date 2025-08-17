@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Store, Search, Filter, Plus, Edit, Trash2, MapPin, Mail, Phone, ArrowRight, CheckCircle, Ban } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 // Simple local mock store for vendors (localStorage-backed)
 interface VendorRow {
@@ -44,6 +45,7 @@ function writeVendors(rows: VendorRow[]) {
 }
 
 export default function AdminVendors({ setCurrentPage, ...context }: Partial<RouteContext>) {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<VendorRow[]>([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'all' | VendorRow['status']>('all');
@@ -101,40 +103,40 @@ export default function AdminVendors({ setCurrentPage, ...context }: Partial<Rou
           <div className="flex items-center mb-4">
             <Button variant="outline" onClick={() => setCurrentPage && setCurrentPage('admin-dashboard')} className="mr-4">
               <ArrowRight className="ml-2 h-4 w-4" />
-              Back to Dashboard
+              {t('backToDashboard')}
             </Button>
           </div>
-          <h1 className="mb-2">Manage Vendors</h1>
-          <p className="text-muted-foreground">Browse and manage vendors, approvals, and status.</p>
+          <h1 className="mb-2">{t('manageVendorsTitle')}</h1>
+          <p className="text-muted-foreground">{t('manageVendorsSubtitle')}</p>
         </div>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center"><Filter className="mr-2 h-5 w-5" />Search & Filter</CardTitle>
+            <CardTitle className="flex items-center"><Filter className="mr-2 h-5 w-5" />{t('searchAndFilter')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
                 <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search by name or email" value={search} onChange={e=>setSearch(e.target.value)} className="pr-10" />
+                <Input placeholder={t('searchByNameOrEmail')} value={search} onChange={e=>setSearch(e.target.value)} className="pr-10" />
               </div>
               <Select value={status} onValueChange={(v:any)=>setStatus(v)}>
-                <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('statusLabel')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
+                  <SelectItem value="all">{t('allStatuses')}</SelectItem>
+                  <SelectItem value="active">{t('activeStatus')}</SelectItem>
+                  <SelectItem value="pending">{t('pendingStatus')}</SelectItem>
+                  <SelectItem value="suspended">{t('suspendedStatus')}</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Add Vendor</Button>
+              <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{t('addVendor')}</Button>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center"><Store className="mr-2 h-5 w-5" />Vendors ({filtered.length})</CardTitle>
+            <CardTitle className="flex items-center"><Store className="mr-2 h-5 w-5" />{t('vendors')} ({filtered.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -146,14 +148,14 @@ export default function AdminVendors({ setCurrentPage, ...context }: Partial<Rou
                       <div className="flex items-center space-x-2 space-x-reverse">
                         <h3 className="font-medium">{r.name}</h3>
                         <Badge variant={r.status==='active'?'default': r.status==='pending'? 'secondary':'destructive'}>
-                          {r.status==='active'?'Active': r.status==='pending'? 'Pending':'Suspended'}
+                          {r.status==='active'? t('activeStatus') : r.status==='pending' ? t('pendingStatus') : t('suspendedStatus')}
                         </Badge>
                       </div>
                       <div className="flex items-center space-x-4 space-x-reverse text-sm text-muted-foreground">
                         <div className="flex items-center"><Mail className="mr-1 h-3 w-3" />{r.email}</div>
                         <div className="flex items-center"><Phone className="mr-1 h-3 w-3" />{r.phone}</div>
                         <div className="flex items-center"><MapPin className="mr-1 h-3 w-3" />{r.location}</div>
-                        <span>Products: {r.productsCount}</span>
+                        <span>{t('productsCountLabel')}: {r.productsCount}</span>
                       </div>
                     </div>
                   </div>
@@ -170,54 +172,54 @@ export default function AdminVendors({ setCurrentPage, ...context }: Partial<Rou
               ))}
             </div>
             {filtered.length===0 && (
-              <div className="text-center py-8 text-muted-foreground">No matching results</div>
+              <div className="text-center py-8 text-muted-foreground">{t('noResults')}</div>
             )}
           </CardContent>
         </Card>
 
         <Dialog open={formOpen} onOpenChange={(o)=>{ setFormOpen(o); if(!o) setEditId(null); }}>
           <DialogContent className="max-w-lg bg-white/95 backdrop-blur-sm border border-white/20">
-            <DialogHeader><DialogTitle>{editId? 'Edit Vendor' : 'Add Vendor'}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editId? t('editVendor') : t('addVendor')}</DialogTitle></DialogHeader>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Store name</Label>
+                <Label>{t('storeName')}</Label>
                 <Input value={form.name||''} onChange={e=>setForm(f=>({...f, name:e.target.value}))} />
               </div>
               <div>
-                <Label>Email</Label>
+                <Label>{t('email')}</Label>
                 <Input type="email" value={form.email||''} onChange={e=>setForm(f=>({...f, email:e.target.value}))} />
               </div>
               <div>
-                <Label>Phone number</Label>
+                <Label>{t('phoneNumber')}</Label>
                 <Input value={form.phone||''} onChange={e=>setForm(f=>({...f, phone:e.target.value}))} />
               </div>
               <div>
-                <Label>Location</Label>
+                <Label>{t('locationLabel')}</Label>
                 <Input value={form.location||''} onChange={e=>setForm(f=>({...f, location:e.target.value}))} />
               </div>
               <div>
-                <Label>Status</Label>
+                <Label>{t('statusLabel')}</Label>
                 <Select value={(form.status as any)||'pending'} onValueChange={(v:any)=>setForm(f=>({...f, status:v}))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="active">{t('activeStatus')}</SelectItem>
+                    <SelectItem value="pending">{t('pendingStatus')}</SelectItem>
+                    <SelectItem value="suspended">{t('suspendedStatus')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Products count</Label>
+                <Label>{t('productsCountLabel')}</Label>
                 <Input type="number" value={String(form.productsCount||0)} onChange={e=>setForm(f=>({...f, productsCount: Number(e.target.value||0)}))} />
               </div>
               <div className="md:col-span-2">
-                <Label>Notes</Label>
+                <Label>{t('notesLabel')}</Label>
                 <Textarea value={form.notes||''} onChange={e=>setForm(f=>({...f, notes:e.target.value}))} />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={()=>setFormOpen(false)}>Cancel</Button>
-              <Button onClick={submit}>{editId? 'Save' : 'Add'}</Button>
+              <Button variant="outline" onClick={()=>setFormOpen(false)}>{t('cancel')}</Button>
+              <Button onClick={submit}>{editId? t('save') : t('addVendor')}</Button>
             </div>
           </DialogContent>
         </Dialog>

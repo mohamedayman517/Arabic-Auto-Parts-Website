@@ -20,6 +20,8 @@ import MyOrders from '../pages/MyOrders';
 import About from '../pages/About';
 import FAQ from '../pages/FAQ';
 import Projects from '../pages/Projects';
+import Rentals from '../pages/Rentals';
+import RentalDetails from '../pages/RentalDetails';
 import ProjectsBuilder from '../pages/ProjectsBuilder';
 import ProjectDetails from '../pages/ProjectDetails';
 import AddService from '../pages/AddService';
@@ -41,6 +43,7 @@ import VendorAccounting from '../pages/vendor/VendorAccounting';
 import VendorSettings from '../pages/vendor/VendorSettings';
 import VendorProjects from '../pages/vendor/VendorProjects';
 import VendorServices from '../pages/vendor/VendorServices';
+import VendorRentals from '../pages/vendor/VendorRentals';
 import VendorProjectDetails from '../pages/vendor/VendorProjectDetails';
 import VendorServiceApplicants from '../pages/vendor/VendorServiceApplicants';
 
@@ -74,6 +77,8 @@ export const routes: Record<string, RouteConfig> = {
   about: { component: About, title: 'من نحن', icon: Globe },
   faq: { component: FAQ, title: 'الأسئلة الشائعة', icon: HelpCircle },
   projects: { component: Projects, title: 'المشاريع', icon: Tag },
+  rentals: { component: Rentals, title: 'التأجير', icon: Tag },
+  'rental-details': { component: RentalDetails, title: 'تفاصيل التأجير', icon: Tag },
   'add-service': { component: AddService, title: 'إضافة خدمة', icon: Tag },
   'service-details': { component: ServiceDetails, title: 'تفاصيل الخدمة', icon: Tag },
   'projects-builder': { component: ProjectsBuilder, title: 'إضافة مشروع', icon: Tag, requiresAuth: true },
@@ -96,6 +101,7 @@ export const routes: Record<string, RouteConfig> = {
   'vendor-projects': { component: VendorProjects, title: 'مشاريعي', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-project-details': { component: VendorProjectDetails, title: 'تفاصيل مشروع', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-services': { component: VendorServices, title: 'خدماتي', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
+  'vendor-rentals': { component: VendorRentals, title: 'التأجير', icon: Tag, requiresAuth: true, allowedRoles: ['vendor'] },
   'vendor-service-applicants': { component: VendorServiceApplicants, title: 'المتقدمون على الخدمات', icon: Users, requiresAuth: true, allowedRoles: ['vendor'] },
 
   // Marketer routes removed

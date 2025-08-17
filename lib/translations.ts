@@ -512,6 +512,15 @@ export const translations = {
     customerRole: "عميل",
     technicianRole: "فني",
     
+    // Admin Vendors page
+    manageVendorsTitle: "إدارة البائعين",
+    manageVendorsSubtitle: "تصفح وإدارة البائعين والموافقات والحالة",
+    addVendor: "إضافة بائع",
+    editVendor: "تعديل البائع",
+    productsCountLabel: "عدد المنتجات",
+    notesLabel: "ملاحظات",
+    save: "حفظ",
+    
     // Vendor Dashboard
     vendorFunctions: "وظائف التاجر",
     vendorDashboardDescription: "نظرة عامة على أداء متجرك وإحصائياته",
@@ -1036,34 +1045,6 @@ export const translations = {
     ordersCountLabel: "Orders",
     totalSpentLabel: "Total Spent",
     userDetails: "User Details",
-    phoneNumber: "Phone Number",
-    locationLabel: "Location",
-    joinDate: "Join Date",
-    numberOfOrders: "Number of Orders",
-    totalSpent: "Total Spent",
-    editAction: "Edit",
-    suspendAction: "Suspend",
-    activateAction: "Activate",
-    noResults: "No results",
-    noUsersFoundWithCriteria: "No users found for the selected criteria",
-    suspendedStatus: "Suspended",
-    bannedStatus: "Banned",
-    // activeStatus: duplicate key
-    // pendingStatus: duplicate key
-    adminRole: "Admin",
-    vendorRole: "Vendor",
-    customerRole: "Customer",
-    technicianRole: "Technician",
-    
-    // Vendor Dashboard
-    vendorFunctions: "Vendor Functions",
-    vendorDashboardDescription: "Overview of your store performance and stats",
-    importantAlerts: "Important Alerts",
-    stockAlert: "Stock Alert",
-    // available: duplicate of earlier common key
-    minimum: "Minimum",
-    critical: "Critical",
-    low: "Low",
     moderate: "Moderate",
     recentOrders: "Recent Orders",
     performance: "Performance",
@@ -1251,6 +1232,14 @@ export const translations = {
     stock: "Stock",
     sales: "Sales",
 
+    // Admin Vendors page
+    manageVendorsTitle: "Manage Vendors",
+    manageVendorsSubtitle: "Browse and manage vendors, approvals, and status",
+    addVendor: "Add Vendor",
+    editVendor: "Edit Vendor",
+    productsCountLabel: "Products",
+    notesLabel: "Notes",
+    save: "Save",
     
   },
 };

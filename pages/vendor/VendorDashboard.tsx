@@ -37,6 +37,7 @@ import {
   MessageSquare,
   Pencil,
   Trash2,
+  Tag,
 } from "lucide-react";
 import Header from "../../components/Header";
 import { useTranslation } from "../../hooks/useTranslation";
@@ -157,6 +158,11 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
       icon: "Plus",
       label: { ar: "إضافة خدمة", en: "Add Service" },
       route: "add-service",
+    },
+    {
+      icon: "Tag",
+      label: { ar: "التأجير", en: "Rentals" },
+      route: "vendor-rentals",
     },
   ];
 
@@ -544,6 +550,14 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
               >
                 <Plus className="mr-2 h-4 w-4" />
                 {locale === 'ar' ? 'إضافة خدمة' : 'Add Service'}
+              </Button>
+              {/* Rentals */}
+              <Button
+                className="w-full justify-start"
+                onClick={() => setCurrentPage && setCurrentPage("vendor-rentals")}
+              >
+                <Tag className="mr-2 h-4 w-4" />
+                {locale === 'ar' ? 'التأجير' : 'Rentals'}
               </Button>
               <Button
                 className="w-full justify-start"

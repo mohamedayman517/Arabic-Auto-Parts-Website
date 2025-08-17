@@ -128,7 +128,7 @@ export default function AddService({ setCurrentPage, ...rest }: AddServiceProps)
 
   return (
     <div className="min-h-screen bg-background" dir={locale === "ar" ? "rtl" : "ltr"}>
-      <Header currentPage="vendor-services" setCurrentPage={setCurrentPage as any} />
+      <Header currentPage="add-service" setCurrentPage={setCurrentPage as any} {...(rest as any)} />
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>

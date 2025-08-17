@@ -14,35 +14,12 @@ interface RentalFormProps {
   onCancel: () => void;
 }
 
-const RENTAL_CATEGORIES = {
-  'معدات رفع ونقل': [
-    { ar: 'كرينات صغيرة', en: 'Mini Crane' },
-    { ar: 'عربات يد', en: 'Wheelbarrow' },
-    { ar: 'لودر/جرافة صغيرة', en: 'Mini Loader' },
-    { ar: 'رافعة شوكية', en: 'Forklift' },
-  ],
-  'معدات بناء وتجهيز': [
-    { ar: 'خلاطة خرسانة', en: 'Concrete Mixer' },
-    { ar: 'دكاك / هزاز خرسانة', en: 'Compactor/Vibrator' },
-    { ar: 'منشار خرسانة أو حديد', en: 'Concrete/Metal Saw' },
-    { ar: 'ماكينة ثني حديد التسليح', en: 'Rebar Bender' },
-    { ar: 'ماكينة قطع حديد', en: 'Metal Cutter' },
-  ],
-  'معدات حماية وسلامة': [
-    { ar: 'خوذات أمان', en: 'Safety Helmets' },
-    { ar: 'أحزمة أمان', en: 'Safety Harness' },
-    { ar: 'شبك حماية', en: 'Safety Nets' },
-    { ar: 'قفازات وأحذية أمان', en: 'Gloves & Safety Shoes' },
-  ],
-  'معدات كهرباء وصيانة': [
-    { ar: 'مولد كهرباء', en: 'Generator' },
-    { ar: 'كشافات إضاءة موقع', en: 'Site Floodlights' },
-    { ar: 'ماكينات قص وصنفرة', en: 'Cutting & Sanding Machines' },
-    { ar: 'دريل / هيلتي', en: 'Hammer Drill' },
-  ],
-} as const;
-
-type CategoryKey = keyof typeof RENTAL_CATEGORIES;
+// Restricted rental category options for vendor
+const RENTAL_CATEGORY_OPTIONS = [
+  'أدوات بناء',
+  'ادوات صيانه',
+  'ادوات تشطيب',
+] as const;
 
 export default function RentalForm({ product, onSave, onCancel }: RentalFormProps) {
   const [formData, setFormData] = useState<any>({
@@ -70,9 +47,7 @@ export default function RentalForm({ product, onSave, onCancel }: RentalFormProp
     ...product,
   });
 
-  const allOptions = Object.entries(RENTAL_CATEGORIES).flatMap(([cat, items]) =>
-    Array.from(items as ReadonlyArray<{ ar: string; en: string }>).map((it) => ({ cat, ar: it.ar, en: it.en }))
-  );
+  // no predefined name options; vendor types the name manually
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,45 +90,25 @@ export default function RentalForm({ product, onSave, onCancel }: RentalFormProp
       </DialogHeader>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Product Name (Select) */}
+        {/* Product Name (free text) */}
         <div>
           <Label htmlFor="nameAr">اسم المنتج للتأجير</Label>
-          <Select
-            value={formData.nameAr}
-            onValueChange={(val) => {
-              // find selected option to derive category
-              const opt = allOptions.find((o) => o.ar === val);
-              const cat = opt?.cat || '';
-              setFormData({
-                ...formData,
-                nameAr: val,
-                nameEn: opt ? opt.en : '',
-                category: String(cat),
-              });
-            }}
-          >
+          <Input id="nameAr" value={formData.nameAr} onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })} placeholder="اكتب اسم المنتج" required />
+        </div>
+
+        {/* Category (restricted select) */}
+        <div>
+          <Label>الفئة</Label>
+          <Select value={formData.category} onValueChange={(val) => setFormData({ ...formData, category: val })}>
             <SelectTrigger>
-              <SelectValue placeholder="اختر المنتج" />
+              <SelectValue placeholder="اختر الفئة" />
             </SelectTrigger>
             <SelectContent>
-              {(Object.keys(RENTAL_CATEGORIES) as CategoryKey[]).map((catKey) => (
-                <div key={catKey}>
-                  <div className="px-2 py-1 text-xs text-muted-foreground">{catKey}</div>
-                  {Array.from(RENTAL_CATEGORIES[catKey] as ReadonlyArray<{ ar: string; en: string }>).map((item) => (
-                    <SelectItem key={`${catKey}-${item.ar}`} value={item.ar}>
-                      {item.ar} {item.en ? `(${item.en})` : ''}
-                    </SelectItem>
-                  ))}
-                </div>
+              {RENTAL_CATEGORY_OPTIONS.map((opt) => (
+                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        {/* Auto category (read-only) */}
-        <div>
-          <Label>الفئة</Label>
-          <Input value={formData.category} readOnly placeholder="سيتم تعيينها تلقائياً" />
         </div>
 
         {/* Price (single) */}

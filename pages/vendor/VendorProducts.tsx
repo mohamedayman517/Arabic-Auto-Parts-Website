@@ -53,6 +53,7 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
         isNew: Boolean(it.isNew),
         isOnSale: Boolean(it.isOnSale),
         partNumber: it.partNumber || '',
+        partLocation: it.partLocation || '',
         descriptionAr: it.description?.ar || '',
         descriptionEn: it.description?.en || '',
         // map addon installation
@@ -107,7 +108,7 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
   // Export current filtered products to CSV
   const handleExportCSV = () => {
     const headers = [
-      'id','nameAr','nameEn','brand','category','subCategoryAr','subCategoryEn','price','originalPrice','stock','status','partNumber','descriptionAr','descriptionEn','addonInstallEnabled','addonInstallFee','image','images'
+      'id','nameAr','nameEn','brand','category','subCategoryAr','subCategoryEn','price','originalPrice','stock','status','partNumber','partLocation','descriptionAr','descriptionEn','addonInstallEnabled','addonInstallFee','image','images'
     ];
     const rows = filteredProducts.map((p: any) => [
       p.id,
@@ -122,6 +123,7 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
       String(p.stock ?? ''),
       p.status || '',
       p.partNumber || '',
+      p.partLocation || '',
       p.descriptionAr || (p.description?.ar) || '',
       p.descriptionEn || (p.description?.en) || '',
       String(!!p.addonInstallEnabled),
@@ -174,6 +176,7 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
           stock: Number(get('stock') || 0),
           status: get('status') || 'active',
           partNumber: get('partNumber') || '',
+          partLocation: get('partLocation') || '',
           descriptionAr: get('descriptionAr') || '',
           descriptionEn: get('descriptionEn') || '',
           addonInstallEnabled: get('addonInstallEnabled') === 'true',
@@ -197,6 +200,7 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
       sales: 0,
       views: 0,
       image: productData?.image || 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=200',
+      partLocation: productData?.partLocation || '',
       createdAt: new Date().toISOString().split('T')[0]
     };
 
@@ -227,6 +231,7 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
         isOnSale: Boolean(productData?.isOnSale || false),
         compatibility: [],
         partNumber: productData?.partNumber || '',
+        partLocation: productData?.partLocation || '',
         warranty: { ar: 'سنة', en: '1 year' },
         description: { ar: productData?.descriptionAr || '', en: productData?.descriptionEn || '' },
         // persist vendor-defined addon installation
@@ -280,6 +285,7 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
           isNew: Boolean(productData?.isNew || false),
           isOnSale: Boolean(productData?.isOnSale || false),
           partNumber: productData?.partNumber || list[idx]?.partNumber || '',
+          partLocation: productData?.partLocation || list[idx]?.partLocation || '',
           description: { ar: productData?.descriptionAr || list[idx]?.description?.ar || '', en: productData?.descriptionEn || list[idx]?.description?.en || '' },
           addonInstallation: { enabled: !!productData?.addonInstallEnabled, feePerUnit: Number(productData?.addonInstallFee || 0) },
         };

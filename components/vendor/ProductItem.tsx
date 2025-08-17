@@ -35,6 +35,11 @@ export default function ProductItem({ product, onEdit, onDelete, onView }: Produ
           <h3 className="font-medium truncate">{getText(product.name)}</h3>
           <p className="text-sm text-muted-foreground">{getText(product.brand)} | {getText(product.category)}</p>
           <p className="text-xs text-muted-foreground">{locale === 'en' ? 'Part Number' : 'رقم القطعة'}: {product.partNumber}</p>
+          {product.partLocation ? (
+            <p className="text-xs text-muted-foreground mt-1">
+              {locale === 'en' ? 'Part Location' : 'مكان القطعة'}: {String(product.partLocation)}
+            </p>
+          ) : null}
           
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">

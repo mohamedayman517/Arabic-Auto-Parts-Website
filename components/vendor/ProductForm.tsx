@@ -30,6 +30,8 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
     stock: product?.stock ?? 0,
     inStock: product?.inStock ?? (Number(product?.stock ?? 0) > 0),
     partNumber: product?.partNumber || '',
+    // Part location (A/B/C)
+    partLocation: (product as any)?.partLocation || '',
     // Localized descriptions
     descriptionAr: product?.descriptionAr || '',
     descriptionEn: product?.descriptionEn || '',
@@ -90,6 +92,7 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
       status: formData.isActive ? 'active' : 'draft',
       specifications: specsObj,
       compatibility: compatibilityArr,
+      partLocation: (formData as any)?.partLocation || '',
       // normalize addon object as well
       addonInstallation: { enabled: !!formData.addonInstallEnabled, feePerUnit: Number(formData.addonInstallFee || 0) },
       id: product?.id || Date.now().toString()
@@ -137,6 +140,28 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
           <div>
             <Label htmlFor="subCategoryEn">النوع الفرعي (إنجليزي)</Label>
             <Input id="subCategoryEn" value={formData.subCategoryEn} onChange={(e) => setFormData({ ...formData, subCategoryEn: e.target.value })} placeholder="e.g., Wooden Door / Aluminum Window" />
+          </div>
+
+          {/* Part location (A/B/C) - mutually exclusive checkboxes */}
+          <div className="md:col-span-2">
+            <Label className="block mb-2">مكان القطعة</Label>
+            <div className="flex flex-wrap gap-4 items-center">
+              {(['A','B','C'] as const).map((opt) => (
+                <div key={opt} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`partLocation-${opt}`}
+                    checked={(formData as any)?.partLocation === opt}
+                    onCheckedChange={(checked) => {
+                      setFormData({
+                        ...formData,
+                        partLocation: checked ? opt : ((formData as any)?.partLocation === opt ? '' : (formData as any)?.partLocation)
+                      });
+                    }}
+                  />
+                  <Label htmlFor={`partLocation-${opt}`}>{opt}</Label>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div>

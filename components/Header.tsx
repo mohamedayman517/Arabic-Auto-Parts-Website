@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, ShoppingCart, User, Menu, Phone, MapPin, ArrowLeft, ArrowRight, Bell } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, Phone, MapPin, ArrowLeft, ArrowRight, Bell, MessageCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
@@ -350,6 +350,18 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
         </div>
       )}
     </header>
+
+    {/* Floating Chatbot Button (bottom-right) - hidden on support page */}
+    {current !== 'support' && (
+      <Button
+        className="fixed bottom-4 right-4 z-50 rounded-full shadow-lg h-12 w-12 p-0 bg-blue-600 hover:bg-blue-700 text-white"
+        onClick={() => go('support')}
+        aria-label={locale==='ar' ? 'الدعم' : 'Support'}
+        title={locale==='ar' ? 'الدعم' : 'Support'}
+      >
+        <MessageCircle className="w-6 h-6" />
+      </Button>
+    )}
 
     {/* Notifications popover handled above */}
     </>

@@ -10,12 +10,9 @@ import {
   Mail,
 } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { RouteContext } from "../components/Router";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useTranslation } from "../hooks/useTranslation";
 
 interface AboutProps {
@@ -46,6 +43,30 @@ const achievements = [
       icon: Shield,
       number: "24/7",
       label: { ar: "دعم فني متواصل", en: "24/7 Technical Support" },
+    },
+  ];
+
+  // رسالتنا
+  const messageCards = [
+    {
+      icon: CheckCircle,
+      title: { ar: "رسالتنا", en: "Our Message" },
+      description: {
+        ar: "رسالتنا في مؤسسة التقنيات الحديثة هي نشر ثقافة الجودة بمعناها الحقيقي في مجال تصنيع وتنفيذ أعمال الألمنيوم والزجاج، لخلق منافسة حقيقية بين جميع المصانع والمؤسسات التي تقدّم خدمات الألمنيوم والزجاج، سواء كانت مصانع كبيرة أم ناشئة. ونتبنّى هذه الرسالة من أجل تقديم أفضل الخدمات بأفضل تكلفة ممكنة.",
+        en: "Our Mission At Modern Technologies Corporation Is To Spread The Culture Of Quality In Its True Sense In The Field Of Manufacturing And Implementing Aluminum And Glass Works In Order To Create Real Competition Between All Factories And Institutions That Provide Aluminum And Glass Services, Whether They Are Large Or Emerging Factories, And This Message That We Adopt Is In Order To Provide The Best Services. At The Most Reasonable Cost",
+      },
+    },
+  ];
+
+  // أهدافنا
+  const goalsCards = [
+    {
+      icon: Target,
+      title: { ar: "أهدافنا", en: "Our Goals" },
+      description: {
+        ar: "نسعى في مؤسسة التقنيات الحديثة إلى بناء شراكات طويلة الأمد مع الكثير من عملائنا في أنحاء المملكة، ونبذل قصارى جهدنا لتحقيق هذا الهدف بما يلبّي طموحات واحتياجات عملائنا الحاليين والمستقبليين. كما نمضي وفق خطة منظّمة نسعى من خلالها إلى توسيع أنشطتنا لتغطي خدماتنا جميع مناطق المملكة العربية السعودية.",
+        en: "We At Modern Technologies Corporation Have A Strong Goal Of Building Long-term Partnerships With Many Of Our Clients Throughout The Kingdom. We Do Our Best To Achieve This Goal To Meet The Ambitions And Needs Of Our Current And Future Customers. We Also Proceed According To An Organized Plan Through Which We Seek To Expand Our Activities To Cover Our Services. All Parts Of The Kingdom Of Saudi Arabia.",
+      },
     },
   ];
 
@@ -85,49 +106,7 @@ const values = [
     },
   ];
 
-  // الفريق
-const team = [
-  {
-      name: { ar: "محمد الأحمد", en: "Mohammed Al-Ahmad" },
-      position: { ar: "المؤسس والرئيس التنفيذي", en: "Founder & CEO" },
-      image:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300",
-      description: {
-        ar: "خبرة أكثر من 20 عاماً في مجال قطع غيار السيارات",
-        en: "Over 20 years of experience in auto parts industry.",
-      },
-    },
-    {
-      name: { ar: "فاطمة العلي", en: "Fatima Al-Ali" },
-      position: { ar: "مديرة العمليات", en: "Operations Manager" },
-      image:
-        "https://images.unsplash.com/photo-1494790108755-2616b612b372?w=300",
-      description: {
-        ar: "متخصصة في إدارة سلسلة التوريد والخدمات اللوجستية",
-        en: "Specialist in supply chain and logistics management.",
-      },
-    },
-    {
-      name: { ar: "أحمد الخالد", en: "Ahmed Al-Khaled" },
-      position: { ar: "رئيس قسم التقنية", en: "Head of Technology" },
-      image:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300",
-      description: {
-        ar: "مهندس برمجيات مع خبرة واسعة في التجارة الإلكترونية",
-        en: "Software engineer with extensive e-commerce experience.",
-      },
-    },
-    {
-      name: { ar: "سارة المحمد", en: "Sara Al-Mohammed" },
-      position: { ar: "مديرة التسويق", en: "Marketing Manager" },
-      image:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300",
-      description: {
-        ar: "خبيرة في التسويق الرقمي وإدارة العلامة التجارية",
-        en: "Expert in digital marketing and brand management.",
-      },
-    },
-  ];
+  // الفريق (تمت الإزالة بناءً على الطلب)
 
   // الشهادات (certifications) - اجعلها تعتمد على الترجمة أو هيكل {ar, en}
   const certifications = [
@@ -163,25 +142,25 @@ const team = [
   // فقرات القصة
   const storyParagraphs = [
     {
-      ar: "مع نمو الطلب، على منتجاتنا وخدماتنا، قررنا التوسع رقمياً لنصل إلى جميع أنحاء المملكة. في عام 2020، أطلقنا منصة العارف الإلكترونية لتكون الجسر بين العملاء والبائعين المتخصصين.",
-      en: "As demand for our products and services grew, we decided to expand digitally to reach all regions of the Kingdom. In 2020, we launched the Al Aaref online platform to bridge the gap between customers and specialized sellers.",
+      ar: "تُعد مؤسسة مودرن تكنيكلز خطوة رائدة في صناعة الألمنيوم عبر تحقيق تطلعات كل عميل على حدة. نحن هنا لنقدّم كل ما يتوقعه أي عميل في مجال أعمال الألمنيوم الواسع: من التصميم والتوريد وتركيب أعمال الكلادينغ والواجهات الزجاجية والستائر الحائطية والأبواب والنوافذ والقِباب بمختلف أنواعها. ونوفر خدمات متكاملة ومتخصصة للأفراد والشركات بطرق سهلة وميسّرة.",
+      en: "Modern Technicals Est. Is A Pioneering Step In The Aluminum Industry By Achieving The Special Ambitions Of Each Customer. We Are Here To Provide Everything That Any Client Expects In The Wide Field Of Aluminum Works, From Designing, Supplying And Installing Cladding Works, Glass Facades, Cartain Wall, Doors, Windows And Planetariums Of All Kinds. We Provide Integrated And Specialized Services, Whether For Individuals Or Companies, In Easy And Convenient Ways. We Are Not Just A Manufacturing And Installation Organization, As Our Background In Civil Engineering Helps Us Interact Directly With Architects And Consultants In Designing And Developing Appropriately, Taking Into Account Cost And Quality. We Help Engineers, Architects, Contractors And Clients Develop To Achieve The Desired Goals In A Correct And Effective Manner. Today, Building Facades Comprise 10 To 25% Of The Project Construction Cost, And Therefore Their Performance Works Successfully In Order To Achieve This Goal. We Act As An Integrated Member Of The Entire Project Team To Provide The Best Performance",
     },
     {
-      ar: "اليوم، نفخر بخدمة أكثر من 50,000 عميل ونعمل مع شبكة من أفضل البائعين والموردين لضمان توفير أكبر تشكيلة من قطع الغيار الأصلية والبديلة.",
-      en: "Today, we are proud to serve over 50,000 customers and work with a network of top sellers and suppliers to ensure the largest selection of original and alternative spare parts.",
+      ar: "لسنا مجرد جهة تصنيع وتركيب؛ فخلفيتنا في الهندسة المدنية تمكّننا من التفاعل مباشرةً مع المعماريين والاستشاريين للتصميم والتطوير الملائمين مع مراعاة التكلفة والجودة. نساعد المهندسين والمعماريين والمقاولين والعملاء على تحقيق الأهداف المنشودة بكفاءة وفاعلية. واليوم تمثّل واجهات المباني 10–25% من تكلفة إنشاء المشروع، لذلك نعمل كعضو متكامل ضمن فريق المشروع بالكامل لتقديم أفضل أداء وتحقيق هذه الأهداف.",
+      en: "Modern Technicals Est. Is A Pioneering Step In The Aluminum Industry By Achieving The Special Ambitions Of Each Customer. We Are Here To Provide Everything That Any Client Expects In The Wide Field Of Aluminum Works, From Designing, Supplying And Installing Cladding Works, Glass Facades, Cartain Wall, Doors, Windows And Planetariums Of All Kinds. We Provide Integrated And Specialized Services, Whether For Individuals Or Companies, In Easy And Convenient Ways. We Are Not Just A Manufacturing And Installation Organization, As Our Background In Civil Engineering Helps Us Interact Directly With Architects And Consultants In Designing And Developing Appropriately, Taking Into Account Cost And Quality. We Help Engineers, Architects, Contractors And Clients Develop To Achieve The Desired Goals In A Correct And Effective Manner. Today, Building Facades Comprise 10 To 25% Of The Project Construction Cost, And Therefore Their Performance Works Successfully In Order To Achieve This Goal. We Act As An Integrated Member Of The Entire Project Team To Provide The Best Performance",
     },
   ];
 
   // الرؤية
   const visionParagraph = {
-    ar: "أن نكون المنصة الرائدة في مجال التجارة الإلكترونية لقطع غيار السيارات في الشرق الأوسط، ونساهم في تطوير قطاع صيانة السيارات من خلال توفير حلول تقنية مبتكرة.",
-    en: "To be the leading e-commerce platform for auto parts in the Middle East, contributing to the development of the car maintenance sector by providing innovative technical solutions.",
+    ar: "نتطلع إلى توسيع أعمالنا المستقبلية المتقدمة بما ينسجم مع رؤية الدولة (رؤية 2030)، التي تسعى إلى تطبيق التقنية والطاقة البديلة الصديقة للبيئة وتبنّي الأفكار الذكية بالشراكة مع الشركات الناجحة، ليقدّم مصنعنا خدمات بأعلى درجات الجودة والاحترافية، مع التحسين المستمر لخدمة العملاء ورضاهم، وتقديم أفضل الأفكار والابتكارات في هذا المجال لخدمة عملائنا",
+    en: "We Look Forward To Expanding Future, Advanced Business With The State’s Vision (Vision 2030), Which Seeks To Apply Technology And Environmentally Friendly Alternative Energy And Implement Smart Ideas In The Participation Of Successful Companies In Order For Our Factory To Provide Services Of The Highest Quality And Professionalism As Well As Continuous Improvement Of Customer Service And Satisfaction. Providing The Best Ideas And Innovation In This Field To Serve Our Customers",
   };
 
   // المهمة
   const missionParagraph = {
-    ar: "تسهيل الحصول على قطع غيار السيارات عالية الجودة من خلال منصة إلكترونية موثوقة تربط بين العملاء والبائعين المحترفين، مع ضمان أفضل أسعار وخدمة عملاء متميزة.",
-    en: "To make it easy to obtain high-quality auto parts through a reliable online platform that connects customers with professional sellers, ensuring the best prices and excellent customer service.",
+    ar: "مهمّتنا أن نقدّم دائمًا حلولًا عالية الجودة واقتصادية لتحقيق معادلة رابح-رابح لجميع أطراف المشروع: العملاء، والمهندسين، والمعماريين، والاستشاريين، والمقاولين",
+    en: "Our Mission Is To Always Provide High Quality And Economical Solutions In Order To Achieve A Win-win Situation For All Project Parties. Clients, Engineers, Architects, Consultants And Contractors",
   };
   
   return (
@@ -298,34 +277,50 @@ const team = [
           </div>
         </div>
 
-        {/* Team */}
+        {/* Our Message */}
         <div className="mb-20">
           <h2 className="text-3xl font-bold text-center mb-12">
-            {t("ourTeam")}
+            {locale === 'ar' ? 'رسالتنا' : 'Our Message'}
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member, index) => (
+          <div className="grid md:grid-cols-1 lg:grid-cols-1 gap-8">
+            {messageCards.map((item, index) => (
               <Card
                 key={index}
-                className="overflow-hidden hover:shadow-lg transition-shadow"
+                className="p-6 text-center hover:shadow-lg transition-shadow"
               >
-                <CardContent className="p-0">
-                  <ImageWithFallback
-                    src={member.image}
-                    alt={member.name[locale]}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-6 space-y-3">
-                    <h3 className="text-lg font-medium">
-                      {member.name[locale]}
-                    </h3>
-                    <Badge variant="secondary" className="text-xs">
-                      {member.position[locale]}
-                    </Badge>
-                    <p className="text-sm text-muted-foreground">
-                      {member.description[locale]}
-                    </p>
+                <CardContent className="space-y-4">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                    <item.icon className="w-8 h-8 text-primary" />
                   </div>
+                  <h3 className="text-xl font-medium">{item.title[locale]}</h3>
+                  <p className="text-muted-foreground text-sm">
+                    {item.description[locale]}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Our Goals */}
+        <div className="mb-20">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            {locale === 'ar' ? 'أهدافنا' : 'Our Goals'}
+          </h2>
+          <div className="grid md:grid-cols-1 lg:grid-cols-1 gap-8">
+            {goalsCards.map((item, index) => (
+              <Card
+                key={index}
+                className="p-6 text-center hover:shadow-lg transition-shadow"
+              >
+                <CardContent className="space-y-4">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                    <item.icon className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-medium">{item.title[locale]}</h3>
+                  <p className="text-muted-foreground text-sm">
+                    {item.description[locale]}
+                  </p>
                 </CardContent>
               </Card>
             ))}

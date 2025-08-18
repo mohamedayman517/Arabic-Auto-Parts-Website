@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import Header from "../../components/Header";
 import { useTranslation } from "../../hooks/useTranslation";
+import { confirmDialog } from "../../utils/alerts";
 
 // statsCards moved inside component to use translations
 
@@ -455,9 +456,13 @@ export default function VendorDashboard({ setCurrentPage, ...context }: Partial<
                           variant="destructive"
                           size="sm"
                           className="bg-red-600 hover:bg-red-700 text-white border-0"
-                          onClick={() => {
-                            // Simple confirm
-                            const ok = window.confirm(locale === 'ar' ? 'هل تريد حذف هذا العرض؟' : 'Delete this proposal?');
+                          onClick={async () => {
+                            const ok = await confirmDialog(
+                              locale === 'ar' ? 'هل تريد حذف هذا العرض؟' : 'Delete this proposal?',
+                              locale === 'ar' ? 'نعم' : 'Yes',
+                              locale === 'ar' ? 'إلغاء' : 'Cancel',
+                              locale === 'ar'
+                            );
                             if (!ok) return;
                             try {
                               const raw = window.localStorage.getItem('vendor_proposals');

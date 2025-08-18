@@ -12,6 +12,7 @@ import ProductForm from '../../components/vendor/ProductForm';
 import ProductItem from '../../components/vendor/ProductItem';
 import { mockVendorProducts, productCategories, productBrands } from '../../data/vendorMockData';
 import { useTranslation } from '../../hooks/useTranslation';
+import { confirmDialog } from '../../utils/alerts';
 
 type VendorProductsProps = Partial<RouteContext>;
 
@@ -297,17 +298,22 @@ export default function VendorProducts({ setCurrentPage, setSelectedProduct, ...
     setEditingProduct(null);
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    if (confirm(locale === 'en' ? 'Are you sure you want to delete this product?' : 'هل أنت متأكد من حذف هذا المنتج؟')) {
-      setProducts(products.filter(p => p.id !== productId));
-      // Remove from localStorage if vendor-added
-      try {
-        const raw = localStorage.getItem('user_products');
-        const list = raw ? (JSON.parse(raw) as any[]) : [];
-        const filtered = list.filter((it: any) => it.id !== productId && it.id !== `v-${productId}`);
-        localStorage.setItem('user_products', JSON.stringify(filtered));
-      } catch {}
-    }
+  const handleDeleteProduct = async (productId: string) => {
+    const ok = await confirmDialog(
+      locale === 'en' ? 'Are you sure you want to delete this product?' : 'هل أنت متأكد من حذف هذا المنتج؟',
+      locale === 'en' ? 'Delete' : 'حذف',
+      locale === 'en' ? 'Cancel' : 'إلغاء',
+      locale === 'ar'
+    );
+    if (!ok) return;
+    setProducts(products.filter(p => p.id !== productId));
+    // Remove from localStorage if vendor-added
+    try {
+      const raw = localStorage.getItem('user_products');
+      const list = raw ? (JSON.parse(raw) as any[]) : [];
+      const filtered = list.filter((it: any) => it.id !== productId && it.id !== `v-${productId}`);
+      localStorage.setItem('user_products', JSON.stringify(filtered));
+    } catch {}
   };
 
   const handleViewProduct = (product: any) => {

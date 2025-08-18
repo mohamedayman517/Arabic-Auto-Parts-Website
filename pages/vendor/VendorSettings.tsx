@@ -16,6 +16,7 @@ import { RouteContext } from '../../components/Router';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { useTranslation } from '../../hooks/useTranslation';
+import { error as errorDialog } from '../../utils/alerts';
 
 interface VendorSettingsProps extends RouteContext {}
 
@@ -113,9 +114,9 @@ export default function VendorSettings(props: VendorSettingsProps) {
     console.log('Payment settings saved:', paymentSettings);
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
-      alert(t('vsPasswordMismatch'));
+      await errorDialog(t('vsPasswordMismatch'), locale === 'ar');
       return;
     }
     // Change password logic

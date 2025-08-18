@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/ca
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../components/ui/tabs";
+import { success } from "../../utils/alerts";
 
 export default function VendorAccounting({ setCurrentPage, ...context }: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
@@ -24,7 +25,7 @@ export default function VendorAccounting({ setCurrentPage, ...context }: Partial
   const active = !!sub?.active;
   const currency = locale === "ar" ? "ر.س" : "SAR";
 
-  const subscribe = () => {
+  const subscribe = async () => {
     try {
       const payload = {
         vendorId,
@@ -35,15 +36,15 @@ export default function VendorAccounting({ setCurrentPage, ...context }: Partial
       };
       window.localStorage.setItem("vendor_accounting_subscription", JSON.stringify(payload));
       setSub(payload);
-      alert(locale === 'ar' ? 'تم تفعيل الاشتراك الشهري.' : 'Monthly subscription activated.');
+      await success(locale === 'ar' ? 'تم تفعيل الاشتراك الشهري.' : 'Monthly subscription activated.', locale === 'ar');
     } catch {}
   };
-  const cancel = () => {
+  const cancel = async () => {
     try {
       const payload = { ...(sub || {}), active: false, cancelledAt: new Date().toISOString() };
       window.localStorage.setItem("vendor_accounting_subscription", JSON.stringify(payload));
       setSub(payload);
-      alert(locale === 'ar' ? 'تم إلغاء الاشتراك.' : 'Subscription cancelled.');
+      await success(locale === 'ar' ? 'تم إلغاء الاشتراك.' : 'Subscription cancelled.', locale === 'ar');
     } catch {}
   };
 

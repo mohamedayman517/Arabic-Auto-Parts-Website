@@ -11,6 +11,7 @@ import Footer from '../../components/Footer';
 import RentalForm from '../../components/vendor/RentalForm';
 import ProductItem from '../../components/vendor/ProductItem';
 import { useTranslation } from '../../hooks/useTranslation';
+import { confirmDialog } from '../../utils/alerts';
 
 // This page mirrors VendorProducts but for rentals. It reuses ProductForm and ProductItem for speed.
 
@@ -98,15 +99,20 @@ export default function VendorRentals({ setCurrentPage, ...context }: VendorRent
     setEditingRental(null);
   };
 
-  const handleDeleteRental = (id: string) => {
-    if (confirm(locale === 'en' ? 'Are you sure you want to delete this rental?' : 'هل أنت متأكد من حذف هذا التأجير؟')) {
-      setRentals(prev => prev.filter(p => p.id !== id));
-      try {
-        const raw = localStorage.getItem('user_rentals');
-        const list = raw ? (JSON.parse(raw) as any[]) : [];
-        localStorage.setItem('user_rentals', JSON.stringify(list.filter((it: any) => it.id !== id)));
-      } catch {}
-    }
+  const handleDeleteRental = async (id: string) => {
+    const ok = await confirmDialog(
+      locale === 'en' ? 'Are you sure you want to delete this rental?' : 'هل أنت متأكد من حذف هذا التأجير؟',
+      locale === 'en' ? 'Delete' : 'حذف',
+      locale === 'en' ? 'Cancel' : 'إلغاء',
+      locale === 'ar'
+    );
+    if (!ok) return;
+    setRentals(prev => prev.filter(p => p.id !== id));
+    try {
+      const raw = localStorage.getItem('user_rentals');
+      const list = raw ? (JSON.parse(raw) as any[]) : [];
+      localStorage.setItem('user_rentals', JSON.stringify(list.filter((it: any) => it.id !== id)));
+    } catch {}
   };
 
   return (

@@ -32,6 +32,7 @@ import { RouteContext } from "../components/Router";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useTranslation } from "../hooks/useTranslation";
+import { success } from "../utils/alerts";
 
 interface ContactProps extends RouteContext {}
 
@@ -84,7 +85,7 @@ export default function Contact({ setCurrentPage, user, setUser, cartItems }: Co
     // Simulate form submission
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    alert(t("contactSuccessMessage"));
+    await success(t("contactSuccessMessage"), locale === 'ar');
     setFormData({
       name: "",
       email: "",

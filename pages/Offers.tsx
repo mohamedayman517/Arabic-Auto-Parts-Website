@@ -39,6 +39,7 @@ import Footer from "../components/Footer";
 
 export default function Offers({ setCurrentPage, isInWishlist, addToWishlist, removeFromWishlist, ...context }: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
+  const isVendor = (context as any)?.user?.role === 'vendor';
   const currency = locale === 'ar' ? 'ر.س' : 'SAR';
   const daysLeftText = (n: number) => (locale === 'ar' ? `باقي ${n} أيام` : `${n} days left`);
 
@@ -261,51 +262,53 @@ export default function Offers({ setCurrentPage, isInWishlist, addToWishlist, re
                       <ShoppingCart className="h-4 w-4 mr-2" />
                       {t("buyNow")}
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className={(isInWishlist && isInWishlist(String(offer.id))) ? 'text-red-500' : ''}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          
-                          if (!isInWishlist || !isInWishlist(String(offer.id))) {
-                            // Add to wishlist
-                            addToWishlist && addToWishlist({
-                              id: String(offer.id),
-                              name: offer.title,
-                              price: parseFloat(offer.salePrice),
-                              brand: offer.category,
-                              originalPrice: parseFloat(offer.originalPrice),
-                              image: "", // Offer doesn't have image property, using empty string
-                              inStock: true
-                            });
+                    {!isVendor && (
+                      <Button
+                          variant="ghost"
+                          size="icon"
+                          className={(isInWishlist && isInWishlist(String(offer.id))) ? 'text-red-500' : ''}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             
-                            Swal.fire({
-                              title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
-                              icon: 'success',
-                              toast: true,
-                              position: 'top-end',
-                              showConfirmButton: false,
-                              timer: 3000
-                            });
-                          } else {
-                            // Remove from wishlist
-                            removeFromWishlist && removeFromWishlist(String(offer.id));
-                            
-                            Swal.fire({
-                              title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
-                              icon: 'info',
-                              toast: true,
-                              position: 'top-end',
-                              showConfirmButton: false,
-                              timer: 3000
-                            });
-                          }
-                        }}
-                      >
-                        <Heart className={`h-4 w-4 ${(isInWishlist && isInWishlist(String(offer.id))) ? 'fill-current' : ''}`} />
-                      </Button>
+                            if (!isInWishlist || !isInWishlist(String(offer.id))) {
+                              // Add to wishlist
+                              addToWishlist && addToWishlist({
+                                id: String(offer.id),
+                                name: offer.title,
+                                price: parseFloat(offer.salePrice),
+                                brand: offer.category,
+                                originalPrice: parseFloat(offer.originalPrice),
+                                image: "", // Offer doesn't have image property, using empty string
+                                inStock: true
+                              });
+                              
+                              Swal.fire({
+                                title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
+                                icon: 'success',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000
+                              });
+                            } else {
+                              // Remove from wishlist
+                              removeFromWishlist && removeFromWishlist(String(offer.id));
+                              
+                              Swal.fire({
+                                title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
+                                icon: 'info',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000
+                              });
+                            }
+                          }}
+                        >
+                          <Heart className={`h-4 w-4 ${(isInWishlist && isInWishlist(String(offer.id))) ? 'fill-current' : ''}`} />
+                        </Button>
+                    )}
                     <Button variant="outline" size="icon">
                       <Share className="h-4 w-4" />
                     </Button>
@@ -439,7 +442,9 @@ export default function Offers({ setCurrentPage, isInWishlist, addToWishlist, re
                             <span>توفر:</span>
                             <span className="font-bold">135 ر.س (30%)</span>
                           </div>
-                          <Button className="w-full">{t("addToCart")}</Button>
+                          {!isVendor && (
+                            <Button className="w-full">{t("addToCart")}</Button>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -467,7 +472,9 @@ export default function Offers({ setCurrentPage, isInWishlist, addToWishlist, re
                             <span>توفر:</span>
                             <span className="font-bold">300 ر.س (25%)</span>
                           </div>
-                          <Button className="w-full">{t("addToCart")}</Button>
+                          {!isVendor && (
+                            <Button className="w-full">{t("addToCart")}</Button>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

@@ -13,6 +13,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { warning } from '../utils/alerts';
 
 interface CheckoutProps extends RouteContext {}
 
@@ -51,7 +52,7 @@ export default function Checkout({ setCurrentPage, user, setReturnTo, cartItems 
   const shippingCost = deliveryMethod === 'express' ? 35 : (subtotal >= 200 ? 0 : 25);
   const total = subtotal + shippingCost;
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     // Require login before placing order
     if (!user) {
       setReturnToSafe('checkout');
@@ -59,7 +60,7 @@ export default function Checkout({ setCurrentPage, user, setReturnTo, cartItems 
       return;
     }
     if (!agreeToTerms) {
-      alert(locale === 'en' ? 'Please agree to the Terms and Privacy Policy' : 'يرجى الموافقة على الشروط والأحكام');
+      await warning(locale === 'en' ? 'Please agree to the Terms and Privacy Policy' : 'يرجى الموافقة على الشروط والأحكام', locale === 'ar');
       return;
     }
     setOrderPlaced(true);

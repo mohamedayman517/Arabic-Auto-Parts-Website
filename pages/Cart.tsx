@@ -7,6 +7,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { RouteContext } from '../components/Router';
 import { useTranslation } from '../hooks/useTranslation';
+import { error as errorDialog } from '../utils/alerts';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
@@ -14,7 +15,7 @@ import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 interface CartProps extends RouteContext {}
 
 export default function Cart({ setCurrentPage, cartItems, updateCartQty, removeFromCart, clearCart }: CartProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
   // Fallbacks for SSG/SSR where context props may be undefined
@@ -28,7 +29,7 @@ export default function Cart({ setCurrentPage, cartItems, updateCartQty, removeF
 
   const removeItem = (id: string) => removeSafe(id);
 
-  const applyPromoCode = () => {
+  const applyPromoCode = async () => {
     // Mock promo code validation
     const validCodes = {
       'WELCOME10': 10,
@@ -43,7 +44,7 @@ export default function Cart({ setCurrentPage, cartItems, updateCartQty, removeF
       });
       setPromoCode('');
     } else {
-      alert(t('cartInvalidPromoCode'));
+      await errorDialog(t('cartInvalidPromoCode'), locale === 'ar');
     }
   };
 

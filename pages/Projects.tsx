@@ -84,6 +84,7 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
   const currency = locale === "ar" ? "ر.س" : "SAR";
   const isLoggedIn = Boolean((rest as any)?.user);
   const currentUserId = (rest as any)?.user?.id ? String((rest as any).user.id) : '';
+  const isVendor = ((rest as any)?.user?.role === 'vendor');
 
   const [projects, setProjects] = useState(mockProjects);
   const [filtered, setFiltered] = useState(mockProjects);
@@ -143,7 +144,7 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
   const [fAcc, setFAcc] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
 
-  // Load saved user projects from localStorage on mount (owner-only)
+  // Load saved user projects from localStorage
   useEffect(() => {
     try {
       if (typeof window === 'undefined') return;
@@ -179,11 +180,15 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
           let migrated = parsed.map(migrateProject).filter(Boolean) as any[];
-          // If logged-in and some legacy projects have no ownerId, assign them to current user (local migration)
-          if (currentUserId) {
+          // If logged-in and not vendor: assign missing ownerId to current user (local migration)
+          if (currentUserId && !isVendor) {
             let changed = false;
             migrated = migrated.map((p:any) => {
-              if (!p.ownerId) { changed = true; return { ...p, ownerId: currentUserId }; }
+              // Assign missing ownerId or previously guest-owned projects to current user
+              if (!p.ownerId || String(p.ownerId) === 'guest') {
+                changed = true;
+                return { ...p, ownerId: currentUserId };
+              }
               return p;
             });
             if (changed) {
@@ -191,9 +196,9 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
               window.localStorage.setItem('user_projects', JSON.stringify(migrated));
             }
           }
-          // Show only projects owned by current user
-          const owned = currentUserId ? migrated.filter((p:any)=> String(p.ownerId||'') === currentUserId) : [];
-          setUserProjects(owned);
+          // For vendors, show all projects; otherwise only owned
+          const list = isVendor ? migrated : (currentUserId ? migrated.filter((p:any)=> String(p.ownerId||'') === currentUserId) : []);
+          setUserProjects(list);
         }
       }
 
@@ -224,23 +229,29 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
       }
       setHydrated(true);
     } catch {}
-  }, []);
+  }, [currentUserId, isVendor]);
 
-  // Persist user projects to localStorage whenever they change (after hydration), merging with other owners' projects
+  // Persist user projects to localStorage whenever they change (after hydration)
   useEffect(() => {
     try {
       if (typeof window === 'undefined') return;
       if (!hydrated) return;
-      const raw = window.localStorage.getItem('user_projects');
-      const existing = raw ? JSON.parse(raw) : [];
-      let others: any[] = [];
-      if (Array.isArray(existing)) {
-        others = existing.filter((p:any)=> String(p.ownerId||'') !== currentUserId);
+      if (isVendor) {
+        // Vendor sees full list; persist as-is
+        window.localStorage.setItem('user_projects', JSON.stringify(userProjects));
+      } else {
+        // Non-vendor: merge own projects with others to preserve others' data
+        const raw = window.localStorage.getItem('user_projects');
+        const existing = raw ? JSON.parse(raw) : [];
+        let others: any[] = [];
+        if (Array.isArray(existing)) {
+          others = existing.filter((p:any)=> String(p.ownerId||'') !== currentUserId);
+        }
+        const merged = [...others, ...userProjects];
+        window.localStorage.setItem('user_projects', JSON.stringify(merged));
       }
-      const merged = [...others, ...userProjects];
-      window.localStorage.setItem('user_projects', JSON.stringify(merged));
     } catch {}
-  }, [userProjects, hydrated, currentUserId]);
+  }, [userProjects, hydrated, currentUserId, isVendor]);
 
   // Persist additional builders
   useEffect(() => {
@@ -896,19 +907,21 @@ export default function Projects({ setCurrentPage, ...rest }: ProjectsProps) {
             <Filter className="w-4 h-4 mr-1" /> {t('filters') || (locale==='ar'?'الفلاتر':'Filters')}
           </Button>
 
-          <Button
-            onClick={() => {
-              if (!isLoggedIn) {
-                (rest as any)?.setReturnTo?.('projects-builder');
-                setCurrentPage && setCurrentPage('login');
-                return;
-              }
-              setCurrentPage && setCurrentPage('projects-builder');
-            }}
-            className="flex items-center gap-1"
-          >
-            <Plus className="w-4 h-4" /> {locale==='ar' ? 'إضافة مشروع' : 'Add Project'}
-          </Button>
+          {!isVendor && (
+            <Button
+              onClick={() => {
+                if (!isLoggedIn) {
+                  (rest as any)?.setReturnTo?.('projects-builder');
+                  setCurrentPage && setCurrentPage('login');
+                  return;
+                }
+                setCurrentPage && setCurrentPage('projects-builder');
+              }}
+              className="flex items-center gap-1"
+            >
+              <Plus className="w-4 h-4" /> {locale==='ar' ? 'إضافة مشروع' : 'Add Project'}
+            </Button>
+          )}
         </div>
 
         {/* Content */}

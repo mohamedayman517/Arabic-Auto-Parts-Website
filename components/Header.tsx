@@ -54,7 +54,8 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
   const isAdmin = user?.role === 'admin';
   const isVendor = user?.role === 'vendor';
   const isTechnician = user?.role === 'technician';
-  const isRestricted = !!(isAdmin || isVendor);
+  // Only admins are restricted; vendors should see full navbar
+  const isRestricted = !!(isAdmin);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const loadNotifications = () => {
@@ -230,6 +231,14 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                       <span className="text-sm text-muted-foreground">
                         {locale === 'ar' ? 'أهلاً،' : 'Welcome,'} <span className="font-semibold text-foreground">{user.name}</span>
                       </span>
+                      {isVendor && (
+                        <button
+                          onClick={() => go('vendor-dashboard')}
+                          className="text-foreground hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                        >
+                          {locale === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
+                        </button>
+                      )}
                       {!isRestricted && (
                         <Button variant="ghost" size="icon" onClick={() => go('profile')} aria-label="Profile">
                           <User className="w-5 h-5" />
@@ -319,12 +328,16 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                 {user && isTechnician && (
                   <button onClick={() => { go('technician-services'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{locale==='ar' ? 'الخدمات' : 'Services'}</button>
                 )}
+                {/* Vendor dashboard quick link visible for vendors */}
+                {user && isVendor && (
+                  <button onClick={() => { go('vendor-dashboard'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{locale==='ar' ? 'لوحة التحكم' : 'Dashboard'}</button>
+                )}
                 <button onClick={() => { go('about'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{t('about')}</button>
                 <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
               </>
             )}
-            {/* Restricted (vendor/admin): show only Logout in menu */}
-            {(isVendor || isAdmin) && (
+            {/* Restricted (admin only): show limited options */}
+            {isAdmin && (
               <>
                 <button onClick={() => { setUser && setUser(null); go('home'); setMobileOpen(false); }} className="py-3 text-left text-foreground hover:text-primary transition-colors">{locale === 'ar' ? 'تسجيل الخروج' : 'Logout'}</button>
               </>

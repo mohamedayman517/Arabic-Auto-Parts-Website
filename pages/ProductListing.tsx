@@ -11,6 +11,9 @@ import {
   Grid,
   List,
   Package,
+  Plus,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { Button } from "../components/ui/button";
@@ -32,6 +35,9 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useTranslation } from "../hooks/useTranslation";
+import { Dialog, DialogTrigger } from "../components/ui/dialog";
+import ProductForm from "../components/vendor/ProductForm";
+import { confirmDialog } from "../utils/alerts";
 
 // Mock data for auto spare parts (acts like a backend)
 // `group` is a normalized category key coming from homepage: engines | tires | electrical | tools
@@ -342,6 +348,9 @@ export default function ProductListing({
   const [openPrice, setOpenPrice] = useState(false);
   const [openFlags, setOpenFlags] = useState(false);
   const [showAllBrands, setShowAllBrands] = useState(false);
+  const isVendor = !!(rest as any)?.user && (rest as any)?.user?.role === 'vendor';
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
 
   // Load vendor-added products from localStorage and merge with defaults
   useEffect(() => {
@@ -467,7 +476,7 @@ export default function ProductListing({
   const ProductCard = ({ product }: { product: any }) => (
     <Card
       className="group cursor-pointer hover:shadow-lg transition-all duration-300"
-      onClick={() => handleProductClick(product)}
+      onClick={() => { if (!isVendor) handleProductClick(product); }}
     >
       <CardContent className="p-4">
         <div className="relative mb-4">
@@ -492,51 +501,86 @@ export default function ProductListing({
             </div>
           )}
           <div className="absolute bottom-2 right-2 opacity-100 transition-opacity flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-9 w-9 p-0 bg-white/95 border border-gray-200 shadow-sm hover:bg-white ring-1 ring-black/5 ${isInWishlist && isInWishlist(product.id) ? 'text-red-500 border-red-200 ring-red-200' : 'text-gray-700'}`}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (isInWishlist && !isInWishlist(product.id)) {
-                  // Add to wishlist
-                  rest.addToWishlist && rest.addToWishlist({
-                    id: product.id,
-                    name: product.name[locale],
-                    price: product.price,
-                    brand: product.brand[locale],
-                    originalPrice: product.originalPrice,
-                    image: product.image,
-                    inStock: product.inStock
-                  });
+            {!isVendor && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-9 w-9 p-0 bg-white/95 border border-gray-200 shadow-sm hover:bg-white ring-1 ring-black/5 ${isInWishlist && isInWishlist(product.id) ? 'text-red-500 border-red-200 ring-red-200' : 'text-gray-700'}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   
-                  Swal.fire({
-                    title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
-                    icon: 'success',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                  });
-                } else if (isInWishlist && isInWishlist(product.id)) {
-                  // Remove from wishlist
-                  rest.removeFromWishlist && rest.removeFromWishlist(product.id);
-                  
-                  Swal.fire({
-                    title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
-                    icon: 'info',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                  });
-                }
-              }}
-            >
-              <Heart className={`h-5 w-5 ${isInWishlist && isInWishlist(product.id) ? 'fill-current' : ''}`} />
-            </Button>
+                  if (isInWishlist && !isInWishlist(product.id)) {
+                    // Add to wishlist
+                    rest.addToWishlist && rest.addToWishlist({
+                      id: product.id,
+                      name: product.name[locale],
+                      price: product.price,
+                      brand: product.brand[locale],
+                      originalPrice: product.originalPrice,
+                      image: product.image,
+                      inStock: product.inStock
+                    });
+                    
+                    Swal.fire({
+                      title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
+                      icon: 'success',
+                      toast: true,
+                      position: 'top-end',
+                      showConfirmButton: false,
+                      timer: 3000
+                    });
+                  } else if (isInWishlist && isInWishlist(product.id)) {
+                    // Remove from wishlist
+                    rest.removeFromWishlist && rest.removeFromWishlist(product.id);
+                    
+                    Swal.fire({
+                      title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
+                      icon: 'info',
+                      toast: true,
+                      position: 'top-end',
+                      showConfirmButton: false,
+                      timer: 3000
+                    });
+                  }
+                }}
+              >
+                <Heart className={`h-5 w-5 ${isInWishlist && isInWishlist(product.id) ? 'fill-current' : ''}`} />
+              </Button>
+            )}
+            {isVendor && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 p-0 bg-white/95 border border-gray-200 shadow-sm hover:bg-white ring-1 ring-black/5 text-gray-700"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingProduct(product); }}
+                  title={locale==='ar'?'تعديل':'Edit'}
+                >
+                  <Pencil className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 p-0 bg-white/95 border border-gray-200 shadow-sm hover:bg-white ring-1 ring-black/5 text-red-600"
+                  onClick={async (e) => { 
+                    e.preventDefault(); e.stopPropagation();
+                    const ok = await confirmDialog(locale==='ar'? 'هل تريد حذف هذا المنتج؟':'Delete this product?', locale==='ar'?'حذف':'Delete', locale==='ar'?'إلغاء':'Cancel', locale==='ar');
+                    if (!ok) return;
+                    setProducts(prev => prev.filter((p:any)=> p.id !== product.id));
+                    try {
+                      const raw = window.localStorage.getItem('user_products');
+                      const list = raw ? JSON.parse(raw) : [];
+                      const filtered = Array.isArray(list) ? list.filter((x:any)=> x.id !== product.id) : [];
+                      window.localStorage.setItem('user_products', JSON.stringify(filtered));
+                    } catch {}
+                  }}
+                  title={locale==='ar'?'حذف':'Delete'}
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -573,35 +617,37 @@ export default function ProductListing({
                 </span>
               )}
             </div>
-            <Button
-              size="sm"
-              className="h-8"
-              disabled={!product.inStock}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!product.inStock) return;
-                rest.addToCart && rest.addToCart({
-                  id: product.id,
-                  name: product.name[locale],
-                  price: product.price,
-                  image: product.image,
-                  quantity: 1,
-                  inStock: product.inStock,
-                });
-                Swal.fire({
-                  title: locale === 'en' ? 'Added to cart' : 'تمت الإضافة إلى السلة',
-                  icon: 'success',
-                  toast: true,
-                  position: 'top-end',
-                  showConfirmButton: false,
-                  timer: 2000,
-                });
-              }}
-            >
-              <ShoppingCart className="h-3 w-3 ml-1" />
-              {t("add")}
-            </Button>
+            {!isVendor && (
+              <Button
+                size="sm"
+                className="h-8"
+                disabled={!product.inStock}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!product.inStock) return;
+                  rest.addToCart && rest.addToCart({
+                    id: product.id,
+                    name: product.name[locale],
+                    price: product.price,
+                    image: product.image,
+                    quantity: 1,
+                    inStock: product.inStock,
+                  });
+                  Swal.fire({
+                    title: locale === 'en' ? 'Added to cart' : 'تمت الإضافة إلى السلة',
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000,
+                  });
+                }}
+              >
+                <ShoppingCart className="h-3 w-3 ml-1" />
+                {t("add")}
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
@@ -611,7 +657,7 @@ export default function ProductListing({
   const ProductListItem = ({ product }: { product: any }) => (
     <Card
       className="cursor-pointer hover:shadow-md transition-shadow"
-      onClick={() => handleProductClick(product)}
+      onClick={() => { if (!isVendor) handleProductClick(product); }}
     >
       <CardContent className="p-4">
         <div className="flex gap-4">
@@ -688,10 +734,22 @@ export default function ProductListing({
                   {t("warranty")}: {product.warranty[locale]}
                 </span>
               </div>
-              <Button size="sm" disabled={!product.inStock}>
-                <ShoppingCart className="h-4 w-4 ml-1" />
-                {t("addToCart")}
-              </Button>
+              {!isVendor && (
+                <Button size="sm" disabled={!product.inStock}>
+                  <ShoppingCart className="h-4 w-4 ml-1" />
+                  {t("addToCart")}
+                </Button>
+              )}
+              {isVendor && (
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={(e)=> { e.preventDefault(); e.stopPropagation(); setEditingProduct(product); }}>
+                    <Pencil className="h-4 w-4 ml-1" /> {locale==='ar'?'تعديل':'Edit'}
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={async (e)=> { e.preventDefault(); e.stopPropagation(); const ok = await confirmDialog(locale==='ar'? 'هل تريد حذف هذا المنتج؟':'Delete this product?', locale==='ar'?'حذف':'Delete', locale==='ar'?'إلغاء':'Cancel', locale==='ar'); if (!ok) return; setProducts(prev=> prev.filter((p:any)=> p.id !== product.id)); try { const raw = window.localStorage.getItem('user_products'); const list = raw ? JSON.parse(raw) : []; const filtered = Array.isArray(list) ? list.filter((x:any)=> x.id !== product.id) : []; window.localStorage.setItem('user_products', JSON.stringify(filtered)); } catch {} }}>
+                    <Trash2 className="h-4 w-4 ml-1" /> {locale==='ar'?'حذف':'Delete'}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -758,9 +816,114 @@ export default function ProductListing({
                 <List className="h-4 w-4" />
               </Button>
             </div>
+            {isVendor && (
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 ml-2" /> {locale==='ar' ? 'إضافة منتج جديد' : 'Add New Product'}
+                  </Button>
+                </DialogTrigger>
+                <ProductForm
+                  onSave={(data: any) => {
+                    const newProduct = {
+                      id: data?.id || `v-${Date.now()}`,
+                      group: 'tools',
+                      name: { ar: data?.nameAr || '', en: data?.nameEn || '' },
+                      brand: { ar: 'عام', en: 'Generic' },
+                      category: { ar: data?.category || 'أبواب', en: data?.category === 'نوافذ' ? 'Windows' : 'Doors' },
+                      subCategory: { ar: data?.subCategory?.ar || data?.subCategoryAr || '', en: data?.subCategory?.en || data?.subCategoryEn || '' },
+                      price: Number(data?.price || 0),
+                      originalPrice: Number(data?.originalPrice || data?.price || 0),
+                      rating: 0,
+                      reviewCount: 0,
+                      image: data?.image || (Array.isArray(data?.images) && data.images[0]) || '',
+                      images: Array.isArray(data?.images) ? data.images : [],
+                      inStock: Boolean(data?.inStock ?? (Number(data?.stock || 0) > 0)),
+                      isNew: !!data?.isNew,
+                      isOnSale: !!data?.isOnSale,
+                      compatibility: Array.isArray(data?.compatibility) ? data.compatibility.map((c:any)=> ({ ar: c, en: c })) : [],
+                      partNumber: data?.partNumber || '',
+                      warranty: { ar: 'سنة', en: '1 year' },
+                      description: { ar: data?.descriptionAr || '', en: data?.descriptionEn || '' },
+                    } as any;
+                    try {
+                      const raw = window.localStorage.getItem('user_products');
+                      const list = raw ? JSON.parse(raw) : [];
+                      window.localStorage.setItem('user_products', JSON.stringify([newProduct, ...list]));
+                    } catch {}
+                    setProducts((prev) => [newProduct, ...prev]);
+                    setIsAddDialogOpen(false);
+                  }}
+                  onCancel={() => setIsAddDialogOpen(false)}
+                />
+              </Dialog>
+            )}
           </div>
 
           </div>
+
+          {/* Vendor Edit Dialog */}
+          {isVendor && (
+            <Dialog open={!!editingProduct} onOpenChange={(open) => { if (!open) setEditingProduct(null); }}>
+              {editingProduct && (
+                <ProductForm
+                  product={{
+                    id: editingProduct.id,
+                    nameAr: editingProduct?.name?.ar || '',
+                    nameEn: editingProduct?.name?.en || '',
+                    category: editingProduct?.category?.ar || 'أبواب',
+                    subCategoryAr: editingProduct?.subCategory?.ar || '',
+                    subCategoryEn: editingProduct?.subCategory?.en || '',
+                    price: editingProduct?.price,
+                    originalPrice: editingProduct?.originalPrice,
+                    stock: (editingProduct as any)?.stock ?? (editingProduct?.inStock ? 10 : 0),
+                    inStock: editingProduct?.inStock,
+                    partNumber: editingProduct?.partNumber || '',
+                    descriptionAr: editingProduct?.description?.ar || '',
+                    descriptionEn: editingProduct?.description?.en || '',
+                    image: editingProduct?.image || '',
+                    images: (editingProduct as any)?.images || (editingProduct?.image ? [editingProduct.image] : []),
+                    isNew: editingProduct?.isNew || false,
+                    isOnSale: editingProduct?.isOnSale || false,
+                    isActive: (editingProduct as any)?.status === 'active',
+                  }}
+                  onSave={(data: any) => {
+                    const updated = {
+                      id: data?.id || editingProduct.id,
+                      group: editingProduct.group || 'tools',
+                      name: { ar: data?.nameAr || '', en: data?.nameEn || '' },
+                      brand: { ar: 'عام', en: 'Generic' },
+                      category: { ar: data?.category || 'أبواب', en: data?.category === 'نوافذ' ? 'Windows' : 'Doors' },
+                      subCategory: { ar: data?.subCategory?.ar || data?.subCategoryAr || '', en: data?.subCategory?.en || data?.subCategoryEn || '' },
+                      price: Number(data?.price || 0),
+                      originalPrice: Number(data?.originalPrice || data?.price || 0),
+                      rating: editingProduct?.rating ?? 0,
+                      reviewCount: editingProduct?.reviewCount ?? 0,
+                      image: data?.image || (Array.isArray(data?.images) && data.images[0]) || '',
+                      images: Array.isArray(data?.images) ? data.images : [],
+                      inStock: Boolean(data?.inStock ?? (Number(data?.stock || 0) > 0)),
+                      isNew: !!data?.isNew,
+                      isOnSale: !!data?.isOnSale,
+                      compatibility: Array.isArray(data?.compatibility) ? data.compatibility.map((c:any)=> ({ ar: c, en: c })) : [],
+                      partNumber: data?.partNumber || '',
+                      warranty: editingProduct?.warranty || { ar: 'سنة', en: '1 year' },
+                      description: { ar: data?.descriptionAr || '', en: data?.descriptionEn || '' },
+                    } as any;
+                    setProducts((prev) => prev.map((p:any) => p.id === updated.id ? updated : p));
+                    try {
+                      const raw = window.localStorage.getItem('user_products');
+                      const list = raw ? JSON.parse(raw) : [];
+                      const exists = Array.isArray(list) && list.some((x:any) => x.id === updated.id);
+                      const newList = exists ? list.map((x:any) => x.id === updated.id ? updated : x) : [updated, ...list];
+                      window.localStorage.setItem('user_products', JSON.stringify(newList));
+                    } catch {}
+                    setEditingProduct(null);
+                  }}
+                  onCancel={() => setEditingProduct(null)}
+                />
+              )}
+            </Dialog>
+          )}
 
           <div className="flex gap-6">
             {/* Filters Sidebar */}

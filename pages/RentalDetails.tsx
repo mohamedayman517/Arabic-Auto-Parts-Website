@@ -48,6 +48,7 @@ export default function RentalDetails({
   ...rest
 }: RentalDetailsProps & Partial<RouteContext>) {
   const { t, locale } = useTranslation();
+  const isVendor = ((rest as any)?.user?.role) === 'vendor';
   const currency = locale === 'ar' ? 'ر.س' : 'SAR';
   const getText = (val: any): string => {
     if (val && typeof val === 'object') {
@@ -334,42 +335,46 @@ export default function RentalDetails({
               </div>
 
               <div className="flex gap-4">
-                <Button className="flex-1" onClick={handleAddToCart} disabled={!normalizedInStock}>
-                  <ShoppingCart className="h-4 w-4 ml-2" />
-                  {t('addToCart')}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!isWishlisted) {
-                      addToWishlist && addToWishlist({
-                        id: product?.id || '1',
-                        name: getText(product?.name),
-                        price: product?.price || 0,
-                        brand: getText(product?.brand),
-                        originalPrice: product?.originalPrice,
-                        image: product?.images?.[0] || '',
-                        partNumber: product?.partNumber,
-                        inStock: product?.inStock || false,
-                      });
-                      Swal.fire({
-                        title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
-                        icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
-                      });
-                    } else {
-                      removeFromWishlist && removeFromWishlist(product?.id || '1');
-                      Swal.fire({
-                        title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
-                        icon: 'info', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
-                      });
-                    }
-                  }}
-                  className={isWishlisted ? 'text-red-500 border-red-500' : ''}
-                >
-                  <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} />
-                </Button>
+                {!isVendor && (
+                  <Button className="flex-1" onClick={handleAddToCart} disabled={!normalizedInStock}>
+                    <ShoppingCart className="h-4 w-4 ml-2" />
+                    {t('addToCart')}
+                  </Button>
+                )}
+                {!isVendor && (
+                  <Button
+                    variant="outline"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!isWishlisted) {
+                        addToWishlist && addToWishlist({
+                          id: product?.id || '1',
+                          name: getText(product?.name),
+                          price: product?.price || 0,
+                          brand: getText(product?.brand),
+                          originalPrice: product?.originalPrice,
+                          image: product?.images?.[0] || '',
+                          partNumber: product?.partNumber,
+                          inStock: product?.inStock || false,
+                        });
+                        Swal.fire({
+                          title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
+                          icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
+                        });
+                      } else {
+                        removeFromWishlist && removeFromWishlist(product?.id || '1');
+                        Swal.fire({
+                          title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
+                          icon: 'info', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
+                        });
+                      }
+                    }}
+                    className={isWishlisted ? 'text-red-500 border-red-500' : ''}
+                  >
+                    <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} />
+                  </Button>
+                )}
                 <Button variant="outline">
                   <Share2 className="h-4 w-4" />
                 </Button>

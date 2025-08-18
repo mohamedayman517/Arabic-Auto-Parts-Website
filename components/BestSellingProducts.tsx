@@ -63,8 +63,9 @@ const products = [
   }
 ];
 
-export default function BestSellingProducts({ setSelectedProduct, setCurrentPage, isInWishlist, addToWishlist, removeFromWishlist, addToCart, setSearchFilters }: Partial<RouteContext>) {
+export default function BestSellingProducts({ setSelectedProduct, setCurrentPage, isInWishlist, addToWishlist, removeFromWishlist, addToCart, setSearchFilters, user }: Partial<RouteContext>) {
   const { t, locale } = useTranslation();
+  const isVendor = user?.role === 'vendor';
   const handleProductClick = (product: any) => {
     setSelectedProduct && setSelectedProduct(product);
     setCurrentPage && setCurrentPage('product-details');
@@ -94,51 +95,53 @@ export default function BestSellingProducts({ setSelectedProduct, setCurrentPage
                 <Badge className={`absolute top-2 right-2 ${product.badgeColor} text-white`}>
                   {locale === 'en' ? (product.badgeEn ?? product.badge) : product.badge}
                 </Badge>
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    className={`absolute top-2 left-2 bg-white/80 hover:bg-white ${(isInWishlist && isInWishlist(String(product.id))) ? 'text-red-500' : 'text-gray-600 hover:text-red-500'}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      
-                      if (!isInWishlist || !isInWishlist(String(product.id))) {
-                        // Add to wishlist
-                        addToWishlist && addToWishlist({
-                          id: String(product.id),
-                          name: locale === 'en' ? (product.nameEn ?? product.name) : product.name,
-                          price: product.price,
-                          brand: locale === 'en' ? product.nameEn : product.name,
-                          originalPrice: product.originalPrice,
-                          image: product.image,
-                          inStock: true
-                        });
+                {!isVendor && (
+                  <Button
+                      size="icon"
+                      variant="ghost"
+                      className={`absolute top-2 left-2 bg-white/80 hover:bg-white ${(isInWishlist && isInWishlist(String(product.id))) ? 'text-red-500' : 'text-gray-600 hover:text-red-500'}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         
-                        Swal.fire({
-                          title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
-                          icon: 'success',
-                          toast: true,
-                          position: 'top-end',
-                          showConfirmButton: false,
-                          timer: 3000
-                        });
-                      } else {
-                        // Remove from wishlist
-                        removeFromWishlist && removeFromWishlist(String(product.id));
-                        
-                        Swal.fire({
-                          title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
-                          icon: 'info',
-                          toast: true,
-                          position: 'top-end',
-                          showConfirmButton: false,
-                          timer: 3000
-                        });
-                      }
-                    }}
-                  >
-                    <Heart className={`h-4 w-4 ${(isInWishlist && isInWishlist(String(product.id))) ? 'fill-current' : ''}`} />
-                  </Button>
+                        if (!isInWishlist || !isInWishlist(String(product.id))) {
+                          // Add to wishlist
+                          addToWishlist && addToWishlist({
+                            id: String(product.id),
+                            name: locale === 'en' ? (product.nameEn ?? product.name) : product.name,
+                            price: product.price,
+                            brand: locale === 'en' ? product.nameEn : product.name,
+                            originalPrice: product.originalPrice,
+                            image: product.image,
+                            inStock: true
+                          });
+                          
+                          Swal.fire({
+                            title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
+                            icon: 'success',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000
+                          });
+                        } else {
+                          // Remove from wishlist
+                          removeFromWishlist && removeFromWishlist(String(product.id));
+                          
+                          Swal.fire({
+                            title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
+                            icon: 'info',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000
+                          });
+                        }
+                      }}
+                    >
+                      <Heart className={`h-4 w-4 ${(isInWishlist && isInWishlist(String(product.id))) ? 'fill-current' : ''}`} />
+                    </Button>
+                )}
               </div>
               
               <CardContent className="p-4">
@@ -161,33 +164,35 @@ export default function BestSellingProducts({ setSelectedProduct, setCurrentPage
                   <span className="text-sm text-muted-foreground line-through">{formatCurrency(product.originalPrice, locale === 'en' ? 'en' : 'ar')}</span>
                 </div>
 
-                <Button
-                  className="w-full"
-                  size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    addToCart && addToCart({
-                      id: String(product.id),
-                      name: locale === 'en' ? (product.nameEn ?? product.name) : product.name,
-                      price: product.price,
-                      image: product.image,
-                      quantity: 1,
-                      inStock: true,
-                    });
-                    Swal.fire({
-                      title: locale === 'en' ? 'Added to cart' : 'تمت الإضافة إلى السلة',
-                      icon: 'success',
-                      toast: true,
-                      position: 'top-end',
-                      showConfirmButton: false,
-                      timer: 2000,
-                    });
-                  }}
-                >
-                  <ShoppingCart className="w-4 h-4 ml-1" />
-                  {t('addToCart')}
-                </Button>
+                {!isVendor && (
+                  <Button
+                    className="w-full"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      addToCart && addToCart({
+                        id: String(product.id),
+                        name: locale === 'en' ? (product.nameEn ?? product.name) : product.name,
+                        price: product.price,
+                        image: product.image,
+                        quantity: 1,
+                        inStock: true,
+                      });
+                      Swal.fire({
+                        title: locale === 'en' ? 'Added to cart' : 'تمت الإضافة إلى السلة',
+                        icon: 'success',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000,
+                      });
+                    }}
+                  >
+                    <ShoppingCart className="w-4 h-4 ml-1" />
+                    {t('addToCart')}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ))}

@@ -38,6 +38,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import { Dialog, DialogTrigger } from "../components/ui/dialog";
 import ProductForm from "../components/vendor/ProductForm";
 import { confirmDialog } from "../utils/alerts";
+import { addFavorite, removeFavorite, isFavorite } from "../lib/favorites";
 
 // Mock data for auto spare parts (acts like a backend)
 // `group` is a normalized category key coming from homepage: engines | tires | electrical | tools
@@ -473,6 +474,12 @@ export default function ProductListing({
     }
   };
 
+  const isWishlisted = (id: string) => {
+    const isLoggedIn = !!(rest as any)?.user;
+    if (isLoggedIn && typeof isInWishlist === 'function') return !!isInWishlist(id);
+    return isFavorite(id);
+  };
+
   const ProductCard = ({ product }: { product: any }) => (
     <Card
       className="group cursor-pointer hover:shadow-lg transition-all duration-300"
@@ -505,37 +512,52 @@ export default function ProductListing({
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-9 w-9 p-0 bg-white/95 border border-gray-200 shadow-sm hover:bg-white ring-1 ring-black/5 ${isInWishlist && isInWishlist(product.id) ? 'text-red-500 border-red-200 ring-red-200' : 'text-gray-700'}`}
+                className={`h-9 w-9 p-0 bg-white/95 border border-gray-200 shadow-sm hover:bg-white ring-1 ring-black/5 ${isWishlisted(product.id) ? 'text-red-500 border-red-200 ring-red-200' : 'text-gray-700'}`}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  
-                  if (isInWishlist && !isInWishlist(product.id)) {
-                    // Add to wishlist
-                    rest.addToWishlist && rest.addToWishlist({
-                      id: product.id,
-                      name: product.name[locale],
-                      price: product.price,
-                      brand: product.brand[locale],
-                      originalPrice: product.originalPrice,
-                      image: product.image,
-                      inStock: product.inStock
-                    });
-                    
+                  const isLoggedIn = !!(rest as any)?.user;
+                  const useContextWishlist = isLoggedIn && typeof isInWishlist === 'function' && !!rest.addToWishlist && !!rest.removeFromWishlist;
+                  const already = isWishlisted(product.id);
+                  if (!already) {
+                    if (useContextWishlist) {
+                      rest.addToWishlist!({
+                        id: product.id,
+                        name: product.name[locale],
+                        price: product.price,
+                        brand: product.brand[locale],
+                        originalPrice: product.originalPrice,
+                        image: product.image,
+                        inStock: product.inStock
+                      });
+                    } else {
+                      addFavorite({
+                        id: product.id,
+                        name: product.name,
+                        price: product.price,
+                        brand: product.brand,
+                        category: product.category,
+                        image: product.image,
+                      });
+                      try { window.dispatchEvent(new Event('favorites_updated')); } catch {}
+                    }
                     Swal.fire({
-                      title: locale === 'en' ? 'Added to wishlist' : 'تمت الإضافة إلى المفضلة',
+                      title: locale === 'en' ? 'Added to favorites' : 'تمت الإضافة إلى المفضلة',
                       icon: 'success',
                       toast: true,
                       position: 'top-end',
                       showConfirmButton: false,
                       timer: 3000
                     });
-                  } else if (isInWishlist && isInWishlist(product.id)) {
-                    // Remove from wishlist
-                    rest.removeFromWishlist && rest.removeFromWishlist(product.id);
-                    
+                  } else {
+                    if (useContextWishlist) {
+                      rest.removeFromWishlist!(product.id);
+                    } else {
+                      removeFavorite(product.id);
+                      try { window.dispatchEvent(new Event('favorites_updated')); } catch {}
+                    }
                     Swal.fire({
-                      title: locale === 'en' ? 'Removed from wishlist' : 'تمت الإزالة من المفضلة',
+                      title: locale === 'en' ? 'Removed from favorites' : 'تمت الإزالة من المفضلة',
                       icon: 'info',
                       toast: true,
                       position: 'top-end',
@@ -545,7 +567,7 @@ export default function ProductListing({
                   }
                 }}
               >
-                <Heart className={`h-5 w-5 ${isInWishlist && isInWishlist(product.id) ? 'fill-current' : ''}`} />
+                <Heart className={`h-5 w-5 ${isWishlisted(product.id) ? 'fill-current' : ''}`} />
               </Button>
             )}
             {isVendor && (

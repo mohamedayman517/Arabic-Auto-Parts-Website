@@ -11,6 +11,9 @@ import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Store, Search, Filter, Plus, Edit, Trash2, MapPin, Mail, Phone, ArrowRight, CheckCircle, Ban } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
+import { getUsers, setUserStatus, MockUser } from '../../lib/authMock';
+import { sendEmail } from '../../lib/emailMock';
+import { success as successAlert, warning as warningAlert } from '../../utils/alerts';
 
 // Simple local mock store for vendors (localStorage-backed)
 interface VendorRow {
@@ -52,9 +55,14 @@ export default function AdminVendors({ setCurrentPage, ...context }: Partial<Rou
   const [formOpen, setFormOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState<Partial<VendorRow>>({ name: '', email: '', phone: '', location: '', status: 'pending', productsCount: 0, notes: '' });
+  const [pendingVendors, setPendingVendors] = useState<MockUser[]>([]);
 
-  useEffect(() => { setRows(readVendors()); }, []);
+  useEffect(() => { setRows(readVendors()); loadPendingVendors(); }, []);
   const reload = () => setRows(readVendors());
+  const loadPendingVendors = () => {
+    const list = getUsers().filter(u => u.role === 'vendor' && (u.status || 'active') === 'pending');
+    setPendingVendors(list);
+  };
 
   const filtered = rows.filter(r => {
     const s = search.trim().toLowerCase();
@@ -94,6 +102,20 @@ export default function AdminVendors({ setCurrentPage, ...context }: Partial<Rou
 
   const setRowStatus = (r: VendorRow, s: VendorRow['status']) => { const d = readVendors(); const i = d.findIndex(x=>x.id===r.id); if (i!==-1){ d[i].status=s; writeVendors(d); reload(); } };
   const removeRow = (r: VendorRow) => { const d = readVendors().filter(x=>x.id!==r.id); writeVendors(d); reload(); };
+  const approveVendor = async (u: MockUser) => {
+    setUserStatus(u.id, 'active');
+    // Compose login link and email
+    const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+    const loginUrl = origin ? `${origin}/#login` : '#login';
+    const subject = (t('vendorApprovedSubject') as any) || 'تمت الموافقة على حسابك';
+    const bodyAr = `مرحباً ${u.name},\n\nتمت الموافقة على حسابك كبائع. يمكنك الآن تسجيل الدخول.\nاضغط هنا لتسجيل الدخول: ${loginUrl}\n\nمع تحياتنا.`;
+    const bodyEn = `Hello ${u.name},\n\nYour vendor account has been approved. You can now log in.\nClick here to login: ${loginUrl}\n\nBest regards.`;
+    const body = `${bodyAr}\n\n---\n${bodyEn}`;
+    sendEmail(u.email, subject, body);
+    await successAlert(t('activatedSuccessfully') || 'تم التفعيل بنجاح', true);
+    loadPendingVendors();
+  };
+  const rejectVendor = async (u: MockUser) => { setUserStatus(u.id, 'suspended'); await warningAlert(t('suspendedSuccessfully') || 'تم التعليق', true); loadPendingVendors(); };
 
   return (
     <div className="min-h-screen bg-background">
@@ -109,6 +131,31 @@ export default function AdminVendors({ setCurrentPage, ...context }: Partial<Rou
           <h1 className="mb-2">{t('manageVendorsTitle')}</h1>
           <p className="text-muted-foreground">{t('manageVendorsSubtitle')}</p>
         </div>
+
+        {/* Pending vendor approvals from auth store */}
+        {pendingVendors.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center"><Store className="mr-2 h-5 w-5" />{t('pendingVendors') || 'طلبات بائعين قيد المراجعة'}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {pendingVendors.map(u => (
+                  <div key={u.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="space-y-0.5">
+                      <div className="font-medium">{u.name}</div>
+                      <div className="text-sm text-muted-foreground">{u.email}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={()=>approveVendor(u)}><CheckCircle className="h-4 w-4 mr-1" />{t('approve') || 'موافقة'}</Button>
+                      <Button size="sm" variant="outline" onClick={()=>rejectVendor(u)}><Ban className="h-4 w-4 mr-1" />{t('reject') || 'رفض'}</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="mb-6">
           <CardHeader>

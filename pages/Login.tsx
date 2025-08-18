@@ -53,6 +53,14 @@ export default function Login({ setCurrentPage, setUser, returnTo, setReturnTo, 
       );
       return;
     }
+    // If vendor and not approved (pending/suspended), block login
+    if (user.role === 'vendor' && user.status && user.status !== 'active') {
+      setError(user.status === 'pending'
+        ? (isAr ? 'حسابك قيد المراجعة من الإدارة. سيتم إشعارك عند الموافقة.' : 'Your account is pending admin approval. You will be notified when approved.')
+        : (isAr ? 'تم تعليق حسابك. يرجى التواصل مع الدعم.' : 'Your account is suspended. Please contact support.')
+      );
+      return;
+    }
     setError(null);
     const u = user;
     const cleanName = typeof u.name === 'string' ? u.name.replace(/\s*User$/i, '').trim() : u.name;

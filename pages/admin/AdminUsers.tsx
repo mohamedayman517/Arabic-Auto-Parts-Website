@@ -56,14 +56,16 @@ export default function AdminUsers({ setCurrentPage, ...context }: Partial<Route
   const reload = () => setUsers(getAdminUsers());
   useEffect(() => { reload(); }, []);
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-    const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
-    
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+  // Show only end customers by default (roles: 'customer' or legacy 'user')
+  const filteredUsers = users
+    .filter(u => u.role === 'customer' || (u as any).role === 'user')
+    .filter(user => {
+      const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = selectedRole === 'all' || user.role === selectedRole;
+      const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
+      return matchesSearch && matchesRole && matchesStatus;
+    });
 
   const openCreate = () => {
     setEditMode(null);

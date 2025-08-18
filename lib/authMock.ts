@@ -6,6 +6,7 @@ export interface MockUser {
   email: string;
   password: string;
   role: Role;
+  status?: 'active' | 'pending' | 'suspended';
   // Optional fields for technicians
   phone?: string;
   dob?: string; // ISO date string (YYYY-MM-DD)
@@ -13,12 +14,12 @@ export interface MockUser {
 }
 
 const SEED_USERS: MockUser[] = [
-  { id: '1', name: 'Admin', email: 'admin@demo.com', password: 'admin123', role: 'admin' },
-  { id: '2', name: 'Vendor', email: 'vendor@demo.com', password: 'vendor123', role: 'vendor' },
-  { id: '4', name: 'Customer', email: 'user@demo.com', password: 'user12345', role: 'customer' },
-  { id: '5', name: 'Technician Sample', email: 'tech@demo.com', password: 'tech12345', role: 'technician', phone: '+966500000000', dob: '1990-01-01', profession: 'plumber' },
+  { id: '1', name: 'Admin', email: 'admin@demo.com', password: 'admin123', role: 'admin', status: 'active' },
+  { id: '2', name: 'Vendor', email: 'vendor@demo.com', password: 'vendor123', role: 'vendor', status: 'active' },
+  { id: '4', name: 'Customer', email: 'user@demo.com', password: 'user12345', role: 'customer', status: 'active' },
+  { id: '5', name: 'Technician Sample', email: 'tech@demo.com', password: 'tech12345', role: 'technician', phone: '+966500000000', dob: '1990-01-01', profession: 'plumber', status: 'active' },
   // Guaranteed demo technician for QA
-  { id: '6', name: 'Technician', email: 'Technician@demo.com', password: 'Technician123', role: 'technician', phone: '+966512345678', dob: '1992-05-10', profession: 'electrician' },
+  { id: '6', name: 'Technician', email: 'Technician@demo.com', password: 'Technician123', role: 'technician', phone: '+966512345678', dob: '1992-05-10', profession: 'electrician', status: 'active' },
 ];
 
 const STORAGE_KEY = 'mock_users';
@@ -49,7 +50,7 @@ export function getUsers(): MockUser[] {
   if (existing && existing.length) {
     const hasDemo = existing.some(u => u.email.toLowerCase() === 'technician@demo.com'.toLowerCase());
     if (!hasDemo) {
-      const demo: MockUser = { id: '6', name: 'Technician', email: 'Technician@demo.com', password: 'Technician123', role: 'technician', phone: '+966512345678', dob: '1992-05-10', profession: 'electrician' };
+      const demo: MockUser = { id: '6', name: 'Technician', email: 'Technician@demo.com', password: 'Technician123', role: 'technician', phone: '+966512345678', dob: '1992-05-10', profession: 'electrician', status: 'active' };
       const withDemo: MockUser[] = [...existing, demo];
       writeStore(withDemo);
       return withDemo;
@@ -80,7 +81,11 @@ export function addUser(newUser: Omit<MockUser, 'id'>): { ok: true; user: MockUs
   const users = getUsers();
   const exists = users.some(u => u.email.toLowerCase() === newUser.email.trim().toLowerCase());
   if (exists) return { ok: false, error: 'EMAIL_TAKEN' };
-  const user: MockUser = { ...newUser, id: String(Date.now()) };
+  const user: MockUser = { ...newUser, id: String(Date.now()) } as MockUser;
+  // Default status: vendors -> pending, others -> active
+  if (!user.status) {
+    user.status = user.role === 'vendor' ? 'pending' : 'active';
+  }
   users.push(user);
   saveUsers(users);
   return { ok: true, user };
@@ -92,4 +97,14 @@ export function validateEmail(email: string): boolean {
 
 export function validatePasswordMin(password: string, min = 6): boolean {
   return typeof password === 'string' && password.length >= min;
+}
+
+// Helpers for admin approval
+export function setUserStatus(userId: string, status: 'active' | 'pending' | 'suspended'): void {
+  const users = getUsers();
+  const idx = users.findIndex(u => u.id === userId);
+  if (idx !== -1) {
+    users[idx].status = status;
+    saveUsers(users);
+  }
 }

@@ -1,4 +1,4 @@
-import { Home, Package, ShoppingCart, User, Truck, FileText, HelpCircle, Store, BarChart3, Settings, Users, TrendingUp, Shield, Tag, Globe, Percent, Phone, Bell } from 'lucide-react';
+import { Home, Package, ShoppingCart, User, Truck, FileText, HelpCircle, Store, BarChart3, Settings, Users, TrendingUp, Shield, Tag, Globe, Percent, Phone, Bell, Heart } from 'lucide-react';
 
 // Define RouteConfig interface
 interface RouteConfig {
@@ -24,6 +24,7 @@ import Rentals from '../pages/Rentals';
 import RentalDetails from '../pages/RentalDetails';
 import ProjectsBuilder from '../pages/ProjectsBuilder';
 import ProjectDetails from '../pages/ProjectDetails';
+import Favorites from '../pages/Favorites';
 import AddService from '../pages/AddService';
 import ServiceDetails from '../pages/ServiceDetails';
 import Support from '../pages/Support';
@@ -69,6 +70,7 @@ export const routes: Record<string, RouteConfig> = {
   products: { component: ProductListing, title: 'المنتجات', icon: Package },
   'product-details': { component: ProductDetails, title: 'تفاصيل المنتج', icon: Package },
   cart: { component: Cart, title: 'السلة', icon: ShoppingCart },
+  favorites: { component: Favorites, title: 'المفضلة', icon: Heart as any },
   checkout: { component: Checkout, title: 'إتمام الطلب', icon: ShoppingCart },
   login: { component: Login, title: 'تسجيل الدخول', icon: User },
   register: { component: Register, title: 'إنشاء حساب', icon: User },

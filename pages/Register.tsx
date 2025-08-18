@@ -10,6 +10,7 @@ import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
 import { useTranslation } from '../hooks/useTranslation';
 import { addUser, validateEmail, validatePasswordMin, Role } from '../lib/authMock';
+import { info as infoAlert } from '../utils/alerts';
 
 interface RegisterProps extends RouteContext {}
 
@@ -60,8 +61,18 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
     }
     setError(null);
     const u = res.user;
+    // If vendor: do NOT auto-login. Inform pending approval and redirect to login
+    if (u.role === 'vendor') {
+      infoAlert(
+        isAr ? 'تم استلام طلب تسجيلك كبائع وهو قيد المراجعة من الإدارة. سيتم إشعارك عند الموافقة، بعدها يمكنك تسجيل الدخول.' : 'Your vendor registration has been received and is pending admin approval. You will be notified when approved, then you can log in.',
+        isAr
+      );
+      setReturnTo(null);
+      setCurrentPage('login');
+      return;
+    }
+    // Non-vendor: auto-login as before
     setUser({ id: u.id, name: u.name, email: u.email, role: u.role });
-    // Persist to localStorage so profile can immediately read birthdate and technician type
     try {
       const payload: any = {
         id: u.id,
@@ -71,14 +82,14 @@ export default function Register({ setCurrentPage, setUser, returnTo, setReturnT
       };
       if (u.role === 'technician') {
         payload.phone = (u as any).phone || phone;
-        payload.dob = (u as any).dob || dob; // profile reads dob as birthdate fallback
-        payload.birthdate = (u as any).dob || dob; // convenience duplicate
-        payload.profession = (u as any).profession || profession; // profile maps to technicianType
+        payload.dob = (u as any).dob || dob;
+        payload.birthdate = (u as any).dob || dob;
+        payload.profession = (u as any).profession || profession;
         payload.technicianType = (u as any).profession || profession;
       }
       localStorage.setItem('mock_current_user', JSON.stringify(payload));
     } catch {}
-    const dest = returnTo || (role === 'admin' ? 'admin-dashboard' : role === 'vendor' ? 'vendor-dashboard' : 'home');
+    const dest = returnTo || 'home';
     setReturnTo(null);
     setCurrentPage(dest);
   };

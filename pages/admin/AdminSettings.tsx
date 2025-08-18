@@ -8,8 +8,10 @@ import { Label } from '../../components/ui/label';
 import { Switch } from '../../components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { ArrowRight, Settings } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export default function AdminSettings({ setCurrentPage, ...context }: Partial<RouteContext>) {
+  const { t } = useTranslation();
   const [siteName, setSiteName] = useState('Auto Parts');
   const [supportEmail, setSupportEmail] = useState('support@example.com');
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -23,33 +25,33 @@ export default function AdminSettings({ setCurrentPage, ...context }: Partial<Ro
           <div className="flex items-center mb-4">
             <Button variant="outline" onClick={() => setCurrentPage && setCurrentPage('admin-dashboard')} className="mr-4">
               <ArrowRight className="ml-2 h-4 w-4" />
-              Back to Dashboard
+              {t('backToDashboard')}
             </Button>
           </div>
-          <h1 className="mb-2">System Settings</h1>
-          <p className="text-muted-foreground">Manage global system configuration and behavior.</p>
+          <h1 className="mb-2">{t('systemSettings')}</h1>
+          <p className="text-muted-foreground">{t('adminSettingsSubtitle')}</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center"><Settings className="mr-2 h-5 w-5" /> General</CardTitle>
+            <CardTitle className="flex items-center"><Settings className="mr-2 h-5 w-5" /> {t('generalTab')}</CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="general" className="space-y-6">
               <TabsList>
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="users">Users</TabsTrigger>
-                <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                <TabsTrigger value="general">{t('generalTab')}</TabsTrigger>
+                <TabsTrigger value="users">{t('usersTab')}</TabsTrigger>
+                <TabsTrigger value="advanced">{t('advancedTab')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="general">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label>Site name</Label>
+                    <Label>{t('siteNameLabel')}</Label>
                     <Input value={siteName} onChange={(e) => setSiteName(e.target.value)} />
                   </div>
                   <div>
-                    <Label>Support email</Label>
+                    <Label>{t('supportEmailLabel')}</Label>
                     <Input type="email" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} />
                   </div>
                 </div>
@@ -59,8 +61,8 @@ export default function AdminSettings({ setCurrentPage, ...context }: Partial<Ro
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Allow new registrations</Label>
-                      <p className="text-xs text-muted-foreground">Enable or disable self-service account creation.</p>
+                      <Label>{t('allowNewRegistrations')}</Label>
+                      <p className="text-xs text-muted-foreground">{t('allowNewRegistrationsDesc')}</p>
                     </div>
                     <Switch checked={allowRegistrations} onCheckedChange={setAllowRegistrations} />
                   </div>
@@ -71,8 +73,8 @@ export default function AdminSettings({ setCurrentPage, ...context }: Partial<Ro
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Maintenance mode</Label>
-                      <p className="text-xs text-muted-foreground">Show maintenance banner and restrict non-admin access.</p>
+                      <Label>{t('maintenanceMode')}</Label>
+                      <p className="text-xs text-muted-foreground">{t('maintenanceModeDesc')}</p>
                     </div>
                     <Switch checked={maintenanceMode} onCheckedChange={setMaintenanceMode} />
                   </div>
@@ -81,8 +83,8 @@ export default function AdminSettings({ setCurrentPage, ...context }: Partial<Ro
             </Tabs>
 
             <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline">Cancel</Button>
-              <Button>Save changes</Button>
+              <Button variant="outline">{t('cancel')}</Button>
+              <Button>{t('saveChanges')}</Button>
             </div>
           </CardContent>
         </Card>

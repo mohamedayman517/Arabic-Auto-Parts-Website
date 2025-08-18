@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../componen
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Package, Search, Filter, Plus, Edit, Trash2, Store, Tag, ArrowRight, CheckCircle, Ban } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
+import { mockVendorProducts } from '../../data/vendorMockData';
 
 // Local mock store for products (localStorage)
 interface ProductRow {
@@ -31,10 +33,18 @@ function readProducts(): ProductRow[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
-  const seed: ProductRow[] = [
-    { id: 1, name: 'فلتر زيت محرك', sku: 'OF-TOY-2015', vendor: 'متجر الجودة', price: 85, status: 'active', stock: 50, createdAt: '2024-01-10' },
-    { id: 2, name: 'إطار 225/65R17', sku: 'TY-225-65R17', vendor: 'قطع غيار بلس', price: 450, status: 'pending', stock: 12, createdAt: '2024-01-12' },
-  ];
+  // Seed from vendorMockData to show all existing products
+  const seed: ProductRow[] = (mockVendorProducts || []).map((p, idx) => ({
+    id: Number(p.id) || Date.now() + idx,
+    name: p.name,
+    sku: p.partNumber,
+    vendor: p.brand || '',
+    price: Number(p.price) || 0,
+    // Map external statuses to local admin statuses
+    status: (p.status === 'draft') ? 'pending' : 'active',
+    stock: Number(p.stock) || 0,
+    createdAt: p.createdAt || new Date().toISOString().slice(0,10),
+  }));
   localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
   return seed;
 }
@@ -44,6 +54,7 @@ function writeProducts(rows: ProductRow[]) {
 }
 
 export default function AdminProducts({ setCurrentPage, ...context }: Partial<RouteContext>) {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<ProductRow[]>([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'all' | ProductRow['status']>('all');
@@ -101,40 +112,40 @@ export default function AdminProducts({ setCurrentPage, ...context }: Partial<Ro
           <div className="flex items-center mb-4">
             <Button variant="outline" onClick={() => setCurrentPage && setCurrentPage('admin-dashboard')} className="mr-4">
               <ArrowRight className="ml-2 h-4 w-4" />
-              Back to Dashboard
+              {t('backToDashboard')}
             </Button>
           </div>
-          <h1 className="mb-2">Manage Products</h1>
-          <p className="text-muted-foreground">Browse and manage products, status, and stock.</p>
+          <h1 className="mb-2">{t('manageProducts')}</h1>
+          <p className="text-muted-foreground">{t('adminProductsSubtitle')}</p>
         </div>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center"><Filter className="mr-2 h-5 w-5" />Search & Filter</CardTitle>
+            <CardTitle className="flex items-center"><Filter className="mr-2 h-5 w-5" />{t('searchAndFilterProducts')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="relative md:col-span-2">
                 <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search by name, SKU, or store" value={search} onChange={e=>setSearch(e.target.value)} className="pr-10" />
+                <Input placeholder={t('searchByNameSkuOrStore')} value={search} onChange={e=>setSearch(e.target.value)} className="pr-10" />
               </div>
               <Select value={status} onValueChange={(v:any)=>setStatus(v)}>
-                <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('statusLabel')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
+                  <SelectItem value="all">{t('allStatuses')}</SelectItem>
+                  <SelectItem value="active">{t('activeStatus')}</SelectItem>
+                  <SelectItem value="pending">{t('pendingStatus')}</SelectItem>
+                  <SelectItem value="suspended">{t('suspendedStatus')}</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Add Product</Button>
+              <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{t('addProduct')}</Button>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center"><Package className="mr-2 h-5 w-5" />Products ({filtered.length})</CardTitle>
+            <CardTitle className="flex items-center"><Package className="mr-2 h-5 w-5" />{t('products')} ({filtered.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -145,15 +156,15 @@ export default function AdminProducts({ setCurrentPage, ...context }: Partial<Ro
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2 space-x-reverse">
                         <h3 className="font-medium">{r.name}</h3>
-                        <Badge variant={r.status==='active'?'default': r.status==='pending'? 'secondary':'destructive'}>
-                          {r.status==='active'?'Active': r.status==='pending'? 'Pending':'Suspended'}
+                        <Badge variant={r.status==='active'? 'default': r.status==='pending'? 'secondary':'destructive'}>
+                          {r.status==='active'? t('activeStatus') : r.status==='pending'? t('pendingStatus') : t('suspendedStatus')}
                         </Badge>
                       </div>
                       <div className="flex items-center space-x-4 space-x-reverse text-sm text-muted-foreground">
                         <div className="flex items-center"><Tag className="mr-1 h-3 w-3" />{r.sku}</div>
                         <div className="flex items-center"><Store className="mr-1 h-3 w-3" />{r.vendor}</div>
-                        <span>Price: {r.price} SAR</span>
-                        <span>Stock: {r.stock}</span>
+                        <span>{t('price')}: {r.price} SAR</span>
+                        <span>{t('stock')}: {r.stock}</span>
                       </div>
                     </div>
                   </div>
@@ -170,54 +181,54 @@ export default function AdminProducts({ setCurrentPage, ...context }: Partial<Ro
               ))}
             </div>
             {filtered.length===0 && (
-              <div className="text-center py-8 text-muted-foreground">No matching results</div>
+              <div className="text-center py-8 text-muted-foreground">{t('noResults')}</div>
             )}
           </CardContent>
         </Card>
 
         <Dialog open={formOpen} onOpenChange={(o)=>{ setFormOpen(o); if(!o) setEditId(null); }}>
           <DialogContent className="max-w-lg bg-white/95 backdrop-blur-sm border border-white/20">
-            <DialogHeader><DialogTitle>{editId? 'Edit Product' : 'Add Product'}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editId? t('editProduct') : t('addProduct')}</DialogTitle></DialogHeader>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Product name</Label>
+                <Label>{t('productName')}</Label>
                 <Input value={form.name||''} onChange={e=>setForm(f=>({...f, name:e.target.value}))} />
               </div>
               <div>
-                <Label>SKU</Label>
+                <Label>{t('partNumber')}</Label>
                 <Input value={form.sku||''} onChange={e=>setForm(f=>({...f, sku:e.target.value}))} />
               </div>
               <div>
-                <Label>Store</Label>
+                <Label>{t('vendor')}</Label>
                 <Input value={form.vendor||''} onChange={e=>setForm(f=>({...f, vendor:e.target.value}))} />
               </div>
               <div>
-                <Label>Price</Label>
+                <Label>{t('currentPrice')}</Label>
                 <Input type="number" value={String(form.price||0)} onChange={e=>setForm(f=>({...f, price: Number(e.target.value||0)}))} />
               </div>
               <div>
-                <Label>Status</Label>
+                <Label>{t('statusLabel')}</Label>
                 <Select value={(form.status as any)||'pending'} onValueChange={(v:any)=>setForm(f=>({...f, status:v}))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="active">{t('activeStatus')}</SelectItem>
+                    <SelectItem value="pending">{t('pendingStatus')}</SelectItem>
+                    <SelectItem value="suspended">{t('suspendedStatus')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Stock</Label>
+                <Label>{t('availableQuantity')}</Label>
                 <Input type="number" value={String(form.stock||0)} onChange={e=>setForm(f=>({...f, stock: Number(e.target.value||0)}))} />
               </div>
               <div className="md:col-span-2">
-                <Label>Notes</Label>
+                <Label>{t('notesLabel')}</Label>
                 <Textarea value={form.notes||''} onChange={e=>setForm(f=>({...f, notes:e.target.value}))} />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={()=>setFormOpen(false)}>Cancel</Button>
-              <Button onClick={submit}>{editId? 'Save' : 'Add'}</Button>
+              <Button variant="outline" onClick={()=>setFormOpen(false)}>{t('cancel')}</Button>
+              <Button onClick={submit}>{editId? t('saveChanges') : t('addProduct')}</Button>
             </div>
           </DialogContent>
         </Dialog>

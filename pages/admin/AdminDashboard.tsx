@@ -83,26 +83,7 @@ const recentUsers = [
   }
 ];
 
-const systemAlerts = [
-  {
-    id: 1,
-    type: 'warning',
-    message: 'استخدام الخادم عالي - 85%',
-    time: '5 دقائق'
-  },
-  {
-    id: 2,
-    type: 'info',
-    message: 'تحديث النظام متاح',
-    time: '1 ساعة'
-  },
-  {
-    id: 3,
-    type: 'error',
-    message: 'فشل في تشغيل مهمة النسخ الاحتياطي',
-    time: '3 ساعات'
-  }
-];
+// Removed system alerts mock and section per request
 
 export default function AdminDashboard({ setCurrentPage, ...context }: Partial<RouteContext>) {
   const { t } = useTranslation();
@@ -170,30 +151,7 @@ export default function AdminDashboard({ setCurrentPage, ...context }: Partial<R
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* System Alerts */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <AlertTriangle className="mr-2 h-5 w-5" />
-                {t('systemAlerts')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {systemAlerts.map((alert) => (
-                <div key={alert.id} className="flex items-start space-x-3 space-x-reverse">
-                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                    alert.type === 'error' ? 'bg-red-500' :
-                    alert.type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-                  }`} />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm">{alert.message}</p>
-                    <p className="text-xs text-muted-foreground">{t('since')} {alert.time}</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
 
           {/* Pending Approvals */}
           <Card>
@@ -280,11 +238,10 @@ export default function AdminDashboard({ setCurrentPage, ...context }: Partial<R
 
         {/* Detailed Tabs */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="users">{t('newUsers')}</TabsTrigger>
             <TabsTrigger value="analytics">{t('analytics')}</TabsTrigger>
             <TabsTrigger value="financial">{t('financial')}</TabsTrigger>
-            <TabsTrigger value="system">{t('system')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="space-y-6">
@@ -430,62 +387,7 @@ export default function AdminDashboard({ setCurrentPage, ...context }: Partial<R
             </div>
           </TabsContent>
 
-          <TabsContent value="system" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>حالة الخوادم</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>الخادم الرئيسي</span>
-                    <Badge variant="default">متصل</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>خادم قاعدة البيانات</span>
-                    <Badge variant="default">متصل</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>خادم التخزين</span>
-                    <Badge variant="secondary">صيانة</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>خادم النسخ الاحتياطي</span>
-                    <Badge variant="destructive">غير متصل</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>استخدام الموارد</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>المعالج</span>
-                      <span>85%</span>
-                    </div>
-                    <Progress value={85} className="h-2" />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>الذاكرة</span>
-                      <span>67%</span>
-                    </div>
-                    <Progress value={67} className="h-2" />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>التخزين</span>
-                      <span>45%</span>
-                    </div>
-                    <Progress value={45} className="h-2" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+          {/* System tab removed per request */}
         </Tabs>
       </div>
     </div>

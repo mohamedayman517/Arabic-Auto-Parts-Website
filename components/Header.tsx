@@ -1,13 +1,13 @@
 "use client";
 
-import { Search, ShoppingCart, User, Menu, Phone, MapPin, ArrowLeft, ArrowRight, Bell, MessageCircle } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, Phone, MapPin, ArrowLeft, ArrowRight, Bell, MessageCircle, Heart } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useTranslation } from '../hooks/useTranslation';
 import type { RouteContext } from './Router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface HeaderProps extends Partial<RouteContext> {
   currentPage?: string;
@@ -29,6 +29,32 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
       }
     }
   };
+  // Favorites count (guest wishlist)
+  const [favCount, setFavCount] = useState(0);
+  const loadFavCount = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = window.localStorage.getItem('favorites_v1');
+        const list = raw ? JSON.parse(raw) : [];
+        setFavCount(Array.isArray(list) ? list.length : 0);
+      }
+    } catch { setFavCount(0); }
+  };
+  useEffect(() => {
+    loadFavCount();
+    const onStorage = (e: StorageEvent) => { if (e.key === 'favorites_v1') loadFavCount(); };
+    const onFavUpdated = () => loadFavCount();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', onStorage);
+      window.addEventListener('favorites_updated', onFavUpdated as any);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', onStorage);
+        window.removeEventListener('favorites_updated', onFavUpdated as any);
+      }
+    };
+  }, []);
   const isHome = (() => {
     if (currentPage) return currentPage === 'home';
     if (typeof window !== 'undefined') {
@@ -54,8 +80,8 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
   const isAdmin = user?.role === 'admin';
   const isVendor = user?.role === 'vendor';
   const isTechnician = user?.role === 'technician';
-  // Only admins are restricted; vendors should see full navbar
-  const isRestricted = !!(isAdmin);
+  // Restrict header content on admin pages: only greeting, logout, language, and notifications
+  const isRestricted = isAdmin && current.startsWith('admin-');
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const loadNotifications = () => {
@@ -72,15 +98,17 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
   return (
     <>
     <header className="w-full">
-      {/* Top promotional banner */}
-      <div className="bg-red-600 text-white py-2 px-4">
-        <div className="container mx-auto text-center">
-          <p className="text-sm">
-            🎉 {locale === 'ar' ? 'عرض خاص: خصم 20% على جميع قطع المحرك' : 'Special Offer: 20% off all engine parts'} -
-            <button onClick={() => go('offers')} className="underline hover:no-underline">{t('offers')}</button>
-          </p>
+      {/* Top promotional banner (hidden on admin pages) */}
+      {!isRestricted && (
+        <div className="bg-red-600 text-white py-2 px-4">
+          <div className="container mx-auto text-center">
+            <p className="text-sm">
+              🎉 {locale === 'ar' ? 'عرض خاص: خصم 20% على جميع قطع المحرك' : 'Special Offer: 20% off all engine parts'} -
+              <button onClick={() => go('offers')} className="underline hover:no-underline">{t('offers')}</button>
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main header */}
       <div className="bg-white shadow-sm border-b">
@@ -173,6 +201,24 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
               
               <div className="flex items-center gap-2">
                 <LanguageSwitcher />
+                {/* Guest favorites (wishlist) button */}
+                {!user && !isRestricted && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative"
+                    onClick={() => go('favorites')}
+                    aria-label={locale==='ar' ? 'المفضلة' : 'Favorites'}
+                    title={locale==='ar' ? 'المفضلة' : 'Favorites'}
+                  >
+                    <Heart className="w-5 h-5" />
+                    {favCount > 0 && (
+                      <Badge className="absolute -top-1 -right-1 min-w-[20px] h-5 rounded-full px-1 flex items-center justify-center text-xs">
+                        {favCount}
+                      </Badge>
+                    )}
+                  </Button>
+                )}
                 {user && (
                   <Popover open={notifOpen} onOpenChange={(o)=>{ setNotifOpen(o); if (o) loadNotifications(); }}>
                     <PopoverTrigger asChild>
@@ -231,12 +277,20 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
                       <span className="text-sm text-muted-foreground">
                         {locale === 'ar' ? 'أهلاً،' : 'Welcome,'} <span className="font-semibold text-foreground">{user.name}</span>
                       </span>
-                      {isVendor && (
+                      {isVendor && !isRestricted && (
                         <button
                           onClick={() => go('vendor-dashboard')}
                           className="text-foreground hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                         >
                           {locale === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
+                        </button>
+                      )}
+                      {isAdmin && !isRestricted && (
+                        <button
+                          onClick={() => go('admin-dashboard')}
+                          className="text-foreground hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                        >
+                          {locale === 'ar' ? 'لوحة المدير' : 'Admin Dashboard'}
                         </button>
                       )}
                       {!isRestricted && (
@@ -364,8 +418,8 @@ export default function Header({ currentPage, setCurrentPage, cartItems, user, s
       )}
     </header>
 
-    {/* Floating Chatbot Button (bottom-right) - hidden on support page */}
-    {current !== 'support' && (
+    {/* Floating Chatbot Button (bottom-right) - hidden on support page and for admins */}
+    {current !== 'support' && !isAdmin && (
       <Button
         className="fixed bottom-4 right-4 z-50 rounded-full shadow-lg h-12 w-12 p-0 bg-blue-600 hover:bg-blue-700 text-white"
         onClick={() => go('support')}

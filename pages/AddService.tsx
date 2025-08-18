@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useTranslation } from "../hooks/useTranslation";
 import type { RouteContext } from "../components/routerTypes";
 import { Separator } from "../components/ui/separator";
+import { getAdminTechnicianOptions } from "../lib/adminOptions";
 
 interface AddServiceProps extends Partial<RouteContext> {}
 
@@ -35,6 +36,7 @@ export default function AddService({ setCurrentPage, ...rest }: AddServiceProps)
   const currency = locale === "ar" ? "ر.س" : "SAR";
 
   const [stype, setStype] = useState<string>("");
+  const [techOptions, setTechOptions] = useState<string[]>([]);
   const [dailyWage, setDailyWage] = useState<number>(0);
   const [days, setDays] = useState<number>(1);
   const [description, setDescription] = useState<string>("");
@@ -107,6 +109,19 @@ export default function AddService({ setCurrentPage, ...rest }: AddServiceProps)
   useEffect(() => {
     try {
       if (typeof window === 'undefined') return;
+      // Initialize technician options from admin with fallback
+      const initAdmin = () => {
+        const specs = getAdminTechnicianOptions().specialties || [];
+        if (Array.isArray(specs) && specs.length) {
+          setTechOptions(specs);
+        } else {
+          // fallback to static SERVICE_TYPES (Arabic/English labels)
+          setTechOptions(SERVICE_TYPES.map(s => (locale === 'ar' ? s.ar : s.en)));
+        }
+      };
+      initAdmin();
+      const onAdminUpdate = () => initAdmin();
+      window.addEventListener('admin_options_updated', onAdminUpdate as any);
       const editId = window.localStorage.getItem('edit_service_id');
       if (!editId) return;
       const raw = window.localStorage.getItem('user_services');
@@ -123,6 +138,9 @@ export default function AddService({ setCurrentPage, ...rest }: AddServiceProps)
       // days/description
       setDays(Number(found.days || 1));
       setDescription(String(found.description || ''));
+      return () => {
+        window.removeEventListener('admin_options_updated', onAdminUpdate as any);
+      };
     } catch {}
   }, []);
 
@@ -153,9 +171,15 @@ export default function AddService({ setCurrentPage, ...rest }: AddServiceProps)
                     <SelectValue placeholder={locale === 'ar' ? 'اختر النوع' : 'Select type'} />
                   </SelectTrigger>
                   <SelectContent>
-                    {SERVICE_TYPES.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{locale === 'ar' ? s.ar : s.en}</SelectItem>
-                    ))}
+                    {techOptions.length > 0
+                      ? techOptions.map((name) => (
+                          <SelectItem key={name} value={name}>{name}</SelectItem>
+                        ))
+                      : SERVICE_TYPES.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {locale === 'ar' ? s.ar : s.en}
+                          </SelectItem>
+                        ))}
                   </SelectContent>
                 </Select>
               </div>

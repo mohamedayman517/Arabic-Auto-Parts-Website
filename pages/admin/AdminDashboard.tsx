@@ -163,17 +163,17 @@ export default function AdminDashboard({ setCurrentPage, ...context }: Partial<R
             </CardHeader>
             <CardContent className="space-y-4">
               {pendingApprovals.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
                   <div>
                     <p className="font-medium text-sm">{item.name}</p>
                     <p className="text-xs text-muted-foreground">{t('by')} {item.submittedBy}</p>
-                    <div className="flex items-center mt-1">
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
                       <Badge variant={item.status === 'urgent' ? 'destructive' : 'secondary'}>
                         {item.status === 'urgent' ? t('urgent') : t('pendingStatus')}
                       </Badge>
                     </div>
                   </div>
-                  <div className="flex space-x-2 space-x-reverse">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Button size="sm" variant="outline">
                       <CheckCircle className="h-4 w-4" />
                     </Button>
@@ -232,6 +232,15 @@ export default function AdminDashboard({ setCurrentPage, ...context }: Partial<R
                 <Settings className="mr-2 h-4 w-4" />
                 {t('systemSettings')}
               </Button>
+              <Button 
+                className="w-full justify-start"
+                variant="outline"
+                onClick={() => setCurrentPage && setCurrentPage('admin-sections')}
+              >
+                {/* Reuse Package icon for sections list */}
+                <Package className="mr-2 h-4 w-4" />
+                الأقسام
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -252,7 +261,7 @@ export default function AdminDashboard({ setCurrentPage, ...context }: Partial<R
               <CardContent>
                 <div className="space-y-4">
                   {recentUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={user.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
                       <div className="flex items-center space-x-4 space-x-reverse">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                           <Users className="h-5 w-5 text-primary" />
@@ -260,7 +269,7 @@ export default function AdminDashboard({ setCurrentPage, ...context }: Partial<R
                         <div>
                           <p className="font-medium">{user.name}</p>
                           <p className="text-sm text-muted-foreground">{user.email}</p>
-                          <div className="flex items-center mt-1">
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
                             <Badge variant="outline">
                               {user.role === 'customer' ? t('customer') : 
                                user.role === 'vendor' ? t('vendor') : t('technician')}
@@ -274,7 +283,7 @@ export default function AdminDashboard({ setCurrentPage, ...context }: Partial<R
                           </div>
                         </div>
                       </div>
-                      <div className="flex space-x-2 space-x-reverse">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Button size="sm" variant="outline">
                           <Package className="h-4 w-4" />
                         </Button>

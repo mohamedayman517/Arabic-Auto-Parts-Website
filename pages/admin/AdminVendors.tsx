@@ -141,12 +141,12 @@ export default function AdminVendors({ setCurrentPage, ...context }: Partial<Rou
             <CardContent>
               <div className="space-y-3">
                 {pendingVendors.map(u => (
-                  <div key={u.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="space-y-0.5">
-                      <div className="font-medium">{u.name}</div>
-                      <div className="text-sm text-muted-foreground">{u.email}</div>
+                  <div key={u.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
+                    <div className="space-y-0.5 w-full min-w-0">
+                      <div className="font-medium break-words max-w-full leading-snug">{u.name}</div>
+                      <div className="text-sm text-muted-foreground break-words">{u.email}</div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button size="sm" variant="outline" onClick={()=>approveVendor(u)}><CheckCircle className="h-4 w-4 mr-1" />{t('approve') || 'موافقة'}</Button>
                       <Button size="sm" variant="outline" onClick={()=>rejectVendor(u)}><Ban className="h-4 w-4 mr-1" />{t('reject') || 'رفض'}</Button>
                     </div>
@@ -188,25 +188,24 @@ export default function AdminVendors({ setCurrentPage, ...context }: Partial<Rou
           <CardContent>
             <div className="space-y-4">
               {filtered.map(r => (
-                <div key={r.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center space-x-4 space-x-reverse">
+                <div key={r.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center space-x-4 space-x-reverse w-full min-w-0">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center"><Store className="h-6 w-6 text-primary" /></div>
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2 space-x-reverse">
-                        <h3 className="font-medium">{r.name}</h3>
+                    <div className="space-y-1 w-full min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-medium break-words max-w-full leading-snug">{r.name}</h3>
                         <Badge variant={r.status==='active'?'default': r.status==='pending'? 'secondary':'destructive'}>
                           {r.status==='active'? t('activeStatus') : r.status==='pending' ? t('pendingStatus') : t('suspendedStatus')}
                         </Badge>
                       </div>
-                      <div className="flex items-center space-x-4 space-x-reverse text-sm text-muted-foreground">
-                        <div className="flex items-center"><Mail className="mr-1 h-3 w-3" />{r.email}</div>
-                        <div className="flex items-center"><Phone className="mr-1 h-3 w-3" />{r.phone}</div>
-                        <div className="flex items-center"><MapPin className="mr-1 h-3 w-3" />{r.location}</div>
-                        <span>{t('productsCountLabel')}: {r.productsCount}</span>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        <div className="flex items-center break-words"><Phone className="mr-1 h-3 w-3" />{r.phone}</div>
+                        <div className="flex items-center break-words"><MapPin className="mr-1 h-3 w-3" />{r.location}</div>
+                        <span className="break-words">{t('productsCountLabel')}: {r.productsCount}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2 space-x-reverse">
+                  <div className="flex flex-wrap items-center gap-2">
                     {r.status==='active' ? (
                       <Button size="sm" variant="outline" onClick={()=>setRowStatus(r,'suspended')}><Ban className="h-4 w-4" /></Button>
                     ) : (

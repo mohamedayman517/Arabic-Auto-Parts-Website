@@ -5,6 +5,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { getAdminRentalOptions } from '../../lib/adminOptions';
 import { DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Checkbox } from '../ui/checkbox';
 
@@ -14,14 +15,16 @@ interface RentalFormProps {
   onCancel: () => void;
 }
 
-// Restricted rental category options for vendor
-const RENTAL_CATEGORY_OPTIONS = [
+// Rental category options are now admin-managed with a fallback to previous defaults
+const FALLBACK_RENTAL_CATEGORY_OPTIONS = [
   'أدوات بناء',
   'ادوات صيانه',
   'ادوات تشطيب',
 ] as const;
 
 export default function RentalForm({ product, onSave, onCancel }: RentalFormProps) {
+  const adminRentalCats = getAdminRentalOptions().categories;
+  const RENTAL_CATEGORY_OPTIONS = (Array.isArray(adminRentalCats) && adminRentalCats.length) ? adminRentalCats : FALLBACK_RENTAL_CATEGORY_OPTIONS;
   const [formData, setFormData] = useState<any>({
     nameAr: product?.nameAr || product?.name || '',
     nameEn: product?.nameEn || '',

@@ -58,6 +58,11 @@ import AdminVendors from '../pages/admin/AdminVendors';
 import AdminProducts from '../pages/admin/AdminProducts';
 import AdminReports from '../pages/admin/AdminReports';
 import AdminSettings from '../pages/admin/AdminSettings';
+import AdminSections from '../pages/admin/AdminSections';
+import AdminProductOptions from '../pages/admin/AdminProductOptions';
+import AdminServiceOptions from '../pages/admin/AdminServiceOptions';
+import AdminTechnicianOptions from '../pages/admin/AdminTechnicianOptions';
+import AdminRentalOptions from '../pages/admin/AdminRentalOptions';
 // Technician pages
 import TechnicianServices from '../pages/technician/TechnicianServices';
 import TechnicianProjects from '../pages/technician/TechnicianProjects';
@@ -115,6 +120,11 @@ export const routes: Record<string, RouteConfig> = {
   'admin-products': { component: AdminProducts, title: 'إدارة المنتجات', icon: Package, requiresAuth: true, allowedRoles: ['admin'] },
   'admin-reports': { component: AdminReports, title: 'Reports & Analytics', icon: BarChart3, requiresAuth: true, allowedRoles: ['admin'] },
   'admin-settings': { component: AdminSettings, title: 'System Settings', icon: Settings, requiresAuth: true, allowedRoles: ['admin'] },
+  'admin-sections': { component: AdminSections, title: 'الأقسام', icon: Package, requiresAuth: true, allowedRoles: ['admin'] },
+  'admin-sections-products': { component: AdminProductOptions, title: 'خيارات المنتجات', icon: Package, requiresAuth: true, allowedRoles: ['admin'] },
+  'admin-sections-services': { component: AdminServiceOptions, title: 'خيارات الخدمات', icon: Tag, requiresAuth: true, allowedRoles: ['admin'] },
+  'admin-sections-technicians': { component: AdminTechnicianOptions, title: 'خيارات الفنيين', icon: Users, requiresAuth: true, allowedRoles: ['admin'] },
+  'admin-sections-rentals': { component: AdminRentalOptions, title: 'خيارات التأجير', icon: Truck, requiresAuth: true, allowedRoles: ['admin'] },
   // Technician routes (require technician role)
   'technician-services': { component: TechnicianServices, title: 'الخدمات', icon: Tag, requiresAuth: true, allowedRoles: ['technician'] },
   'technician-service-details': { component: TechnicianServiceDetails, title: 'تفاصيل خدمة', icon: Tag, requiresAuth: true, allowedRoles: ['technician'] },

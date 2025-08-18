@@ -5,6 +5,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { getAdminProductOptions } from '../../lib/adminOptions';
 import { Checkbox } from '../ui/checkbox';
 import { Switch } from '../ui/switch';
 import { DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -17,6 +18,10 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
+  const adminCategories = getAdminProductOptions().categories;
+  const categoryOptions = (Array.isArray(adminCategories) && adminCategories.length)
+    ? adminCategories
+    : ['أبواب','نوافذ'];
   const [formData, setFormData] = useState({
     // Localized fields
     nameAr: product?.nameAr || product?.name || '',
@@ -127,8 +132,9 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
                 <SelectValue placeholder="اختر الفئة" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="أبواب">أبواب</SelectItem>
-                <SelectItem value="نوافذ">نوافذ</SelectItem>
+                {categoryOptions.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

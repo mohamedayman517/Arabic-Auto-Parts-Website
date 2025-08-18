@@ -226,44 +226,37 @@ export default function AdminUsers({ setCurrentPage, ...context }: Partial<Route
           <CardContent>
             <div className="space-y-4">
               {filteredUsers.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center space-x-4 space-x-reverse">
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <div key={user.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center space-x-4 space-x-reverse w-full min-w-0">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
                       <Users className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2 space-x-reverse">
-                        <h3 className="font-medium">{user.name}</h3>
+                    <div className="space-y-1 w-full min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-medium break-words max-w-full leading-snug">{user.name}</h3>
                         <Badge variant={getStatusVariant(user.status)}>
                           {getStatusText(user.status)}
                         </Badge>
                       </div>
-                      <div className="flex items-center space-x-4 space-x-reverse text-sm text-muted-foreground">
-                        <div className="flex items-center">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        <div className="flex items-center break-words min-w-0">
                           <Mail className="mr-1 h-3 w-3" />
-                          {user.email}
+                          <span className="break-words">{user.email}</span>
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center break-words min-w-0">
                           <Phone className="mr-1 h-3 w-3" />
-                          {user.phone}
+                          <span className="break-words">{user.phone}</span>
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center break-words min-w-0">
                           <MapPin className="mr-1 h-3 w-3" />
-                          {user.location}
+                          <span className="break-words">{user.location}</span>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-4 space-x-reverse text-xs">
-                        <Badge variant="outline">{getRoleText(user.role)}</Badge>
-                        <div className="flex items-center">
-                          <Calendar className="mr-1 h-3 w-3" />
-                          {t('joinedOn')} {user.joinDate}
-                        </div>
-                        <span>{t('ordersCountLabel')}: {user.orders}</span>
-                        <span>{t('totalSpentLabel')}: {user.totalSpent}</span>
+                        <span className="break-words">{t('ordersCountLabel')}: {user.orders}</span>
+                        <span className="break-words">{t('totalSpentLabel')}: {user.totalSpent}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2 space-x-reverse">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button 
